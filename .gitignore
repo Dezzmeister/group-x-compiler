@@ -1,0 +1,6 @@
+compiler_debug
+compiler_release
+test_debug
+test_release
+src/scanner.cpp
+
