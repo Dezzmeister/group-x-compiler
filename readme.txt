@@ -19,11 +19,6 @@ make test_release: builds test binary in release mode and runs it, then deletes
 make test_all: builds debug and release test binaries, runs them, and cleans
     them up
 
-If a test fails, you will need to clean up the test binaries yourself:
-
-make clean_test_debug: Cleans build artifacts and test binary
-make clean_test_release: Cleans build artifacts and test binary
-
 ==================================== Tests ====================================
 
 Tests are in the `tests/` directory. The entry point for the test binary is

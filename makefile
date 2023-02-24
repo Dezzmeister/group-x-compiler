@@ -20,25 +20,24 @@ release: compiler_release
 test_all: test_debug test_release
 
 compiler_debug: ${DEPS} main.cpp
-	${CC} ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
+	${CC} ${DBG_FLAGS} $^ -o debug_bin ${LD_FLAGS}
 
 compiler_release: ${DEPS} main.cpp
-	${CC} ${RELEASE_FLAGS} $^ -o $@ ${LD_FLAGS}
+	${CC} ${RELEASE_FLAGS} $^ -o release_bin ${LD_FLAGS}
 
 test_debug: ${DEPS} ${TEST_DIR}/*.cpp
-	${CC} ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS} && ./$@ && make clean_test_debug
+	${CC} ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
+	./$@
+	rm -f $@
 
 test_release: ${DEPS} ${TEST_DIR}/*.cpp
-	${CC} ${RELEASE_FLAGS} $^ -o $@ ${LD_FLAGS} && ./$@ && make clean_test_release
+	${CC} ${RELEASE_FLAGS} $^ -o $@ ${LD_FLAGS}
+	./$@
+	rm -f $@
 
 src/scanner.cpp: src/scanner.lex
 	lex -o src/scanner.cpp $^
 
-clean: compiler_debug compiler_release ${GENERATED_FILES}
+clean: debug_bin release_bin ${GENERATED_FILES}
 	rm -f $^
 
-clean_test_debug: test_debug
-	rm -f $^
-
-clean_test_release: test_release
-	rm -f $^
