@@ -1,5 +1,5 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef SRC_PARSEUTILS_H
+#define SRC_PARSEUTILS_H
 
 // 100, 0xdeadbeef, -50.4, 79.3f, -0x49e, -4., ...
 #define NUM_LITERAL     1

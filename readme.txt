@@ -30,3 +30,11 @@ entire suite fails. C and C++ have assert and static assert macros that allow
 us to test for conditions at runtime and compile time respectively. I wrote a
 stub test using assert in `tests/stub.cpp`. This is just a start, the Test
 Engineer is free to extend this, discard this, or whatever.
+
+================================== Dev Setup ==================================
+
+You may want to add the following line to your .vimrc:
+
+    au BufReadPost *.ypp set syntax=yacc
+
+This tells Vim to use yacc syntax highlighting for .ypp files.

@@ -1,6 +1,11 @@
-%{
-#include "parser.h"
+%option warn
 
+%{
+#include "parseutils.h"
+// TODO: Circular imports can break the scanner. Include a mechanism to prevent
+// this
+
+// TODO: Return string buf to parser
 static char string_buf[MAX_STR_LEN] = { 0 };
 static char * string_buf_ptr;
 int lineno = 0;
@@ -8,14 +13,14 @@ int lineno = 0;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 %}
-%option yylineno
 %x str
+%x incl
 
 delim       [ \t]
 ws          {delim}+
 digit       [0-9]
-int         (\-)?{digit}+
-hexint      (\-)?0x({digit}|[a-fA-F])+
+int         (\-)?([[:digit:]]{-}[0])[[:digit:]]*
+hexint      (\-)?0[xX][[:xdigit:]]+
 float       (\-)?{digit}+\.{digit}*f?
 num         {int}|{hexint}|{float}
 bool        (true)|(false)
@@ -28,11 +33,12 @@ for_kw      for
 int_kw      int
 float_kw    float
 id          {letter}({letter}|{digit})*
-char        '((.)|(\\n)|(\\r)|(\\t)|(\0))'
+char        '((.)|(\\n)|(\\r)|(\\t)|(\\0))'
 
 %%
 
 \"          string_buf_ptr = string_buf; BEGIN(str);
+import      BEGIN(incl);
 <str>{
     \"      {
         BEGIN(INITIAL);
@@ -52,6 +58,25 @@ char        '((.)|(\\n)|(\\r)|(\\t)|(\0))'
         while (*yptr) {
             *string_buf_ptr++ = *yptr++;
         }
+    }
+}
+<incl>{
+    [ \t]*      {}
+    [^ \t\n]+   {
+        yyin = fopen(yytext, "r");
+
+        if (! yyin) {
+            x::syntax_error("Nonexistent or unreadable file");
+        }
+        yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
+
+        BEGIN(INITIAL);
+    }
+}
+<<EOF>> {
+    yypop_buffer_state();
+    if (! YY_CURRENT_BUFFER) {
+        yyterminate();
     }
 }
 

@@ -5,7 +5,7 @@ RELEASE_FLAGS = ${COMMON_FLAGS} -O3
 LD_FLAGS = -ll
 
 SRC_DIR := src
-GENERATED_FILES := ${addprefix ${SRC_DIR}/, scanner.cpp}
+GENERATED_FILES := ${addprefix ${SRC_DIR}/, scanner.cpp parser.cpp parser.h}
 
 DEPS = ${GENERATED_FILES} ${wildcard ${SRC_DIR}/*.h} ${wildcard ${SRC_DIR}/*.cpp}
 
@@ -35,9 +35,13 @@ test_release: ${DEPS} ${TEST_DIR}/*.cpp
 	./$@
 	rm -f $@
 
-src/scanner.cpp: src/scanner.lex
-	lex -o src/scanner.cpp $^
+${GENERATED_FILES}: src/parser.ypp src/scanner.lex
+	bison -d src/parser.ypp
+	mv parser.tab.cpp src/parser.cpp
+	mv parser.tab.hpp src/parser.h
+	lex -Cfe -o src/scanner.cpp src/scanner.lex
 
-clean: debug_bin release_bin ${GENERATED_FILES}
-	rm -f $^
+.PHONY: clean
+clean:
+	rm -f debug_bin release_bin ${GENERATED_FILES}
 

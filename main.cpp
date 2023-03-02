@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "src/parser.h"
+#include "src/parseutils.h"
 
 int main() {
     int c;

@@ -1,0 +1,54 @@
+%{
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "parseutils.h"
+
+%}
+
+%token NUM_LITERAL;
+%token CHAR_LITERAL;
+%token STR_LITERAL;
+%token BOOL_LITERAL;
+%token ID;
+
+%token LINE_SEP;
+
+%token IF_KW;
+%token ELSE_KW;
+%token WHILE_KW;
+%token BREAK_KW;
+%token FOR_KW;
+%token INT_KW;
+%token FLOAT_KW;
+
+%token ASSIGN_OP;
+
+%%
+
+line    : expr LINE_SEP
+        ;
+
+typename    : INT_KW { printf("int\n"); }
+            | FLOAT_KW { printf("float\n"); }
+            | ID { printf("%d\n", yyval); }
+            ;
+
+var_decl    : typename ID { printf("var decl\n"); };
+var_init    : var_decl ASSIGN_OP expr { printf("var init\n"); }
+            ;
+
+literal     : NUM_LITERAL { printf("%d\n", yyval); }
+            | CHAR_LITERAL { printf("%d\n", yyval); }
+            | STR_LITERAL { printf("%d\n", yyval); }
+            | BOOL_LITERAL { printf("%d\n", yyval); }
+            ;
+
+expr    : '(' expr ')' { $$ = $2; }
+        | var_decl
+        | var_init
+        | literal
+        ;
+
+
