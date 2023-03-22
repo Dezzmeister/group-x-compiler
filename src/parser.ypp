@@ -13,17 +13,19 @@
 %token BOOL_LITERAL;
 %token ID;
 
-%token LINE_SEP;
+%token LINE_SEP
 
-%token IF_KW;
-%token ELSE_KW;
-%token WHILE_KW;
-%token BREAK_KW;
-%token FOR_KW;
-%token INT_KW;
-%token FLOAT_KW;
+%token IF_KW ELSE_KW WHILE_KW BREAK_KW FOR_KW INT_KW FLOAT_KW ARRAY_KW STRUCT_KW
 
 %token ASSIGN_OP;
+
+%token PLUS MINUS UMINUS TIMES DIVIDE POWER MOD
+
+%token EQUAL GREATERTHAN LESSTHAN 
+
+%token LPAREN RPAREN LCBRACE RCBRACE LBRACKET RBRACKET
+
+%token FSLASH POUND
 
 %%
 
@@ -50,5 +52,4 @@ expr    : '(' expr ')' { $$ = $2; }
         | var_init
         | literal
         ;
-
-
+        

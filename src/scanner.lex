@@ -3,7 +3,7 @@
 %{
 #include "parseutils.h"
 // TODO: Circular imports can break the scanner. Include a mechanism to prevent
-// this
+// this -- [look in cycles.py]
 
 // TODO: Return string buf to parser
 static char string_buf[MAX_STR_LEN] = { 0 };
@@ -35,44 +35,50 @@ float_kw    float
 id          {letter}({letter}|{digit})*
 char        '((.)|(\\n)|(\\r)|(\\t)|(\\0))'
 
-%%
 
+
+%%
 \"          string_buf_ptr = string_buf; BEGIN(str);
 import      BEGIN(incl);
 <str>{
-    \"      {
+    \"  {
         BEGIN(INITIAL);
         *string_buf_ptr = '\0';
         return STR_LITERAL;
-    }
-    \n      {
-        x::syntax_error("Malformed string");
-    }
-    \\n     *string_buf_ptr++ = '\n';
-    \\t     *string_buf_ptr++ = '\t';
-    \\r     *string_buf_ptr++ = '\r';
-    \\(.|\n)    *string_buf_ptr++ = yytext[1];
-    [^\\\n\"]+  {
-        char *yptr = yytext;
-
-        while (*yptr) {
-            *string_buf_ptr++ = *yptr++;
         }
-    }
+
+    \n  { 
+        x::syntax_error("Malformed string"); 
+        }
+        
+    \\n         *string_buf_ptr++ = '\n';
+    \\t         *string_buf_ptr++ = '\t';
+    \\r         *string_buf_ptr++ = '\r';
+    \\(.|\n)    *string_buf_ptr++ = yytext[1];
+
+    [^\\\n\"]+  {
+                char *yptr = yytext;
+                while (*yptr) { 
+                    *string_buf_ptr++ = *yptr++;
+                }
+                }
 }
 <incl>{
     [ \t]*      {}
     [^ \t\n]+   {
-        yyin = fopen(yytext, "r");
-
-        if (! yyin) {
-            x::syntax_error("Nonexistent or unreadable file");
-        }
-        yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
-
-        BEGIN(INITIAL);
-    }
+                yyin = fopen(yytext, "r");
+                if (! yyin) {
+                    // So file name is included in the error.
+                    char s[50];
+                    sprintf(s, "Nonexistent or unreadable file %s", yytext);
+                    printf("%s\n", s);
+                    x::syntax_error(s);
+                }
+                yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
+                BEGIN(INITIAL);
+                }
 }
+
 <<EOF>> {
     yypop_buffer_state();
     if (! YY_CURRENT_BUFFER) {
@@ -95,6 +101,24 @@ import      BEGIN(incl);
 {float_kw}  {return FLOAT_KW;}
 
 {id}        {return ID;}
+
+"\/"        {return DIVIDE;}
+"*"         {return TIMES;}
+"#"         {return POUND;}
+"+"         {return PLUS;}
+"-"         {return MINUS;}
+"%"         {return MOD;}
+"**"        {return POWER;}
+"("         {return LPAREN;}
+")"         {return RPAREN;}
+"{"         {return LCBRACE;}
+"}"         {return RCBRACE;}
+"["         {return LBRACKET;}
+"]"         {return RBRACKET;}
+"="         {return ASSIGN_OP;}
+"=="        {return EQUAL;}
+"<"         {return LESSTHAN;}
+">"         {return GREATERTHAN;}
 
 %%
 
