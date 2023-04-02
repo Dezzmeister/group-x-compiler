@@ -36,10 +36,8 @@ test_release: ${DEPS} ${TEST_DIR}/*.cpp
 	rm -f $@
 
 ${GENERATED_FILES}: src/parser.ypp src/scanner.lex
-	bison -d src/parser.ypp
-	mv parser.tab.cpp src/parser.cpp
-	mv parser.tab.hpp src/parser.h
-	lex -Cfe -o src/scanner.cpp src/scanner.lex
+	bison --defines=src/parser.h -o src/parser.cpp src/parser.ypp
+	flex -Cfe -o src/scanner.cpp src/scanner.lex
 
 .PHONY: clean
 clean:

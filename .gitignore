@@ -3,4 +3,8 @@ compiler_release
 test_debug
 test_release
 src/scanner.cpp
-
+src/parser.cpp
+src/parser.h
+src/parser.output
+debug_bin
+release_bin

@@ -2,12 +2,14 @@
 
 %{
 #include "parseutils.h"
+#include "parser.h"
 // TODO: Circular imports can break the scanner. Include a mechanism to prevent
 // this
 
 // TODO: Return string buf to parser
 static char string_buf[MAX_STR_LEN] = { 0 };
 static char * string_buf_ptr;
+
 int lineno = 0;
 
 #pragma GCC diagnostic push
@@ -25,13 +27,14 @@ float       (\-)?{digit}+\.{digit}*f?
 num         {int}|{hexint}|{float}
 bool        (true)|(false)
 letter      [a-zA-Z]
-if_kw       if
-else_kw     else
-while_kw    while
-break_kw    break
-for_kw      for
-int_kw      int
-float_kw    float
+
+if       if
+else     else
+while    while
+break    break
+for      for
+return   return
+
 id          {letter}({letter}|{digit})*
 char        '((.)|(\\n)|(\\r)|(\\t)|(\\0))'
 
@@ -43,7 +46,7 @@ import      BEGIN(incl);
     \"      {
         BEGIN(INITIAL);
         *string_buf_ptr = '\0';
-        return STR_LITERAL;
+        return STR;
     }
     \n      {
         x::syntax_error("Malformed string");
@@ -66,7 +69,9 @@ import      BEGIN(incl);
         yyin = fopen(yytext, "r");
 
         if (! yyin) {
-            x::syntax_error("Nonexistent or unreadable file");
+            char s[50];
+            sprintf(s, "Nonexistent or unreadable file %s", yytext);
+            x::syntax_error(s);
         }
         yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
 
@@ -81,20 +86,24 @@ import      BEGIN(incl);
 }
 
 {ws}        {}
-\n          {lineno++;}
-{num}       {return NUM_LITERAL;}
-{bool}      {return BOOL_LITERAL;}
-{char}      {return CHAR_LITERAL;}
+\n          {lineno++; return NEWLINE;}
 
-{if_kw}     {return IF_KW;}
-{else_kw}   {return ELSE_KW;}
-{while_kw}  {return WHILE_KW;}
-{break_kw}  {return BREAK_KW;}
-{for_kw}    {return FOR_KW;}
-{int_kw}    {return INT_KW;}
-{float_kw}  {return FLOAT_KW;}
+{num}       {yylval.itype = atoi(yytext); return NUM;} 
+{bool}      {return BOOL;}
+{char}      {yylval.ctype = *yytext; return CHAR;}
 
-{id}        {return ID;}
+{if}         {return IF;}
+{else}       {return ELSE;}
+{while}      {return WHILE;}
+{break}      {return BREAK;}
+{for}        {return FOR;}
+{return}     {return RETURN;}
+
+{id}        {yylval.string = yytext; return ID;}
+
+"="         {return ASSIGN;}
+ 
+[+-\/*\^]   {return *yytext;}
 
 %%
 
