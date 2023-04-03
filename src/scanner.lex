@@ -3,6 +3,7 @@
 %{
 #include "parseutils.h"
 #include "parser.h"
+#include "symtable.h"
 // TODO: Circular imports can break the scanner. Include a mechanism to prevent
 // this
 
@@ -34,6 +35,12 @@ while    while
 break    break
 for      for
 return   return
+print    print
+struct   struct
+
+int_type   int
+float_type float
+char_type  char
 
 id          {letter}({letter}|{digit})*
 char        '((.)|(\\n)|(\\r)|(\\t)|(\\0))'
@@ -92,18 +99,35 @@ import      BEGIN(incl);
 {bool}      {return BOOL;}
 {char}      {yylval.ctype = *yytext; return CHAR;}
 
+{int_type}    {return INT_TYPE;}
+{float_type}  {return FLOAT_TYPE;}
+{char_type}   {return CHAR_TYPE;}
+
 {if}         {return IF;}
 {else}       {return ELSE;}
 {while}      {return WHILE;}
 {break}      {return BREAK;}
 {for}        {return FOR;}
 {return}     {return RETURN;}
+{print}      {return PRINT;}
+{struct}     {return STRUCT;}
 
-{id}        {yylval.string = yytext; return ID;}
+{id}    {
+        struct symrec* s = getsym(yytext);
+        if (!s) {
+            char new_str[strlen(yytext) + 1];
+            strcpy(new_str,yytext);
+            s = putsym(new_str, ID); 
+        }
+        yylval.string = yytext;
+        return ID;
+        }
 
 "="         {return ASSIGN;}
- 
+[\(\)]      {return *yytext;}
 [+-\/*\^]   {return *yytext;}
+
+
 
 %%
 

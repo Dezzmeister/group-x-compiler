@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "src/parseutils.h"
+#include "src/symtable.h"
 
 symrec *sym_table;
 
-symrec * putsym (char const *name)
+symrec * putsym (char const *name, int type)
 {
   symrec *res = (symrec *) malloc (sizeof (symrec));
   res->name = strdup(name);
+  res->type = type;
   res->next = sym_table;
   sym_table = res;
   return res;
