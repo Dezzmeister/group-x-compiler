@@ -8,3 +8,5 @@ src/parser.h
 src/parser.output
 debug_bin
 release_bin
+run.sh
+notes

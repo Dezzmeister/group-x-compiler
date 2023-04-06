@@ -1,15 +1,15 @@
 %option warn
 
 %{
-#include "parseutils.h"
 #include "parser.h"
+#include "parseutils.h"
 #include "symtable.h"
 // TODO: Circular imports can break the scanner. Include a mechanism to prevent
 // this
 
-// TODO: Return string buf to parser
 static char string_buf[MAX_STR_LEN] = { 0 };
 static char * string_buf_ptr;
+SymbolTable * symtable = new SymbolTable();
 
 int lineno = 0;
 
@@ -37,6 +37,7 @@ for      for
 return   return
 print    print
 struct   struct
+fun      fun 
 
 int_type   int
 float_type float
@@ -53,7 +54,9 @@ import      BEGIN(incl);
     \"      {
         BEGIN(INITIAL);
         *string_buf_ptr = '\0';
-        return STR;
+        yylval.string = string_buf;
+        add_string(string_buf);
+        return STR_LITERAL;
     }
     \n      {
         x::syntax_error("Malformed string");
@@ -92,42 +95,38 @@ import      BEGIN(incl);
     }
 }
 
-{ws}        {}
-\n          {lineno++; return NEWLINE;}
+{ws}          {}
+\n            {lineno++;}
 
-{num}       {yylval.itype = atoi(yytext); return NUM;} 
-{bool}      {return BOOL;}
-{char}      {yylval.ctype = *yytext; return CHAR;}
+{num}         {yylval.itype = atoi(yytext); return NUM_LITERAL;} 
+{bool}        {return BOOL_LITERAL;}
+{char}        {yylval.ctype = *yytext; return CHAR_LITERAL;}
 
 {int_type}    {return INT_TYPE;}
 {float_type}  {return FLOAT_TYPE;}
 {char_type}   {return CHAR_TYPE;}
+{if}          {return IF;}
+{else}        {return ELSE;}
+{while}       {return WHILE;}
+{break}       {return BREAK;}
+{for}         {return FOR;}
+{return}      {return RETURN;}
+{print}       {return PRINT;}
+{struct}      {return STRUCT;}
+{fun}         {return FUN;}
 
-{if}         {return IF;}
-{else}       {return ELSE;}
-{while}      {return WHILE;}
-{break}      {return BREAK;}
-{for}        {return FOR;}
-{return}     {return RETURN;}
-{print}      {return PRINT;}
-{struct}     {return STRUCT;}
+{id}          {
+                Symbol *s = symtable->GetSymbol(yytext);
+                if (s) {
+                    return s->type;
+                }
+                yylval.string = strdup(yytext);
+                return IDENTIFIER;
+             }
 
-{id}    {
-        struct symrec* s = getsym(yytext);
-        if (!s) {
-            char new_str[strlen(yytext) + 1];
-            strcpy(new_str,yytext);
-            s = putsym(new_str, ID); 
-        }
-        yylval.string = yytext;
-        return ID;
-        }
+[+-\/*\^\(\)\{\}]   {return *yytext;}
 
-"="         {return ASSIGN;}
-[\(\)]      {return *yytext;}
-[+-\/*\^]   {return *yytext;}
-
-
+"="                 {return ASSIGN;}
 
 %%
 
