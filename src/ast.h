@@ -34,7 +34,7 @@ class FloatLiteral : public ASTNode {
 
 class CharLiteral : public ASTNode {
     public:
-        const statc int kind = 3;
+        const static int kind = 3;
     
         const char value;
     
