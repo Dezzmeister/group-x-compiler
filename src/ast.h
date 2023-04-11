@@ -191,7 +191,7 @@ class Function : public Stmt {
         if (stmts) {stmts->print();}
         printf(") ");
     }
-    int get_kind() { return 0; }
+    int get_kind() { return kind; }
 
 };
 
@@ -231,6 +231,19 @@ class Float: public Expr {
         }
         void print() {
             printf("%f", value);
+        }
+};
+
+class Paren: public Expr {
+    public:
+        const static int kind = 8;
+        const char * value;
+        Paren(const char * value);
+        int get_kind() {
+            return kind;
+        }
+        void print() {
+            printf("%s", value);
         }
 };
 #endif
