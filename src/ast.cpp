@@ -58,3 +58,7 @@ Statements::Statements(Stmt * s1, Stmt * s2) {
     this->left = s1;
     this->right = s2;
 }
+
+Paren::Paren(Expr * e) {
+    this->expr = e;
+}

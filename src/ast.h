@@ -237,13 +237,15 @@ class Float: public Expr {
 class Paren: public Expr {
     public:
         const static int kind = 8;
-        const char * value;
-        Paren(const char * value);
+        Expr * expr;
+        Paren(Expr * e);
         int get_kind() {
             return kind;
         }
         void print() {
-            printf("%s", value);
+            putchar('(');
+            expr->print();
+            putchar(')');
         }
 };
 #endif

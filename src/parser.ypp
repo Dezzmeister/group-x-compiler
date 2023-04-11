@@ -95,7 +95,7 @@ expr  : expr '+' expr { $$ = new ArithExpr('+', $1, $3); }
       | expr '/' expr { $$ = new ArithExpr('/', $1, $3); }
       | expr '%' expr { $$ = new ArithExpr('%', $1, $3); }
       | '(' expr ')' { $$ = new Paren($2); }
-      | '-' expr %prec '-' { $$ = new ArithExpr('-', $2->left, NULL); }
+      | '-' expr %prec UMINUS { $$ = new ArithExpr('-', $2, nullptr); }
       | literal 
       | assignment
       | IDENTIFIER { $$ = new Id($1); }
