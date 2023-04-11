@@ -89,7 +89,13 @@ return_stmt : RETURN expr {$$ = new Return($2); }
 print_stmt  : PRINT '(' expr ')' '.' { $$ = new Print($3); }
             ;
 
-expr  : expr '+' expr {$$ = new ArithExpr('+', $1, $3);} 
+expr  : expr '+' expr { $$ = new ArithExpr('+', $1, $3); }
+      | expr '-' expr { $$ = new ArithExpr('-', $1, $3); }
+      | expr '*' expr { $$ = new ArithExpr('*', $1, $3); }
+      | expr '/' expr { $$ = new ArithExpr('/', $1, $3); }
+      | expr '%' expr { $$ = new ArithExpr('%', $1, $3); }
+      | '(' expr ')' { $$ = new Paren($2); }
+      | '-' expr %prec '-' { $$ = new ArithExpr('-', $2->left, NULL); }
       | literal 
       | assignment
       | IDENTIFIER { $$ = new Id($1); }
