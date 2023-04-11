@@ -32,4 +32,43 @@ class FloatLiteral : public ASTNode {
         }
 };
 
+class CharLiteral : public ASTNode {
+    public:
+        const statc int kind = 3;
+    
+        const char value;
+    
+        CharLiteral(const char value);
+    
+        int get_kind() {
+            return kind;   
+        }
+};
+
+class StringLiteral : public ASTNode {
+    public:
+        const static int kind = 4;
+    
+        const string value;
+        
+        StringLiteral(const string value);
+    
+        int get_kind() {
+            return kind;   
+        }
+};
+
+class BooleanLiteral : public ASTNode {
+    public:
+        const static int kind = 5;
+        
+        const boolean value;
+    
+        BooleanLiteral(const boolean value);
+    
+        int get_kind() {
+            return kind;
+        }
+};
+
 #endif
