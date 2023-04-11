@@ -1,6 +1,6 @@
 CC = g++
 COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native
-DBG_FLAGS = ${COMMON_FLAGS} -Og
+DBG_FLAGS = ${COMMON_FLAGS} -O -ggdb
 RELEASE_FLAGS = ${COMMON_FLAGS} -O3
 LD_FLAGS = -ll
 
@@ -36,7 +36,7 @@ test_release: ${DEPS} ${TEST_DIR}/*.cpp
 	rm -f $@
 
 ${GENERATED_FILES}: src/parser.ypp src/scanner.lex
-	bison --defines=src/parser.h -o src/parser.cpp src/parser.ypp
+	bison  --defines=src/parser.h -o src/parser.cpp src/parser.ypp
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
 
 .PHONY: clean

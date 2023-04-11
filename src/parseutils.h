@@ -8,8 +8,10 @@
 #define yyerror(msg) x::syntax_error(msg)
 
 extern char * yytext;
+extern FILE * yyin;
 
 extern int yylex();
+void add_string(const char * str);
 
 extern int lineno;
 

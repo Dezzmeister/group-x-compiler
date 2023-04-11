@@ -1,162 +1,133 @@
 %code requires {
-#include <cstring>
-#include "stdio.h" 
+#include <stdio.h>
+
 #include "parseutils.h"
-#include "parser.h"
+#include "ast.h"
 }
 
-
 %code {
-    #include "tree.h"
     #include "symtable.h"
-
-    void print_helper(const char * pre, tree *root, bool is_left) {
-        if (root) {
-            printf("%s", pre);
-            printf("%s", is_left ? "├──" : "└──");
-            printf("%d\n", root->type);
-            char* new_pre = new char[strlen(pre) + 5];
-            strcpy(new_pre, pre);
-            strcat(new_pre, is_left ? "│   " : "    ");
-            print_helper(new_pre, root->left, true);
-            print_helper(new_pre, root->right, false);
-            delete[] new_pre;
-        }
-    }
-
-    void print_tree(tree *root) {
-        if (!root) {
-            return;
-        }
-        print_helper("", root, false);
-    }
-
-    tree * mktree(int type, YYSTYPE val) {
-        struct tree * tree = new struct tree; 
-        tree->type = type; 
-        tree->val = val;
-        return tree;
-    }
-
-    tree * mktree(int type, tree *left = nullptr, tree *right = nullptr) {
-        struct tree * tree = new struct tree; 
-        tree->type = type;
-        tree->left = left;
-        tree->right = right;
-        return tree;
-    } 
+    extern SymbolTable * symtable;
 }
 
 %union {
-    struct tree *tree;
+    ASTNode *tree;
+    Expr *expr;
+    Stmt *stmt;
     int itype;
     double dtype;
     char ctype;
     char * string;
 }
 
-%type <tree> program stmt_list stmt expr literal
+%type <tree> program 
+%type <expr> literal expr assignment
+%type <stmt> print_stmt if_stmt while_stmt return_stmt stmt 
+struct_decl func_decl var_decl param_list block statements
+%type <itype>  typename 
 
-%type <tree> if_stmt while_stmt print_stmt return_stmt 
+%token <itype>  NUM_LITERAL;
+%token <ctype>  CHAR_LITERAL;
+%token <string> STR_LITERAL;
+%token <itype>  BOOL_LITERAL;
+%token <string> IDENTIFIER;
 
-%type <tree> assignment var_decl struct_decl
+%token ASSIGN IF ELSE WHILE FOR BREAK RETURN PRINT STRUCT FUN
+%token <itype> INT_TYPE FLOAT_TYPE CHAR_TYPE STRUCT_NAME
 
-%type <itype> typename
-
-%token <itype>  NUM;
-%token <ctype>  CHAR;
-%token <string> STR;
-%token <itype>  BOOL;
-%token <string> ID;
-
-%token NEWLINE ASSIGN;
-
-%token IF ELSE WHILE FOR BREAK
-
-%token RETURN PRINT 
-
-%token STRUCT
+// To avoid dangling else, an else block is associated with 
+// the innermost if block.
+%precedence ELSE
+%precedence ')'
 
 %left <ctype> '-' '+'
 %left <ctype> '*' '/'
 %right <ctype> ASSIGN
 %right <ctype> '^' 
-
-%token <itype> INT_TYPE FLOAT_TYPE CHAR_TYPE
-
-%token STMT_LIST
-
+%left UMINUS
 %%
 
 program : %empty {} 
-        | stmt_list {print_tree($1);}
+        | statements { ASTNode::PrintASTNode($1);  }
         ;
     
-stmt_list : stmt_list stmt {$$ = mktree(STMT_LIST, $1, $2);}
-          | stmt 
-          ;
-
-stmt : expr NEWLINE {$$ = $1;}
-     | if_stmt 
-     | while_stmt 
-     | print_stmt
-     | return_stmt
-     | var_decl
-     | struct_decl
-     | NEWLINE { $$ = nullptr; }
-     ;
-
-if_stmt : IF '(' expr ')' stmt { $$ = mktree(IF, $3, $5);}
-        ;
-
-while_stmt : WHILE '(' expr ')' stmt { $$ = mktree(WHILE, $3, $5); }
+statements : statements stmt {$$ = new Statements($1, $2);}
+           | stmt
            ;
 
-print_stmt : PRINT '(' expr ')' { $$ = mktree(PRINT, $3);}
+block  : '{' statements '}' { $$ =  $2;  }
+ 
+stmt : expr {$$ = new ExprStmt($1);}
+     | print_stmt
+     | if_stmt 
+     | while_stmt 
+     | return_stmt
+     | func_decl
+     | var_decl
+     | struct_decl
+     ;
 
-return_stmt : RETURN expr {$$ = mktree(RETURN, $2);}
+func_decl : typename IDENTIFIER '(' param_list ')' block 
+{ $$ = new Function($1, $4, $6); } 
+;
+            
+param_list : param_list ',' var_decl 
+           | var_decl 
+           | %empty { $$ = nullptr; } 
+           ;
 
-expr  : expr '+' expr {$$ = mktree('+', $1, $3); }
-      | expr '-' expr {$$ = mktree('-', $1, $3);}
-      | expr '*' expr {$$ = mktree('*', $1, $3);} 
-      | expr '/' expr {$$ = mktree('/', $1, $3);}
-      | expr '^' expr {$$ = mktree('^', $1, $3);}
-      | '(' expr ')'  {$$ = $2; } 
+if_stmt : IF '(' expr ')' block { $$  = new If($3, $5); }
+        | IF '(' expr ')' block ELSE block { $$ = new If($3, $5, $7);} 
+        ;
+
+while_stmt : WHILE '(' expr ')' block  { $$ = new While($3, $5);} 
+           ;
+
+return_stmt : RETURN expr {$$ = new Return($2); }
+            ;
+
+print_stmt  : PRINT '(' expr ')' '.' { $$ = new Print($3); }
+            ;
+
+expr  : expr '+' expr {$$ = new ArithExpr('+', $1, $3);} 
       | literal 
       | assignment
+      | IDENTIFIER { $$ = new Id($1); }
       ;
 
-assignment  : var_decl ASSIGN expr {$$ = mktree(ASSIGN, $1, $3); }
+assignment  : var_decl ASSIGN expr 
+            { 
+                VarDecl * vd = (VarDecl*) $1;
+                $$ = new ArithExpr('=', vd->v, $3); 
+            } 
             ;
 
-struct_decl : STRUCT ID 
-                { 
-                    symrec *s = getsym($2); 
-                    s->type = STRUCT;
-                    $$ = mktree(STRUCT, YYSTYPE{.string = $2});
-                }
+struct_decl : STRUCT IDENTIFIER 
+            { 
+                SymbolTable::Push(new SymbolTable());
+            } '{' struct_decl_list '}' 
+            { 
+                Symbol * s = new Symbol(SymbolTable::Pop());
+                symtable->PutSymbol(s);
+            }
             ;
 
-var_decl : typename ID { $$ = mktree($1, YYSTYPE{.string = $2}); }
-         ;
+struct_decl_list : struct_decl_list var_decl 
+                 | var_decl 
 
-typename : INT_TYPE
+var_decl    :  typename IDENTIFIER 
+            { 
+                $$ = new VarDecl($1, new Var($2)); 
+                symtable->PutSymbol($2, $1);
+            }
+            ;
+
+typename  : INT_TYPE
           | FLOAT_TYPE
           | CHAR_TYPE
-          | ID {
-            struct symrec *s = getsym($1);
-            if (!s || s->type != STRUCT) {
-                char s[50];
-                sprintf(s, "Undeclared struct %s", $1);
-                x::syntax_error(s);
-            }
-            else {
-                $$ = s->type;
-            }
-            }
-
-literal : NUM  {$$ = mktree(NUM, YYSTYPE{.itype = $1}) ;  }
-        | CHAR {$$ = mktree(CHAR, YYSTYPE{.ctype = $1}); } 
-        | STR  {$$ = mktree(STR, YYSTYPE{.string = $1}); }
-        | BOOL {$$ = mktree(NUM, YYSTYPE{.itype = $1});  }
+          | STRUCT_NAME 
+          
+          
+literal : NUM_LITERAL   {$$ = new Int($1); }
+        | STR_LITERAL   {$$ = new String($1);}
         ;  
