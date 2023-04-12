@@ -20,11 +20,11 @@
     char * string;
 }
 
-%type <tree> program 
+%type <tree> program
 %type <expr> literal expr assignment
-%type <stmt> print_stmt if_stmt while_stmt return_stmt stmt 
+%type <stmt> print_stmt if_stmt while_stmt return_stmt stmt
 struct_decl func_decl var_decl param_list block statements
-%type <itype>  typename 
+%type <itype>  typename
 
 %token <itype>  NUM_LITERAL;
 %token <ctype>  CHAR_LITERAL;
@@ -35,7 +35,7 @@ struct_decl func_decl var_decl param_list block statements
 %token ASSIGN IF ELSE WHILE FOR BREAK RETURN PRINT STRUCT FUN
 %token <itype> INT_TYPE FLOAT_TYPE CHAR_TYPE STRUCT_NAME
 
-// To avoid dangling else, an else block is associated with 
+// To avoid dangling else, an else block is associated with
 // the innermost if block.
 %precedence ELSE
 %precedence ')'
@@ -43,44 +43,44 @@ struct_decl func_decl var_decl param_list block statements
 %left <ctype> '-' '+'
 %left <ctype> '*' '/'
 %right <ctype> ASSIGN
-%right <ctype> '^' 
+%right <ctype> '^'
 %left UMINUS
 %%
 
-program : %empty {} 
+program : %empty {}
         | statements { ASTNode::PrintASTNode($1);  }
         ;
-    
+
 statements : statements stmt {$$ = new Statements($1, $2);}
            | stmt
            ;
 
 block  : '{' statements '}' { $$ =  $2;  }
- 
+
 stmt : expr {$$ = new ExprStmt($1);}
      | print_stmt
-     | if_stmt 
-     | while_stmt 
+     | if_stmt
+     | while_stmt
      | return_stmt
      | func_decl
      | var_decl
      | struct_decl
      ;
 
-func_decl : typename IDENTIFIER '(' param_list ')' block 
-{ $$ = new Function($1, $4, $6); } 
+func_decl : typename IDENTIFIER '(' param_list ')' block
+{ $$ = new Function($1, $4, $6); }
 ;
-            
-param_list : param_list ',' var_decl 
-           | var_decl 
-           | %empty { $$ = nullptr; } 
+
+param_list : param_list ',' var_decl
+           | var_decl
+           | %empty { $$ = nullptr; }
            ;
 
 if_stmt : IF '(' expr ')' block { $$  = new If($3, $5); }
-        | IF '(' expr ')' block ELSE block { $$ = new If($3, $5, $7);} 
+        | IF '(' expr ')' block ELSE block { $$ = new If($3, $5, $7);}
         ;
 
-while_stmt : WHILE '(' expr ')' block  { $$ = new While($3, $5);} 
+while_stmt : WHILE '(' expr ')' block  { $$ = new While($3, $5);}
            ;
 
 return_stmt : RETURN expr {$$ = new Return($2); }
@@ -89,41 +89,65 @@ return_stmt : RETURN expr {$$ = new Return($2); }
 print_stmt  : PRINT '(' expr ')' '.' { $$ = new Print($3); }
             ;
 
-expr  : expr '+' expr { $$ = new ArithExpr('+', $1, $3); }
+//Unsure about how to ensure that $1 evaluates to a boolean for the ternary operator
+//Unsure if ! and not should be LogicalExpr or UnaryExpr
+expr  : expr '?' expr ':' expr { $$ = new TernaryExpr($1, $3, $5); }
+      | expr '+' expr { $$ = new ArithExpr('+', $1, $3); }
       | expr '-' expr { $$ = new ArithExpr('-', $1, $3); }
       | expr '*' expr { $$ = new ArithExpr('*', $1, $3); }
       | expr '/' expr { $$ = new ArithExpr('/', $1, $3); }
       | expr '%' expr { $$ = new ArithExpr('%', $1, $3); }
+      | expr '**' expr { $$ = new ArithExpr('**', $1, $3); }
       | '(' expr ')' { $$ = new Paren($2); }
-      | '-' expr %prec UMINUS { $$ = new ArithExpr('-', $2, nullptr); }
-      | literal 
+      | expr '&' expr { $$ = new BitwiseExpr('&', $1, $3); }
+      | expr '|' expr { $$ = new BitwiseExpr('|', $1, $3); }
+      | expr '^' expr { $$ = new BitwiseExpr('^', $1, $3); }
+      | expr '~' expr { $$ = new BitwiseExpr('~', $1, $3); }
+      | expr '<<' expr { $$ = new BitwiseExpr('<<', $1, $3); }
+      | expr '>>' expr { $$ = new BitwiseExpr('>>', $1, $3); }
+      | '-' expr %prec UMINUS { $$ = new UnaryExpr('-', $2); }
+      | expr '++' { $$ = new UnaryExpr('++', $1); }
+      | expr '--' { $$ = new UnaryExpr('--', $1); }
+      | expr '==' expr { $$ = new CompExpr('==', $1, $3); }
+      | expr '!=' expr { $$ = new CompExpr('!=', $1, $3); }
+      | expr '<' expr { $$ = new CompExpr('<', $1, $3); }
+      | expr '<=' expr { $$ = new CompExpr('<=', $1, $3); }
+      | expr '>' expr { $$ = new CompExpr('>', $1, $3); }
+      | expr '>=' expr { $$ = new CompExpr('>=', $1, $3); }
+      | expr 'and' expr { $$ = new LogicalExpr('and', $1, $3); }
+      | expr '&&' expr { $$ = new LogicalExpr('&&', $1, $3); }
+      | expr 'or' expr { $$ = new LogicalExpr('or', $1, $3); }
+      | expr '||' expr { $$ = new LogicalExpr('||', $1, $3); }
+      | '!' expr { $$ = new LogicalExpr('!', nullptr, $2); }
+      | 'not' expr { $$ = new LogicalExpr('not', nullptr, $2); }
+      | literal
       | assignment
       | IDENTIFIER { $$ = new Id($1); }
       ;
 
-assignment  : var_decl ASSIGN expr 
-            { 
+assignment  : var_decl ASSIGN expr
+            {
                 VarDecl * vd = (VarDecl*) $1;
-                $$ = new ArithExpr('=', vd->v, $3); 
-            } 
+                $$ = new ArithExpr('=', vd->v, $3);
+            }
             ;
 
-struct_decl : STRUCT IDENTIFIER 
-            { 
+struct_decl : STRUCT IDENTIFIER
+            {
                 SymbolTable::Push(new SymbolTable());
-            } '{' struct_decl_list '}' 
-            { 
+            } '{' struct_decl_list '}'
+            {
                 Symbol * s = new Symbol(SymbolTable::Pop());
                 symtable->PutSymbol(s);
             }
             ;
 
-struct_decl_list : struct_decl_list var_decl 
-                 | var_decl 
+struct_decl_list : struct_decl_list var_decl
+                 | var_decl
 
-var_decl    :  typename IDENTIFIER 
-            { 
-                $$ = new VarDecl($1, new Var($2)); 
+var_decl    :  typename IDENTIFIER
+            {
+                $$ = new VarDecl($1, new Var($2));
                 symtable->PutSymbol($2, $1);
             }
             ;
@@ -131,9 +155,9 @@ var_decl    :  typename IDENTIFIER
 typename  : INT_TYPE
           | FLOAT_TYPE
           | CHAR_TYPE
-          | STRUCT_NAME 
-          
-          
+          | STRUCT_NAME
+
+
 literal : NUM_LITERAL   {$$ = new Int($1); }
         | STR_LITERAL   {$$ = new String($1);}
-        ;  
+        ;

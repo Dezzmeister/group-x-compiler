@@ -30,7 +30,7 @@ class ExprStmt : public Stmt {
     }
     int get_kind() {
         return 0;
-    } 
+    }
     void print() {
         expr->print();
     }
@@ -68,7 +68,7 @@ class Statements : public Stmt {
     Stmt * left;
     Stmt * right;
     Statements(Stmt * left, Stmt * right);
-    void print() 
+    void print()
     {
         if (left)  {  left->print();  }
         if (right) {  right->print(); }
@@ -76,7 +76,7 @@ class Statements : public Stmt {
     int get_kind() {
         return 0;
     }
-}; 
+};
 
 class Print : public Stmt {
     public:
@@ -86,8 +86,8 @@ class Print : public Stmt {
     int get_kind() {
         return kind;
     }
-    void print() 
-    { 
+    void print()
+    {
         printf("(print ");
         expr->print();
         printf(") ");
@@ -148,13 +148,13 @@ class Return : public Stmt {
 };
 
 class Var : public Expr {
-    public: 
+    public:
     const static int kind = 7;
     // Should be a pointer to the symbol table.
     int type;
     const char * name;
     Var(const char * name);
-    void print() 
+    void print()
     {
         printf("%s", name);
     }
@@ -162,7 +162,7 @@ class Var : public Expr {
 };
 
 class VarDecl : public Stmt {
-    public: 
+    public:
     int type;
     Var * v;
     VarDecl(int, Var *);
@@ -170,7 +170,7 @@ class VarDecl : public Stmt {
     void print() {
         printf("var");
         putchar(' ');
-        v->print(); 
+        v->print();
         putchar(' ');
     }
 };
@@ -246,6 +246,91 @@ class Paren: public Expr {
             putchar('(');
             expr->print();
             putchar(')');
+        }
+};
+
+class BitwiseExpr: public Expr {
+    public:
+        const static int kind = 9;
+        char * op;
+        Expr * left;
+        Expr * right;
+        BitwiseExpr(char *, Expr *, Expr *);
+        int get_kind() {
+            return kind;
+        }
+        void print() {
+            left->print();
+            printf(%s, op);
+            right->print();
+        }
+};
+
+class UnaryExpr: public Expr {
+    public:
+        const static int kind = 10;
+        char * op;
+        Expr * expr;
+        UnaryExpr(char *, Expr *);
+        int get_kind() {
+            return kind;
+        }
+        void print() {
+            expr->print();
+            printf(%s, op);
+        }
+};
+
+class TernaryExpr: public Expr {
+    public:
+        const static int kind = 11;
+        Expr * condition;
+        Expr * t_expr;
+        Expr * f_expr;
+        TernaryExpr(Expr *, Expr *, Expr *);
+        int get_kind() {
+            return kind;
+        }
+        void print() {
+            condition->print();
+            putchar('?');
+            t_expr->print();
+            putchar(':');
+            f_expr->print();
+        }
+};
+
+class CompExpr : public Expr {
+    public:
+        const static int kind = 12;
+        char * op;
+        Expr * left;
+        Expr * right;
+        CompExpr(char *, Expr *, Expr *);
+        int get_kind() {
+            return kind;
+        }
+        void print() {
+            left->print();
+            printf(%s, op);
+            right->print();
+        }
+};
+
+class LogicalExpr : public Expr {
+    public:
+        const static int kind = 13;
+        char * op;
+        Expr * left;
+        Expr * right;
+        LogicalExpr(char *, Expr *, Expr *);
+        int get_kind() {
+            return kind;
+        }
+        void print() {
+            left->print();
+            printf(%s, op);
+            right->print();
         }
 };
 #endif
