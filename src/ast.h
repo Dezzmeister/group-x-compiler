@@ -39,7 +39,17 @@ class Expr : public ASTNode {
         Expr() {}
 };
 
-class TypeDecl : public Expr {
+class Statement : public ASTNode {
+    public:
+        virtual void print() const = 0;
+
+        virtual ~Statement() {}
+
+    protected:
+        Statement() {}
+};
+
+class TypeDecl : public Statement {
     public:
         virtual void print() const = 0;
 
@@ -118,7 +128,7 @@ class FloatLiteral : public NumLiteral {
         KIND_CLASS()
 };
 
-class Ident : public Typename {
+class Ident : public Typename, Expr {
     public:
         const std::string id;
 
@@ -189,6 +199,36 @@ class TypenameList : public ASTNode {
         KIND_CLASS()
 };
 
+class VarDecl : public Statement {
+    public:
+        const Typename * type_name;
+        const Ident * var_name;
+
+        VarDecl(const Typename * type_name, const Ident * var_name);
+
+        virtual ~VarDecl();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
+class VarDeclList : public ASTNode {
+    public:
+        std::vector<VarDecl *> decls;
+
+        VarDeclList(std::vector<VarDecl *> decls);
+
+        virtual ~VarDeclList();
+
+        virtual void print() const;
+
+        // Pushes the var decl onto the back of the type list
+        void push_decl(VarDecl * decl);
+
+        KIND_CLASS()
+};
+
 class TupleTypename : public Typename {
     public:
         const TypenameList * type_list;
@@ -230,14 +270,14 @@ class TypeAlias : public TypeDecl {
         KIND_CLASS()
 };
 
-class VarDecl : public Expr {
+class StructDecl : public TypeDecl {
     public:
-        const Typename * type_name;
-        const Ident * var_name;
+        const Ident * name;
+        const VarDeclList * members;
 
-        VarDecl(const Typename * type_name, const Ident * var_name);
+        StructDecl(const Ident * name, const VarDeclList * members);
 
-        virtual ~VarDecl();
+        virtual ~StructDecl();
 
         virtual void print() const;
 

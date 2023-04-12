@@ -15,9 +15,11 @@ const int ParensTypename::kind = x::next_kind("parens_typename");
 const int PtrTypename::kind = x::next_kind("ptr_typename");
 const int MutTypename::kind = x::next_kind("mut_typename");
 const int TypenameList::kind = x::next_kind("typename_list");
+const int VarDeclList::kind = x::next_kind("var_decl_list");
 const int TupleTypename::kind = x::next_kind("tuple_typename");
 const int FuncTypename::kind = x::next_kind("func_typename");
 const int TypeAlias::kind = x::next_kind("type_alias");
+const int StructDecl::kind = x::next_kind("struct_decl");
 const int VarDecl::kind = x::next_kind("var_decl");
 
 int x::next_kind(const char * const name) {
@@ -128,6 +130,25 @@ void TypenameList::push_type(Typename * type_name) {
     types.push_back(type_name);
 }
 
+VarDeclList::VarDeclList(std::vector<VarDecl *> decls) : decls(decls) {}
+
+VarDeclList::~VarDeclList() {
+    for (auto &decl : decls) {
+        delete decl;
+    }
+}
+
+void VarDeclList::print() const {
+    for (auto &decl : decls) {
+        decl->print();
+        printf(";\n");
+    }
+}
+
+void VarDeclList::push_decl(VarDecl * decl) {
+    decls.push_back(decl);
+}
+
 TupleTypename::TupleTypename(const TypenameList * type_list) : type_list(type_list) {}
 
 TupleTypename::~TupleTypename() {
@@ -171,6 +192,21 @@ void TypeAlias::print() const {
     name->print();
     printf(" = ");
     type_expr->print();
+}
+
+StructDecl::StructDecl(const Ident * name, const VarDeclList * members) : name(name), members(members) {}
+
+StructDecl::~StructDecl() {
+    delete name;
+    delete members;
+}
+
+void StructDecl::print() const {
+    printf("struct ");
+    name->print();
+    printf(" {\n");
+    members->print();
+    printf("};\n");
 }
 
 VarDecl::VarDecl(const Typename * type_name, const Ident * var_name) :

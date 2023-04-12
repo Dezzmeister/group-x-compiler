@@ -26,7 +26,7 @@ letter      [a-zA-Z]
 if          if
 else        else
 
-ident       {letter}({letter}|[[:digit:]])*
+ident       ({letter}|_)({letter}|[[:digit:]]|_)*
 
 %%
 
@@ -40,6 +40,7 @@ float       {yylval.ident = new Ident(yytext); return FLOAT_TYPE;}
 char        {yylval.ident = new Ident(yytext); return CHAR_TYPE;}
 
 type        {return TYPE_ALIAS_KW;}
+struct      {return STRUCT_KW;}
 
 mut         {return MUT;}
 
@@ -58,6 +59,8 @@ mut         {return MUT;}
 \]          {return ']';}
 \=          {return '=';}
 ;           {return ';';}
+\{          {return '{';}
+\}          {return '}';}
 
 %%
 
