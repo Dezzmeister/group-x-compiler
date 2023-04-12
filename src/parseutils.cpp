@@ -1,9 +1,19 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <vector>
 
 #include "parseutils.h"
 
-void x::syntax_error(const char * const msg) {
-    fprintf(stderr, "Syntax error on line %d: %s\n", lineno, msg);
-    exit(EXIT_FAILURE);
+ASTNode * x::top = nullptr;
+
+void x::parse_math_op_expr(MathExpr ** res, MathExpr * expr, char op, NumLiteral * num) {
+    if (expr->get_kind() == MathOp::kind) {
+        MathOp * math_op = (MathOp *) expr;
+
+        if (math_op->op == op) {
+            math_op->push_operand(num);
+            *res = math_op;
+            return;
+        }
+    }
+
+    *res = new MathOp(op, {expr, num});
 }

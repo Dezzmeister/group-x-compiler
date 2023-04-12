@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "src/parseutils.h"
 #include "src/symtable.h"
 
@@ -30,5 +31,11 @@ int main() {
     * To test run make debug then ./debug_bin and enter an arithmetic 
     * experssion Press Ctrl-D to signal end of input.
     */
-    return yyparse();
+    int val = yyparse();
+    printf("status code: %d\n", val);
+    printf("expr: ");
+    x::top->print();
+    printf("\nkind: %s\n", x::kind_map[x::top->get_kind()].c_str());
+
+    return val;
 }

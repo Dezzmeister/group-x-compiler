@@ -1,24 +1,25 @@
 #ifndef SRC_PARSEUTILS_H
 #define SRC_PARSEUTILS_H
 
+#include "ast.h"
 #include "parser.h"
 
 #define MAX_STR_LEN     2048
 
-#define yyerror(msg) x::syntax_error(msg)
-
 extern char * yytext;
 
 extern int yylex();
-
-extern int lineno;
+extern int yylen;
 
 namespace x {
+    extern int lineno;
+
     /**
-     * Raises a syntax error and stops the program. This should only
-     * be called by the lexer or parser.
+     * The top level node after parsing. Will be nullptr until the parser is finished.
      */
-    void syntax_error(const char * const msg);
+    extern ASTNode * top;
+
+    void parse_math_op_expr(MathExpr ** res, MathExpr * expr, char op, NumLiteral * num);
 }
 
 #endif
