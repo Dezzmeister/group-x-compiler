@@ -18,8 +18,6 @@ namespace x {
      * The top level node after parsing. Will be nullptr until the parser is finished.
      */
     extern ASTNode * top;
-
-    void parse_math_op_expr(MathExpr ** res, MathExpr * expr, char op, NumLiteral * num);
 }
 
 #endif

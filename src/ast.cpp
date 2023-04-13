@@ -9,8 +9,11 @@ std::vector<std::string> x::kind_map;
 
 const int IntLiteral::kind = x::next_kind("int_literal");
 const int FloatLiteral::kind = x::next_kind("float_literal");
+const int BoolLiteral::kind = x::next_kind("bool_literal");
 const int Ident::kind = x::next_kind("ident");
-const int MathOp::kind = x::next_kind("math_op");
+const int ParensExpr::kind = x::next_kind("parens_expr");
+const int MathExpr::kind = x::next_kind("math_expr");
+const int BoolExpr::kind = x::next_kind("bool_expr");
 const int ParensTypename::kind = x::next_kind("parens_typename");
 const int PtrTypename::kind = x::next_kind("ptr_typename");
 const int MutTypename::kind = x::next_kind("mut_typename");
@@ -21,6 +24,7 @@ const int FuncTypename::kind = x::next_kind("func_typename");
 const int TypeAlias::kind = x::next_kind("type_alias");
 const int StructDecl::kind = x::next_kind("struct_decl");
 const int VarDecl::kind = x::next_kind("var_decl");
+const int VarDeclInit::kind = x::next_kind("var_decl_init");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -45,34 +49,66 @@ void FloatLiteral::print() const {
     printf("%f", value);
 }
 
+BoolLiteral::BoolLiteral(const bool value) : value(value) {}
+
+void BoolLiteral::print() const {
+    if (value) {
+        printf("true");
+    } else {
+        printf("false");
+    }
+}
+
 Ident::Ident(const char * const _id) : id(std::string(_id)) {}
 
 void Ident::print() const {
     std::cout << id;
 }
 
-MathOp::MathOp(const char op, std::vector<MathExpr *> operands) : 
+MathExpr::MathExpr(const char op, const Expr * left, const Expr * right) :
     op(op),
-    operands(operands)
+    left(left),
+    right(right)
     {}
 
-MathOp::~MathOp() {
-    for (auto &ptr : operands) {
-        delete ptr;
-    }
+MathExpr::~MathExpr() {
+    delete left;
+    delete right;
 }
 
-void MathOp::push_operand(MathExpr * operand) {
-    operands.push_back(operand);
+void MathExpr::print() const {
+    left->print();
+    printf(" %c ", op);
+    right->print();
 }
 
-void MathOp::print() const {
-    for (size_t i = 0; i < operands.size() - 1; i++) {
-        operands[i]->print();
-        putchar(op);
-    }
+BoolExpr::BoolExpr(const char * const op, const Expr * left, const Expr * right) :
+    op(std::string(op)),
+    left(left),
+    right(right)
+    {}
 
-    operands[operands.size() - 1]->print();
+BoolExpr::~BoolExpr() {
+    delete left;
+    delete right;
+}
+
+void BoolExpr::print() const {
+    left->print();
+    printf(" %s ", op.c_str());
+    right->print();
+}
+
+ParensExpr::ParensExpr(const Expr * expr) : expr(expr) {}
+
+ParensExpr::~ParensExpr() {
+    delete expr;
+}
+
+void ParensExpr::print() const {
+    putchar('(');
+    expr->print();
+    putchar(')');
 }
 
 ParensTypename::ParensTypename(const Typename * name) : name(name) {}
@@ -223,4 +259,17 @@ void VarDecl::print() const {
     type_name->print();
     putchar(' ');
     var_name->print();
+}
+
+VarDeclInit::VarDeclInit(const VarDecl * decl, const Expr * init) : decl(decl), init(init) {}
+
+VarDeclInit::~VarDeclInit() {
+    delete decl;
+    delete init;
+}
+
+void VarDeclInit::print() const {
+    decl->print();
+    printf(" = ");
+    init->print();
 }

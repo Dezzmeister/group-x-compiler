@@ -34,6 +34,8 @@ ident       ({letter}|_)({letter}|[[:digit:]]|_)*
 \n          {x::lineno++; return NEWLINE;}
 {int}       {yylval.int_literal = new IntLiteral(yytext); return INT;}
 {float}     {yylval.float_literal = new FloatLiteral(yytext); return FLOAT;}
+true        {yylval.bool_literal = new BoolLiteral(true); return BOOL;}
+false       {yylval.bool_literal = new BoolLiteral(false); return BOOL;}
 
 int         {yylval.ident = new Ident(yytext); return INT_TYPE;}
 float       {yylval.ident = new Ident(yytext); return FLOAT_TYPE;}
@@ -47,6 +49,9 @@ mut         {return MUT;}
 {ident}     {yylval.ident = new Ident(yytext); return IDENT;}
 
 \-\>        {return FUNC_TYPE_OP;}
+
+"&&"        {return BOOL_AND;}
+"||"        {return BOOL_OR;}
 
 \+          {return '+';}
 \-          {return '-';}

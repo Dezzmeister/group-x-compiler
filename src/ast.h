@@ -39,6 +39,19 @@ class Expr : public ASTNode {
         Expr() {}
 };
 
+class ParensExpr : public Expr {
+    public:
+        const Expr * expr;
+
+        ParensExpr(const Expr * expr);
+
+        virtual ~ParensExpr();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
 class Statement : public ASTNode {
     public:
         virtual void print() const = 0;
@@ -82,17 +95,7 @@ class ParensTypename : public Typename {
         KIND_CLASS()
 };
 
-class MathExpr : public ASTNode {
-    public:
-        virtual void print() const = 0;
-
-        virtual ~MathExpr() {}
-
-    protected:
-        MathExpr() {}
-};
-
-class NumLiteral : public MathExpr {
+class NumLiteral : public Expr {
     public:
         virtual void print() const = 0;
 
@@ -128,7 +131,18 @@ class FloatLiteral : public NumLiteral {
         KIND_CLASS()
 };
 
-class Ident : public Typename, Expr {
+class BoolLiteral : public Expr {
+    public:
+        const bool value;
+
+        BoolLiteral(const bool value);
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
+class Ident : public Typename, public Expr {
     public:
         const std::string id;
 
@@ -139,20 +153,32 @@ class Ident : public Typename, Expr {
         KIND_CLASS()
 };
 
-class MathOp : public MathExpr {
+class MathExpr : public Expr {
     public:
         const char op;
+        const Expr * left;
+        const Expr * right;
 
-        std::vector<MathExpr *> operands;
+        MathExpr(const char op, const Expr * left, const Expr * right);
 
-        MathOp(const char op, std::vector<MathExpr *> operands);
-
-        virtual ~MathOp();
+        virtual ~MathExpr();
 
         virtual void print() const;
 
-        // Pushes the operand onto the back of the operand list
-        void push_operand(MathExpr * operand);
+        KIND_CLASS()
+};
+
+class BoolExpr : public Expr {
+    public:
+        const std::string op;
+        const Expr * left;
+        const Expr * right;
+
+        BoolExpr(const char * const op, const Expr * left, const Expr * right);
+
+        virtual ~BoolExpr();
+
+        virtual void print() const;
 
         KIND_CLASS()
 };
@@ -256,6 +282,20 @@ class FuncTypename : public Typename {
         KIND_CLASS()
 };
 
+class StaticArrayTypename : public Typename {
+    public:
+        const Typename * element_type;
+        const IntLiteral * size;
+
+        StaticArrayTypename(const Typename * element_type, const IntLiteral * size);
+
+        virtual ~StaticArrayTypename();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
 class TypeAlias : public TypeDecl {
     public:
         const Ident * name;
@@ -278,6 +318,20 @@ class StructDecl : public TypeDecl {
         StructDecl(const Ident * name, const VarDeclList * members);
 
         virtual ~StructDecl();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
+class VarDeclInit : public Statement {
+    public:
+        const VarDecl * decl;
+        const Expr * init;
+
+        VarDeclInit(const VarDecl * decl, const Expr * init);
+
+        virtual ~VarDeclInit();
 
         virtual void print() const;
 
