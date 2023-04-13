@@ -4,13 +4,21 @@
 #include "parser.h"
 union YYSTYPE;
 class SymbolTable;
+
+union Value {
+    int i;
+    float f;
+    char c;
+    char * c_str;
+    SymbolTable * symtable;
+};
 class Symbol {
     public:
     int type;
     char * name;
-    YYSTYPE value;
+    Value value;
     Symbol * next;
-    Symbol(int type, YYSTYPE value) : type(type), value(value) {}
+    Symbol(int type, Value value) : type(type), value(value) {}
     Symbol() {}
     Symbol(SymbolTable * table);
 };

@@ -1,9 +1,10 @@
 #include "symtable.h"
 Symbol::Symbol(SymbolTable * table) {
-        // Create a symbol for struct and function types. 
-        for (Symbol * s = table->symbol_list; s; s = s->next) {
-            this->type += s->type;
-        }
+        // Symbol table entry points to another symbol table
+        // This occurs when parsing functions and structures.
+        // The local variables and members of these constructs 
+        // have their own scope.
+        this->value.symtable = table;
     }
 void SymbolTable::Push(SymbolTable * new_table) {
     new_table->enclosing = symtable;
