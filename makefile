@@ -1,6 +1,6 @@
 CC = g++
 COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native
-DBG_FLAGS = ${COMMON_FLAGS} -O -ggdb
+DBG_FLAGS = ${COMMON_FLAGS} -O -g
 RELEASE_FLAGS = ${COMMON_FLAGS} -O3
 LD_FLAGS = -ll
 
