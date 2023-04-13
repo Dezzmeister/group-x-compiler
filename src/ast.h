@@ -252,16 +252,16 @@ class Paren: public Expr {
 class BitwiseExpr: public Expr {
     public:
         const static int kind = 9;
-        char * op;
+        const char * op;
         Expr * left;
         Expr * right;
-        BitwiseExpr(char *, Expr *, Expr *);
+        BitwiseExpr(const char *, Expr *, Expr *);
         int get_kind() {
             return kind;
         }
         void print() {
             left->print();
-            printf(%s, op);
+            printf("%s", op);
             right->print();
         }
 };
@@ -269,15 +269,15 @@ class BitwiseExpr: public Expr {
 class UnaryExpr: public Expr {
     public:
         const static int kind = 10;
-        char * op;
+        const char * op;
         Expr * expr;
-        UnaryExpr(char *, Expr *);
+        UnaryExpr(const char *, Expr *);
         int get_kind() {
             return kind;
         }
         void print() {
             expr->print();
-            printf(%s, op);
+            printf("%s", op);
         }
 };
 
@@ -285,8 +285,8 @@ class TernaryExpr: public Expr {
     public:
         const static int kind = 11;
         Expr * condition;
-        Expr * t_expr;
-        Expr * f_expr;
+        Expr * true_expr;
+        Expr * false_expr;
         TernaryExpr(Expr *, Expr *, Expr *);
         int get_kind() {
             return kind;
@@ -294,25 +294,25 @@ class TernaryExpr: public Expr {
         void print() {
             condition->print();
             putchar('?');
-            t_expr->print();
+            true_expr->print();
             putchar(':');
-            f_expr->print();
+            false_expr->print();
         }
 };
 
 class CompExpr : public Expr {
     public:
         const static int kind = 12;
-        char * op;
+        const char * op;
         Expr * left;
         Expr * right;
-        CompExpr(char *, Expr *, Expr *);
+        CompExpr(const char *, Expr *, Expr *);
         int get_kind() {
             return kind;
         }
         void print() {
             left->print();
-            printf(%s, op);
+            printf("%s", op);
             right->print();
         }
 };
@@ -320,16 +320,16 @@ class CompExpr : public Expr {
 class LogicalExpr : public Expr {
     public:
         const static int kind = 13;
-        char * op;
+        const char * op;
         Expr * left;
         Expr * right;
-        LogicalExpr(char *, Expr *, Expr *);
+        LogicalExpr(const char *, Expr *, Expr *);
         int get_kind() {
             return kind;
         }
         void print() {
             left->print();
-            printf(%s, op);
+            printf("%s", op);
             right->print();
         }
 };

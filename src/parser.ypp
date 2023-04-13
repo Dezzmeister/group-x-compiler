@@ -45,6 +45,12 @@ struct_decl func_decl var_decl param_list block statements
 %right <ctype> ASSIGN
 %right <ctype> '^'
 %left UMINUS
+
+%token POWER "**" LSHIFT ">>" RSHIFT "<<"
+%token INC "++" DEC "--" 
+%token EQ "==" NEQ "!=" 
+%token LEQ "<=" GEQ ">=" 
+%token AND OR NOT
 %%
 
 program : %empty {}
@@ -97,29 +103,26 @@ expr  : expr '?' expr ':' expr { $$ = new TernaryExpr($1, $3, $5); }
       | expr '*' expr { $$ = new ArithExpr('*', $1, $3); }
       | expr '/' expr { $$ = new ArithExpr('/', $1, $3); }
       | expr '%' expr { $$ = new ArithExpr('%', $1, $3); }
-      | expr '**' expr { $$ = new ArithExpr('**', $1, $3); }
+      | expr '^' expr { $$ = new ArithExpr('^', $1, $3); }
       | '(' expr ')' { $$ = new Paren($2); }
-      | expr '&' expr { $$ = new BitwiseExpr('&', $1, $3); }
-      | expr '|' expr { $$ = new BitwiseExpr('|', $1, $3); }
-      | expr '^' expr { $$ = new BitwiseExpr('^', $1, $3); }
-      | expr '~' expr { $$ = new BitwiseExpr('~', $1, $3); }
-      | expr '<<' expr { $$ = new BitwiseExpr('<<', $1, $3); }
-      | expr '>>' expr { $$ = new BitwiseExpr('>>', $1, $3); }
-      | '-' expr %prec UMINUS { $$ = new UnaryExpr('-', $2); }
-      | expr '++' { $$ = new UnaryExpr('++', $1); }
-      | expr '--' { $$ = new UnaryExpr('--', $1); }
-      | expr '==' expr { $$ = new CompExpr('==', $1, $3); }
-      | expr '!=' expr { $$ = new CompExpr('!=', $1, $3); }
-      | expr '<' expr { $$ = new CompExpr('<', $1, $3); }
-      | expr '<=' expr { $$ = new CompExpr('<=', $1, $3); }
-      | expr '>' expr { $$ = new CompExpr('>', $1, $3); }
-      | expr '>=' expr { $$ = new CompExpr('>=', $1, $3); }
-      | expr 'and' expr { $$ = new LogicalExpr('and', $1, $3); }
-      | expr '&&' expr { $$ = new LogicalExpr('&&', $1, $3); }
-      | expr 'or' expr { $$ = new LogicalExpr('or', $1, $3); }
-      | expr '||' expr { $$ = new LogicalExpr('||', $1, $3); }
-      | '!' expr { $$ = new LogicalExpr('!', nullptr, $2); }
-      | 'not' expr { $$ = new LogicalExpr('not', nullptr, $2); }
+      | expr '&' expr { $$ = new BitwiseExpr("&", $1, $3); }
+      | expr '|' expr { $$ = new BitwiseExpr("|", $1, $3); }
+      | expr '^' expr { $$ = new BitwiseExpr("^", $1, $3); }
+      | expr '~' expr { $$ = new BitwiseExpr("~", $1, $3); }
+      | expr "<<" expr { $$ = new BitwiseExpr(">>", $1, $3); }
+      | expr ">>" expr { $$ = new BitwiseExpr("<<", $1, $3); }
+      | '-' expr %prec UMINUS { $$ = new UnaryExpr("-", $2); }
+      | expr "++" { $$ = new UnaryExpr("++", $1); }
+      | expr "--" { $$ = new UnaryExpr("--", $1); }
+      | expr "==" expr { $$ = new CompExpr("==", $1, $3); }
+      | expr "!=" expr { $$ = new CompExpr("!=", $1, $3); }
+      | expr '<' expr { $$ = new CompExpr("<", $1, $3); }
+      | expr "<=" expr { $$ = new CompExpr("<=", $1, $3); }
+      | expr '>' expr { $$ = new CompExpr(">", $1, $3); }
+      | expr ">=" expr { $$ = new CompExpr(">=", $1, $3); }
+      | expr AND expr { $$ = new LogicalExpr("and", $1, $3); }
+      | expr OR expr { $$ = new LogicalExpr("or", $1, $3); }
+      | NOT expr { $$ = new LogicalExpr("not", nullptr, $2); }
       | literal
       | assignment
       | IDENTIFIER { $$ = new Id($1); }

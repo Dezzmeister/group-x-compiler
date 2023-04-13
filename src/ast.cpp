@@ -62,3 +62,19 @@ Statements::Statements(Stmt * s1, Stmt * s2) {
 Paren::Paren(Expr * e) {
     this->expr = e;
 }
+
+LogicalExpr::LogicalExpr(const char * op, Expr * left, Expr * right) :
+op(op), left(left), right(right) {}
+
+CompExpr::CompExpr(const char * op, Expr * left, Expr * right) :
+op(op), left(left), right(right) {}
+
+BitwiseExpr::BitwiseExpr(const char * op, Expr * left, Expr * right) :
+op(op), left(left), right(right) {}
+
+UnaryExpr::UnaryExpr(const char * op, Expr * e) :
+op(op), expr(e) {}
+
+TernaryExpr::TernaryExpr(Expr * cond, Expr * t, Expr * f) : 
+condition(cond), true_expr(t), false_expr(f) {}
+
