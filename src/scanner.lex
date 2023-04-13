@@ -66,6 +66,7 @@ mut         {return MUT;}
 ;           {return ';';}
 \{          {return '{';}
 \}          {return '}';}
+&           {return '&';}
 
 %%
 

@@ -338,4 +338,30 @@ class VarDeclInit : public Statement {
         KIND_CLASS()
 };
 
+class AddrOf : public Expr {
+    public:
+        const Expr * expr;
+
+        AddrOf(const Expr * expr);
+
+        virtual ~AddrOf();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
+class Deref : public Expr {
+    public:
+        const Expr * expr;
+
+        Deref(const Expr * expr);
+
+        virtual ~Deref();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
 #endif

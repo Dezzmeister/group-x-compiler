@@ -33,6 +33,8 @@ extern void yyerror(const char * const error);
     StructDecl * struct_decl;
     VarDecl * var_decl;
     VarDeclInit * var_decl_init;
+    AddrOf * addr_of;
+    Deref * deref;
 }
 
 %token <int_literal> INT
@@ -42,13 +44,15 @@ extern void yyerror(const char * const error);
 %token FUNC_TYPE_OP NEWLINE
 
 %right '='
-%right MUT TYPE_ALIAS_KW STRUCT_KW
+%right TYPE_ALIAS_KW STRUCT_KW
 %precedence FUNC_PREC
-%left '*'
 %right '('
 %left ')'
 %right BOOL_AND BOOL_OR
 %right '+' '-'
+%right MUT
+%left '*'
+%right '&'
 
 %type <num_literal> num
 %type <expr> expr
@@ -67,6 +71,8 @@ extern void yyerror(const char * const error);
 %type <type_decl> type_decl
 %type <var_decl> var_decl
 %type <var_decl_init> var_decl_init
+%type <addr_of> addr_of_expr
+%type <deref> deref_expr
 
 %%
 
@@ -78,6 +84,8 @@ statement : type_decl ';' {x::top = $1; YYACCEPT;}
 expr : '(' expr ')' {$$ = new ParensExpr($2);}
      | math_expr {$$ = $1;}
      | bool_expr {$$ = $1;}
+     | addr_of_expr {$$ = $1;}
+     | deref_expr {$$ = $1;}
      | BOOL {$$ = $1;}
      | num {$$ = $1;}
      | IDENT {$$ = $1;}
@@ -90,6 +98,12 @@ math_expr : expr '+' expr {$$ = new MathExpr('+', $1, $3);}
 bool_expr : expr BOOL_AND expr {$$ = new BoolExpr("&&", $1, $3);}
           | expr BOOL_OR expr {$$ = new BoolExpr("||", $1, $3);}
           ;
+
+addr_of_expr : '&' expr {$$ = new AddrOf($2);}
+             ;
+
+deref_expr : '*' expr {$$ = new Deref($2);}
+           ;
 
 type_decl : type_alias {$$ = $1;}
           | struct_decl {$$ = $1;}

@@ -25,6 +25,8 @@ const int TypeAlias::kind = x::next_kind("type_alias");
 const int StructDecl::kind = x::next_kind("struct_decl");
 const int VarDecl::kind = x::next_kind("var_decl");
 const int VarDeclInit::kind = x::next_kind("var_decl_init");
+const int AddrOf::kind = x::next_kind("addr_of");
+const int Deref::kind = x::next_kind("deref");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -272,4 +274,26 @@ void VarDeclInit::print() const {
     decl->print();
     printf(" = ");
     init->print();
+}
+
+AddrOf::AddrOf(const Expr * expr) : expr(expr) {}
+
+AddrOf::~AddrOf() {
+    delete expr;
+}
+
+void AddrOf::print() const {
+    putchar('&');
+    expr->print();
+}
+
+Deref::Deref(const Expr * expr) : expr(expr) {}
+
+Deref::~Deref() {
+    delete expr;
+}
+
+void Deref::print() const {
+    putchar('*');
+    expr->print();
 }
