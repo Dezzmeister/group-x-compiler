@@ -43,6 +43,7 @@ char        {yylval.ident = new Ident(yytext); return CHAR_TYPE;}
 
 type        {return TYPE_ALIAS_KW;}
 struct      {return STRUCT_KW;}
+as          {return CAST_KW;}
 
 mut         {return MUT;}
 

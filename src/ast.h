@@ -255,6 +255,21 @@ class VarDeclList : public ASTNode {
         KIND_CLASS()
 };
 
+class ExprList : public ASTNode {
+    public:
+        std::vector<Expr *> exprs;
+
+        ExprList(std::vector<Expr *> exprs);
+
+        virtual ~ExprList();
+
+        virtual void print() const;
+
+        void push_expr(Expr * expr);
+
+        KIND_CLASS()
+};
+
 class TupleTypename : public Typename {
     public:
         const TypenameList * type_list;
@@ -262,6 +277,19 @@ class TupleTypename : public Typename {
         TupleTypename(const TypenameList * type_list);
 
         virtual ~TupleTypename();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
+class TupleExpr : public Expr {
+    public:
+        const ExprList * expr_list;
+
+        TupleExpr(const ExprList * expr_list);
+
+        virtual ~TupleExpr();
 
         virtual void print() const;
 
@@ -358,6 +386,20 @@ class Deref : public Expr {
         Deref(const Expr * expr);
 
         virtual ~Deref();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
+class CastExpr : public Expr {
+    public:
+        const Typename * dest_type;
+        const Expr * expr;
+
+        CastExpr(const Typename * dest_type, const Expr * expr);
+
+        virtual ~CastExpr();
 
         virtual void print() const;
 

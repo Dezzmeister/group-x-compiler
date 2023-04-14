@@ -19,6 +19,7 @@ const int PtrTypename::kind = x::next_kind("ptr_typename");
 const int MutTypename::kind = x::next_kind("mut_typename");
 const int TypenameList::kind = x::next_kind("typename_list");
 const int VarDeclList::kind = x::next_kind("var_decl_list");
+const int ExprList::kind = x::next_kind("expr_list");
 const int TupleTypename::kind = x::next_kind("tuple_typename");
 const int FuncTypename::kind = x::next_kind("func_typename");
 const int TypeAlias::kind = x::next_kind("type_alias");
@@ -27,6 +28,8 @@ const int VarDecl::kind = x::next_kind("var_decl");
 const int VarDeclInit::kind = x::next_kind("var_decl_init");
 const int AddrOf::kind = x::next_kind("addr_of");
 const int Deref::kind = x::next_kind("deref");
+const int CastExpr::kind = x::next_kind("cast_expr");
+const int TupleExpr::kind = x::next_kind("tuple_expr");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -187,6 +190,27 @@ void VarDeclList::push_decl(VarDecl * decl) {
     decls.push_back(decl);
 }
 
+ExprList::ExprList(std::vector<Expr *> exprs) : exprs(exprs) {}
+
+ExprList::~ExprList() {
+    for (auto &expr : exprs) {
+        delete expr;
+    }
+}
+
+void ExprList::print() const {
+    for (size_t i = 0; i < exprs.size() - 1; i++) {
+        exprs[i]->print();
+        printf(", ");
+    }
+
+    exprs[exprs.size() - 1]->print();
+}
+
+void ExprList::push_expr(Expr * expr) {
+    exprs.push_back(expr);
+}
+
 TupleTypename::TupleTypename(const TypenameList * type_list) : type_list(type_list) {}
 
 TupleTypename::~TupleTypename() {
@@ -195,9 +219,19 @@ TupleTypename::~TupleTypename() {
 
 void TupleTypename::print() const {
     putchar('[');
-
     type_list->print();
+    putchar(']');
+}
 
+TupleExpr::TupleExpr(const ExprList * expr_list) : expr_list(expr_list) {}
+
+TupleExpr::~TupleExpr() {
+    delete expr_list;
+}
+
+void TupleExpr::print() const {
+    putchar('[');
+    expr_list->print();
     putchar(']');
 }
 
@@ -296,4 +330,17 @@ Deref::~Deref() {
 void Deref::print() const {
     putchar('*');
     expr->print();
+}
+
+CastExpr::CastExpr(const Typename * dest_type, const Expr * expr) : dest_type(dest_type), expr(expr) {}
+
+CastExpr::~CastExpr() {
+    delete dest_type;
+    delete expr;
+}
+
+void CastExpr::print() const {
+    expr->print();
+    printf(" as ");
+    dest_type->print();
 }

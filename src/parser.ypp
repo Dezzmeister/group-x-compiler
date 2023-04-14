@@ -14,6 +14,7 @@ extern void yyerror(const char * const error);
 
     ASTNode * ast;
     Expr * expr;
+    ExprList * expr_list;
     NumLiteral * num_literal;
     IntLiteral * int_literal;
     FloatLiteral * float_literal;
@@ -25,6 +26,7 @@ extern void yyerror(const char * const error);
     PtrTypename * ptr_type_name;
     MutTypename * mut_type_name;
     TupleTypename * tuple_type_name;
+    ParensTypename * parens_type_name;
     TypenameList * type_list;
     VarDeclList * var_decl_list;
     FuncTypename * func_type_name;
@@ -35,6 +37,8 @@ extern void yyerror(const char * const error);
     VarDeclInit * var_decl_init;
     AddrOf * addr_of;
     Deref * deref;
+    CastExpr * cast_expr;
+    TupleExpr * tuple_expr;
 }
 
 %token <int_literal> INT
@@ -50,12 +54,14 @@ extern void yyerror(const char * const error);
 %left ')'
 %right BOOL_AND BOOL_OR
 %right '+' '-'
+%nonassoc CAST_KW
 %right MUT
 %left '*'
 %right '&'
 
 %type <num_literal> num
 %type <expr> expr
+%type <expr_list> expr_list
 %type <math_expr> math_expr
 %type <bool_expr> bool_expr
 %type <type_name> type_name
@@ -63,6 +69,7 @@ extern void yyerror(const char * const error);
 %type <ptr_type_name> ptr_type_name
 %type <mut_type_name> mut_type_name
 %type <tuple_type_name> tuple_type_name
+%type <parens_type_name> parens_type_name
 %type <func_type_name> func_type_name
 %type <type_list> type_list
 %type <var_decl_list> var_decl_list
@@ -73,6 +80,8 @@ extern void yyerror(const char * const error);
 %type <var_decl_init> var_decl_init
 %type <addr_of> addr_of_expr
 %type <deref> deref_expr
+%type <cast_expr> cast_expr
+%type <tuple_expr> tuple_expr
 
 %%
 
@@ -86,10 +95,16 @@ expr : '(' expr ')' {$$ = new ParensExpr($2);}
      | bool_expr {$$ = $1;}
      | addr_of_expr {$$ = $1;}
      | deref_expr {$$ = $1;}
+     | cast_expr {$$ = $1;}
+     | tuple_expr {$$ = $1;}
      | BOOL {$$ = $1;}
      | num {$$ = $1;}
      | IDENT {$$ = $1;}
      ;
+
+expr_list : expr {$$ = new ExprList({$1});}
+          | expr_list ',' expr {$1->push_expr($3); $$ = $1;}
+          ;
 
 math_expr : expr '+' expr {$$ = new MathExpr('+', $1, $3);}
           | expr '-' expr {$$ = new MathExpr('-', $1, $3);}
@@ -103,6 +118,12 @@ addr_of_expr : '&' expr {$$ = new AddrOf($2);}
              ;
 
 deref_expr : '*' expr {$$ = new Deref($2);}
+           ;
+
+cast_expr : expr CAST_KW type_name {$$ = new CastExpr($3, $1);}
+          ;
+
+tuple_expr : '[' expr_list ']' {$$ = new TupleExpr($2);}
            ;
 
 type_decl : type_alias {$$ = $1;}
@@ -127,11 +148,14 @@ type_name : simple_type_name {$$ = $1;}
           | mut_type_name {$$ = $1;}
           | tuple_type_name {$$ = $1;}
           | func_type_name {$$ = $1;}
-          | '(' type_name ')' {$$ = new ParensTypename($2);}
+          | parens_type_name {$$ = $1;}
           ;
 
 func_type_name : '[' type_list ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename($2, $5);}
                ;
+
+parens_type_name : '(' type_name ')' {$$ = new ParensTypename($2);}
+                 ;
 
 simple_type_name : INT_TYPE {$$ = $1;}
                  | FLOAT_TYPE {$$ = $1;}
