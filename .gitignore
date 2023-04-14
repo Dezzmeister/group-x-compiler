@@ -6,5 +6,7 @@ src/scanner.cpp
 src/parser.cpp
 src/parser.h
 src/parser.output
+src/parser.dot
+parser.png
 debug_bin
 release_bin

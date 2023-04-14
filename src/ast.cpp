@@ -30,6 +30,8 @@ const int AddrOf::kind = x::next_kind("addr_of");
 const int Deref::kind = x::next_kind("deref");
 const int CastExpr::kind = x::next_kind("cast_expr");
 const int TupleExpr::kind = x::next_kind("tuple_expr");
+const int FunctionCall::kind = x::next_kind("function_call");
+const int StatementList::kind = x::next_kind("statement_list");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -211,6 +213,25 @@ void ExprList::push_expr(Expr * expr) {
     exprs.push_back(expr);
 }
 
+StatementList::StatementList(std::vector<Statement *> statements) : statements(statements) {}
+
+StatementList::~StatementList() {
+    for (auto &statement : statements) {
+        delete statement;
+    }
+}
+
+void StatementList::print() const {
+    for (auto &statement : statements) {
+        statement->print();
+        putchar(';');
+    }
+}
+
+void StatementList::push_statement(Statement * statement) {
+    statements.push_back(statement);
+}
+
 TupleTypename::TupleTypename(const TypenameList * type_list) : type_list(type_list) {}
 
 TupleTypename::~TupleTypename() {
@@ -343,4 +364,21 @@ void CastExpr::print() const {
     expr->print();
     printf(" as ");
     dest_type->print();
+}
+
+FunctionCall::FunctionCall(const CallingExpr * func, const ExprList * args) :
+    func(func),
+    args(args)
+    {}
+
+FunctionCall::~FunctionCall() {
+    delete func;
+    delete args;
+}
+
+void FunctionCall::print() const {
+    func->print();
+    putchar('(');
+    args->print();
+    putchar(')');
 }

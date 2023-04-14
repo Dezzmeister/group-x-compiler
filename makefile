@@ -35,8 +35,12 @@ test_release: ${DEPS} ${TEST_DIR}/*.cpp
 	./$@
 	rm -f $@
 
+parser_graph: src/parser.ypp
+	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
+	dot -Tpng src/parser.dot -o parser.png
+
 ${GENERATED_FILES}: src/parser.ypp src/scanner.lex
-	bison --defines=src/parser.h --verbose -o src/parser.cpp src/parser.ypp
+	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
 
 .PHONY: clean

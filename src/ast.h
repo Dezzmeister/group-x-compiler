@@ -39,17 +39,29 @@ class Expr : public ASTNode {
         Expr() {}
 };
 
-class ParensExpr : public Expr {
+class ExprList : public ASTNode {
     public:
-        const Expr * expr;
+        std::vector<Expr *> exprs;
 
-        ParensExpr(const Expr * expr);
+        ExprList(std::vector<Expr *> exprs);
 
-        virtual ~ParensExpr();
+        virtual ~ExprList();
 
         virtual void print() const;
 
+        void push_expr(Expr * expr);
+
         KIND_CLASS()
+};
+
+class CallingExpr : public Expr {
+    public:
+        virtual void print() const = 0;
+
+        virtual ~CallingExpr() {}
+
+    protected:
+        CallingExpr() {}
 };
 
 class Statement : public ASTNode {
@@ -60,6 +72,34 @@ class Statement : public ASTNode {
 
     protected:
         Statement() {}
+};
+
+class StatementList : public ASTNode {
+    public:
+        std::vector<Statement *> statements;
+
+        StatementList(std::vector<Statement *> statements);
+
+        virtual ~StatementList();
+
+        virtual void print() const;
+
+        void push_statement(Statement * statement);
+
+        KIND_CLASS()
+};
+
+class ParensExpr : public CallingExpr {
+    public:
+        const Expr * expr;
+
+        ParensExpr(const Expr * expr);
+
+        virtual ~ParensExpr();
+
+        virtual void print() const;
+
+        KIND_CLASS()
 };
 
 class TypeDecl : public Statement {
@@ -142,7 +182,7 @@ class BoolLiteral : public Expr {
         KIND_CLASS()
 };
 
-class Ident : public Typename, public Expr {
+class Ident : public Typename, public CallingExpr {
     public:
         const std::string id;
 
@@ -239,6 +279,20 @@ class VarDecl : public Statement {
         KIND_CLASS()
 };
 
+class FunctionCall : public Statement, public Expr {
+    public:
+        const CallingExpr * func;
+        const ExprList * args;
+
+        FunctionCall(const CallingExpr * func, const ExprList * args);
+
+        virtual ~FunctionCall();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
 class VarDeclList : public ASTNode {
     public:
         std::vector<VarDecl *> decls;
@@ -251,21 +305,6 @@ class VarDeclList : public ASTNode {
 
         // Pushes the var decl onto the back of the type list
         void push_decl(VarDecl * decl);
-
-        KIND_CLASS()
-};
-
-class ExprList : public ASTNode {
-    public:
-        std::vector<Expr *> exprs;
-
-        ExprList(std::vector<Expr *> exprs);
-
-        virtual ~ExprList();
-
-        virtual void print() const;
-
-        void push_expr(Expr * expr);
 
         KIND_CLASS()
 };
