@@ -163,8 +163,26 @@ class FloatLiteral : public NumLiteral {
         const double value;
 
         FloatLiteral(const char * float_str);
-
         FloatLiteral(const float value);
+
+class TernaryExpr: public Expr {
+    public:
+        const static int kind = 11;
+        Expr * condition;
+        Expr * true_expr;
+        Expr * false_expr;
+        TernaryExpr(Expr *, Expr *, Expr *);
+        int get_kind() {
+            return kind;
+        }
+        void print() {
+            condition->print();
+            putchar('?');
+            true_expr->print();
+            putchar(':');
+            false_expr->print();
+        }
+};
 
         virtual void print() const;
 
@@ -445,4 +463,20 @@ class CastExpr : public Expr {
         KIND_CLASS()
 };
 
+class LogicalExpr : public Expr {
+    public:
+        const static int kind = 13;
+        const char * op;
+        Expr * left;
+        Expr * right;
+        LogicalExpr(const char *, Expr *, Expr *);
+        int get_kind() {
+            return kind;
+        }
+        void print() {
+            left->print();
+            printf("%s", op);
+            right->print();
+        }
+};
 #endif

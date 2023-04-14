@@ -1,16 +1,30 @@
 #ifndef SYMTABLE_H
 #define SYMTABLE_H
+#include <string.h>
 #include "parser.h"
-union YYSTYPE;
-typedef struct symrec {
-    char *name;  
-    int type;    
-    YYSTYPE val;
-    struct symrec *next;  
-    } symrec;
+#include <map>
 
-extern symrec *sym_table;
+union Value {
+    int i;
+    float f;
+    char c;
+    char * c_str;
+};
 
-symrec *putsym (char const *name, int type);
-symrec *getsym (char const *name);
+class Symbol {
+    public:
+    int type;
+    char * name;
+    Value value;
+    Symbol * next;
+    Symbol(int type, Value value) : type(type), value(value) {}
+    Symbol() {}
+};
+
+class SymbolTable {
+    public:
+    std::map<char *, Symbol *> table;
+    SymbolTable * enclosing;
+};
+extern SymbolTable * symtable;
 #endif

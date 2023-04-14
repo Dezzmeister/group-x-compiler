@@ -7,6 +7,7 @@
 #define MAX_STR_LEN     2048
 
 extern char * yytext;
+extern FILE * yyin;
 
 extern int yylex();
 extern int yylen;
