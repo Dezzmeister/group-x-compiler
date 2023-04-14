@@ -94,7 +94,8 @@ extern void yyerror(const char * const error);
 
 %%
 
-program : statement_list {x::top = $1; YYACCEPT;}
+program : %empty {}
+        | statement_list {x::top = $1; YYACCEPT;}
         ;
 
 statement : type_decl {$$ = $1;}

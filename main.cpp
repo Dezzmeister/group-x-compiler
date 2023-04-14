@@ -3,34 +3,37 @@
 #include <string.h>
 #include "src/parseutils.h"
 #include "src/symtable.h"
+#include <unistd.h>
 
-symrec *sym_table;
+extern int yydebug;
 
-symrec * putsym (char const *name, int type)
-{
-  symrec *res = (symrec *) malloc (sizeof (symrec));
-  res->name = strdup(name);
-  res->type = type;
-  res->next = sym_table;
-  sym_table = res;
-  return res;
+#define MAX_STR_NUM 100
+
+const char *str_literals[MAX_STR_NUM];
+
+void add_string(const char * str) {
+  static int i = 0;
+  str_literals[i++] = str;
 }
 
-symrec * getsym (char const *name)
-{
-  for (symrec *p = sym_table; p; p = p->next)
-    if (strcmp (p->name, name) == 0)
-      return p;
-  return nullptr;
-}
+extern SymbolTable * symtable;
 
-int main() {
-    // if (YYDEBUG) { yydebug = 1; }  /* Enable tracing */
-    /*
-    * The parse tree currently only recognizes arithmetic expressions.
-    * To test run make debug then ./debug_bin and enter an arithmetic 
-    * experssion Press Ctrl-D to signal end of input.
-    */
+int main(int argc, char ** argv) {
+    if (YYDEBUG) { yydebug = 1; }  /* Enable tracing */
+
+    if (argc == 2) {
+      yyin = fopen(argv[1], "r");
+      if (!yyin) {
+          fprintf(stderr, "Cannot open file %s for reading.\n", argv[1]);
+          exit(1);
+      }
+        close(0);
+        if(dup(fileno(yyin))) {
+          fprintf(stderr, "dup error.\n");
+          exit(1);
+        }
+    } 
+
     int val = yyparse();
     printf("status code: %d\n", val);
     printf("expr: ");

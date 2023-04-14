@@ -15,6 +15,7 @@ int x::lineno = 0;
 %}
 %x str
 
+str_literal \"[^\"\n]*\"
 delim       [ \t]
 ws          {delim}+
 int         [[:digit:]]+
@@ -29,7 +30,7 @@ else        else
 ident       ({letter}|_)({letter}|[[:digit:]]|_)*
 
 %%
-
+{str_literal}  {yylval.c_str = strdup(yytext);}
 {ws}        {}
 \n          {x::lineno++; return NEWLINE;}
 {int}       {yylval.int_literal = new IntLiteral(yytext); return INT;}
@@ -71,9 +72,6 @@ mut         {return MUT;}
 
 %%
 
-int yywrap() {
-    return 1;
-}
 
 void yyerror(const char * const error) {
     fprintf(stderr, "%s\nyytext: %s\n", error, yytext);
