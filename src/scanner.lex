@@ -31,13 +31,11 @@ else        else
 ident       ({letter}|_)({letter}|[[:digit:]]|_)*
 
 comment     \/\/.*\n
-multicomment    (\/\*).(\*\/)
 
 %%
 {str_literal}  {yylval.c_str = strdup(yytext);}
 {ws}        {}
 {comment}   {}
-{multicomment}  {}
 \n          {x::lineno++;}
 {int}       {yylval.int_literal = new IntLiteral(yytext); return INT;}
 {float}     {yylval.float_literal = new FloatLiteral(yytext); return FLOAT;}
