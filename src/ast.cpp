@@ -2,8 +2,12 @@
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
+#include <cstdint>
 
+#include "parser.h"
 #include "ast.h"
+#include "tac.h"
+
 
 std::vector<std::string> x::kind_map;
 
@@ -94,6 +98,10 @@ void TernaryExpr::print() const {
     tru->print();  printf(" : "); fals->print();
 }
 
+int TernaryExpr::codegen() const {
+    return Triple::make_triple(TERNARY_TAC, (intptr_t) tru, (intptr_t) fals); 
+}
+
 Ident::Ident(const char * const _id) : id(std::string(_id)) {}
 
 void Ident::print() const {
@@ -117,6 +125,12 @@ void MathExpr::print() const {
     right->print();
 }
 
+int MathExpr::codegen() const {
+    int lidx = left->codegen();
+    int ridx = right->codegen();
+    return Triple::make_triple(op, lidx, ridx);
+}
+
 BoolExpr::BoolExpr(const char * const op, const Expr * left, const Expr * right) :
     op(std::string(op)),
     left(left),
@@ -134,6 +148,12 @@ void BoolExpr::print() const {
     right->print();
 }
 
+int BoolExpr::codegen() const {
+    int lidx = left->codegen();
+    int ridx = right->codegen();
+    return Triple::make_triple(BOOL_TAC, lidx, ridx);
+}
+
 ParensExpr::ParensExpr(const Expr * expr) : expr(expr) {}
 
 ParensExpr::~ParensExpr() {
@@ -144,6 +164,10 @@ void ParensExpr::print() const {
     putchar('(');
     expr->print();
     putchar(')');
+}
+
+int ParensExpr::codegen() const {
+    return expr->codegen();
 }
 
 ParensTypename::ParensTypename(const Typename * name) : name(name) {}
@@ -216,6 +240,15 @@ void VarDeclList::print() const {
     }
 }
 
+int VarDeclList::codegen() const {
+    int i = 0;
+    for (auto &decl : decls) {
+        decl->codegen();
+        ++i;
+    }
+    return i;
+}
+
 void VarDeclList::push_decl(VarDecl * decl) {
     decls.push_back(decl);
 }
@@ -241,6 +274,15 @@ void ExprList::push_expr(Expr * expr) {
     exprs.push_back(expr);
 }
 
+int ExprList::codegen() const {
+    int i = 0;
+    for (auto &expr : exprs) {
+        expr->codegen();
+        ++i;
+    }
+    return i;
+}
+
 StatementList::StatementList(std::vector<Statement *> statements) : statements(statements) {}
 
 StatementList::~StatementList() {
@@ -258,6 +300,15 @@ void StatementList::print() const {
 
 void StatementList::push_statement(Statement * statement) {
     statements.push_back(statement);
+}
+
+int StatementList::codegen() const {
+    int i = 0;
+    for (auto &statement : statements) {
+        statement->codegen();
+        ++i;
+    }
+    return i;
 }
 
 TupleTypename::TupleTypename(const TypenameList * type_list) : type_list(type_list) {}
@@ -282,6 +333,11 @@ void TupleExpr::print() const {
     putchar('[');
     expr_list->print();
     putchar(']');
+}
+
+int TupleExpr::codegen() const {
+    intptr_t last = expr_list->codegen();
+    return Triple::make_triple(TUPLE_TAC, last, 0);
 }
 
 FuncTypename::FuncTypename(const TypenameList * params, const Typename * ret_type) :
@@ -350,6 +406,11 @@ void VarDecl::add_to_scope(SymbolTable * symtable) {
     symtable->put(var_name->id, new Symbol(Var));
 }
 
+
+int VarDecl::codegen() const {
+    return Triple::make_triple(VARDECL_TAC, (intptr_t) var_name, 0);
+}
+
 VarDeclInit::VarDeclInit(const VarDecl * decl, const Expr * init) : decl(decl), init(init) {}
 
 VarDeclInit::~VarDeclInit() {
@@ -363,6 +424,10 @@ void VarDeclInit::print() const {
     init->print();
 }
 
+int VarDeclInit::codegen() const {
+    return Triple::make_triple(VARINIT_TAC, (intptr_t) decl->var_name, init->codegen());
+}
+
 PrintStmt::PrintStmt(const Expr * expr) : expr(expr) {}
 
 PrintStmt::~PrintStmt() {
@@ -372,6 +437,10 @@ PrintStmt::~PrintStmt() {
 void PrintStmt::print() const {
     printf("print ");
     expr->print();
+}
+
+int PrintStmt::codegen() const {
+    return Triple::make_triple(PRINT_TAC, expr->codegen(), 0);
 }
 
 IfStmt::IfStmt(const Expr * cond, const StatementList * then, const StatementList * els) :
@@ -400,6 +469,10 @@ void IfStmt::print() const {
     }
 }
 
+int IfStmt::codegen() const {
+    return Triple::make_triple(IF_TAC, (intptr_t) cond, 0);
+}
+
 WhileStmt::WhileStmt(const Expr * cond, const StatementList * body) : cond(cond), body(body) {}
 
 WhileStmt::~WhileStmt() {
@@ -413,6 +486,10 @@ void WhileStmt::print() const {
     printf(" {\n");
     body->print();
     printf("}");
+}
+
+int WhileStmt::codegen() const {
+    return Triple::make_triple(WHILE_TAC, (intptr_t) cond, (intptr_t) body);
 }
 
 ForStmt::ForStmt(const Expr * init, const Expr * cond, const Expr * update, const StatementList * body) :
@@ -442,6 +519,12 @@ void ForStmt::print() const {
     printf("}");
 }
 
+int ForStmt::codegen() const {
+    // Translates for loop into while loop.
+    init->codegen();
+    return Triple::make_triple(WHILE_TAC, (intptr_t) condition, (intptr_t) body);
+}
+
 AddrOf::AddrOf(const Expr * expr) : expr(expr) {}
 
 AddrOf::~AddrOf() {
@@ -451,6 +534,11 @@ AddrOf::~AddrOf() {
 void AddrOf::print() const {
     putchar('&');
     expr->print();
+}
+
+int AddrOf::codegen() const {
+    int addr = expr->codegen();
+    return Triple::make_triple(ADDR_OF_TAC, addr, 0);
 }
 
 Deref::Deref(const Expr * expr) : expr(expr) {}
@@ -464,6 +552,11 @@ void Deref::print() const {
     expr->print();
 }
 
+int Deref::codegen() const {
+    int addr = expr->codegen();
+    return Triple::make_triple(DEREF_TAC, addr, 0);
+}
+
 CastExpr::CastExpr(const Typename * dest_type, const Expr * expr) : dest_type(dest_type), expr(expr) {}
 
 CastExpr::~CastExpr() {
@@ -475,6 +568,10 @@ void CastExpr::print() const {
     expr->print();
     printf(" as ");
     dest_type->print();
+}
+
+int CastExpr::codegen() const {
+    return Triple::make_triple(CAST_TAC, (intptr_t) dest_type, expr->codegen());
 }
 
 LogicalExpr::LogicalExpr(const std::string op, const Expr *l, const Expr *r) :
@@ -494,6 +591,10 @@ void LogicalExpr::print() const {
     right->print();
 }
 
+int LogicalExpr::codegen() const {
+    return Triple::make_triple(LOGICAL_TAC, (intptr_t) left, (intptr_t) right); 
+}
+
 FunctionCall::FunctionCall(const CallingExpr * func, const ExprList * args) :
     func(func),
     args(args)
@@ -509,6 +610,11 @@ void FunctionCall::print() const {
     putchar('(');
     args->print();
     putchar(')');
+}
+
+int FunctionCall::codegen() const {
+    int num_of_params =  args->codegen();
+    return Triple::make_triple(CALL_TAC, (intptr_t) func, num_of_params);
 }
 
 ArgsList::ArgsList(std::vector<VarDecl *> args) : args(args) {}
@@ -563,6 +669,10 @@ void FuncDecl::print() const {
     printf("}\n");
 }
 
+int FuncDecl::codegen() const {
+    return Triple::make_triple(FUNC_DECL_TAC, (intptr_t) name, (intptr_t) body);
+}
+
 ProgramSource::ProgramSource(std::vector<ASTNode *> nodes) : nodes(nodes) {}
 
 ProgramSource::~ProgramSource() {
@@ -574,6 +684,13 @@ void ProgramSource::print() const {
         node->print();
         printf(";\n");
     }
+}
+
+int ProgramSource::codegen() const {
+    for (auto &node : nodes) {
+        node->codegen();
+    }
+    return 0;
 }
 
 void ProgramSource::add_node(ASTNode * node) {
@@ -589,4 +706,8 @@ ReturnStatement::~ReturnStatement() {
 void ReturnStatement::print() const {
     printf("return ");
     val->print();
+}
+
+int ReturnStatement::codegen() const {
+    return Triple::make_triple(RETURN_TAC, (intptr_t) val, 0);
 }

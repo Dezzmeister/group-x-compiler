@@ -11,12 +11,11 @@ extern int yydebug;
 
 const char *str_literals[MAX_STR_NUM];
 
+// Used to store string literals in read only text segment of assembly file.
 void add_string(const char * str) {
   static int i = 0;
   str_literals[i++] = str;
 }
-
-extern SymbolTable * symtable;
 
 int main(int argc, char ** argv) {
     if (YYDEBUG) { yydebug = 1; }  /* Enable tracing */
@@ -37,6 +36,8 @@ int main(int argc, char ** argv) {
     printf("expr: ");
     x::top->print();
     printf("\nkind: %s\n", x::kind_map[x::top->get_kind()].c_str());
+
+    x::top->codegen();
 
     return val;
 }

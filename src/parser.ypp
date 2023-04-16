@@ -70,6 +70,15 @@ extern void yyerror(const char * const error);
 %nonassoc <float_literal> FLOAT
 %nonassoc <bool_literal> BOOL
 
+// These tokens will serve as an index into a table 
+// of function pointers for our three address code structures.
+// They will be used by the code generator to generate
+// the correct assembly code for each three address code construct.
+%token BOOL_TAC TUPLE_TAC VARDECL_TAC VARINIT_TAC PRINT_TAC IF_TAC WHILE_TAC 
+ADDR_OF_TAC DEREF_TAC CAST_TAC FUNC_CALL_TAC RETURN_TAC LOGICAL_TAC CALL_TAC
+FUNC_DECL_TAC TERNARY_TAC 
+
+
 %type <program_source> program
 %type <statement> statement
 %type <statement_list> statement_list

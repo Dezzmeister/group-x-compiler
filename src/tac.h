@@ -1,25 +1,35 @@
-//three address code file
+#ifndef TAC_H
+#define TAC_H
 
-// A class that represents three address code.
-class Quad  {
-    /* 
-    * Addresses, including result, can be either be addresses of constants 
-    * or pointers to a symbol table entry. 
-    */
-    // E.g. t3 = t1 + t2 
+#include <vector>
+#include <cstdint>
+
+// three address code class.
+
+class Triple {
+    public:
     int op;
-    int addr1;
-    int addr2;
-    // The result can be a symbol table entry or an temporary
-    // used in another tac instruction.
-    int result;
-    Quad(int op, int a1, int a2, int res) :
-    op(op), addr1(a1), addr2(a2), result(res) {}
+    intptr_t addr1;
+    intptr_t addr2;
+    Triple(int op, intptr_t a1, intptr_t a2) :
+    op(op), addr1(a1), addr2(a2) {}
+    static int make_triple(int op, intptr_t a1, intptr_t a2);
 };
 
 class BasicBlock {
     // See Aho Section 8.4
-    Quad * quads;
+    public:
+    std::vector<Triple> trips;
     int num_instructions;
-    BasicBlock(Quad * q) : quads(q) {}
+    BasicBlock(std::vector<Triple> t) : trips(t) {}
+    BasicBlock() {
+        num_instructions = 0;
+        trips = std::vector<Triple>();
+    }
 };
+
+namespace x {
+    extern BasicBlock * block;
+}
+
+#endif

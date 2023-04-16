@@ -56,6 +56,8 @@ class ASTNode {
 
         virtual ~ASTNode() {}
 
+        virtual int codegen() const = 0;
+
     protected:
         ASTNode() {}
 };
@@ -72,12 +74,16 @@ class ProgramSource : public ASTNode {
 
         void add_node(ASTNode * node);
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
 class Expr : public ASTNode {
     public:
         virtual void print() const = 0;
+
+        virtual int codegen() const = 0;
 
         virtual ~Expr() {}
 
@@ -95,6 +101,8 @@ class ExprList : public ASTNode {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         void push_expr(Expr * expr);
 
         KIND_CLASS()
@@ -103,6 +111,8 @@ class ExprList : public ASTNode {
 class CallingExpr : public Expr {
     public:
         virtual void print() const = 0;
+
+        virtual int codegen() const = 0;
 
         virtual ~CallingExpr() {}
 
@@ -113,6 +123,8 @@ class CallingExpr : public Expr {
 class Statement : public ASTNode {
     public:
         virtual void print() const = 0;
+
+        virtual int codegen() const = 0;
 
         virtual ~Statement() {}
 
@@ -130,6 +142,8 @@ class StatementList : public ASTNode {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         void push_statement(Statement * statement);
 
         KIND_CLASS()
@@ -145,12 +159,15 @@ class ParensExpr : public CallingExpr {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
 class TypeDecl : public Statement {
     public:
         virtual void print() const = 0;
+        virtual int codegen() const = 0;
 
         virtual ~TypeDecl() {}
 
@@ -161,6 +178,8 @@ class TypeDecl : public Statement {
 class Typename : public ASTNode {
     public:
         virtual void print() const = 0;
+
+        virtual int codegen() const = 0;
 
         virtual ~Typename() {}
 
@@ -178,12 +197,17 @@ class ParensTypename : public Typename {
 
         virtual void print() const;
 
+        // Should not be called
+        virtual int codegen() const { return 0; };
+
         KIND_CLASS()
 };
 
 class NumLiteral : public Expr {
     public:
         virtual void print() const = 0;
+
+        virtual int codegen() const = 0;
 
         virtual ~NumLiteral() {}
 
@@ -201,6 +225,8 @@ class IntLiteral : public NumLiteral {
 
         virtual void print() const;
 
+        virtual int codegen() const { return value;};
+
         KIND_CLASS()
 };
 
@@ -212,6 +238,8 @@ class FloatLiteral : public NumLiteral {
         FloatLiteral(const float value);
 
         virtual void print() const;
+
+        virtual int codegen() const {return 0;};
 
         KIND_CLASS()
 };
@@ -228,6 +256,8 @@ class TernaryExpr: public Expr {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
@@ -239,6 +269,8 @@ class BoolLiteral : public Expr {
 
         virtual void print() const;
 
+        virtual int codegen() const {return 0;};
+
         KIND_CLASS()
 };
 
@@ -249,6 +281,8 @@ class Ident : public Typename, public CallingExpr {
         Ident(const char * const _id);
 
         virtual void print() const;
+
+        virtual int codegen() const {return 0;};
 
         KIND_CLASS()
 };
@@ -265,6 +299,8 @@ class MathExpr : public Expr {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
@@ -280,6 +316,8 @@ class BoolExpr : public Expr {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
@@ -292,6 +330,8 @@ class PtrTypename : public Typename {
         virtual ~PtrTypename();
 
         virtual void print() const;
+
+        virtual int codegen() const {return 0;};
 
         KIND_CLASS() 
 };
@@ -306,6 +346,8 @@ class MutTypename : public Typename {
 
         virtual void print() const;
 
+        virtual int codegen() const {return 0;};
+
         KIND_CLASS()
 };
 
@@ -318,6 +360,8 @@ class TypenameList : public ASTNode {
         virtual ~TypenameList();
 
         virtual void print() const;
+
+        virtual int codegen() const {return 0;};
 
         // Pushes the typename onto the back of the type list
         void push_type(Typename * type_name);
@@ -336,6 +380,8 @@ class VarDecl : public Statement {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         void add_to_scope(SymbolTable * symtable);
 
         KIND_CLASS()
@@ -352,6 +398,8 @@ class FunctionCall : public Statement, public Expr {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
@@ -364,6 +412,8 @@ class VarDeclList : public ASTNode {
         virtual ~VarDeclList();
 
         virtual void print() const;
+
+        virtual int codegen() const;
 
         // Pushes the var decl onto the back of the type list
         void push_decl(VarDecl * decl);
@@ -381,6 +431,8 @@ class TupleTypename : public Typename {
 
         virtual void print() const;
 
+        virtual int codegen() const {return 0;};
+
         KIND_CLASS()
 };
 
@@ -393,6 +445,8 @@ class TupleExpr : public Expr {
         virtual ~TupleExpr();
 
         virtual void print() const;
+
+        virtual int codegen() const;
 
         KIND_CLASS()
 };
@@ -408,6 +462,8 @@ class FuncTypename : public Typename {
 
         virtual void print() const;
 
+        virtual int codegen() const {return 0;};
+
         KIND_CLASS()
 };
 
@@ -421,6 +477,8 @@ class StaticArrayTypename : public Typename {
         virtual ~StaticArrayTypename();
 
         virtual void print() const;
+
+        virtual int codegen() const {return 0;};
 
         KIND_CLASS()
 };
@@ -436,6 +494,8 @@ class TypeAlias : public TypeDecl {
 
         virtual void print() const;
 
+        virtual int codegen() const {return 0;};
+
         KIND_CLASS()
 };
 
@@ -449,6 +509,8 @@ class StructDecl : public TypeDecl {
         virtual ~StructDecl();
 
         virtual void print() const;
+
+        virtual int codegen() const {return 0;};
 
         KIND_CLASS()
 };
@@ -464,6 +526,8 @@ class VarDeclInit : public Statement {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
@@ -476,6 +540,8 @@ class PrintStmt : public Statement {
     virtual ~PrintStmt();
 
     virtual void print() const;
+
+    virtual int codegen() const;
 
     KIND_CLASS()
 };
@@ -492,6 +558,8 @@ class IfStmt : public Statement {
 
     virtual void print() const;
 
+    virtual int codegen() const;
+
     KIND_CLASS()
 };
 
@@ -505,6 +573,8 @@ class WhileStmt : public Statement {
     virtual ~WhileStmt();
 
     virtual void print() const;
+
+    virtual int codegen() const;
 
     KIND_CLASS()
 };
@@ -521,6 +591,8 @@ class ForStmt : public Statement {
 
     virtual void print() const;
 
+    virtual int codegen() const;
+
     KIND_CLASS()
 };
 
@@ -534,6 +606,8 @@ class AddrOf : public Expr {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
@@ -546,6 +620,8 @@ class Deref : public Expr {
         virtual ~Deref();
 
         virtual void print() const;
+
+        virtual int codegen() const;
 
         KIND_CLASS()
 };
@@ -561,6 +637,8 @@ class CastExpr : public Expr {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
@@ -574,7 +652,9 @@ class LogicalExpr : public Expr {
 
         virtual ~LogicalExpr();
 
-        virtual void print() const; 
+        virtual void print() const;
+
+        virtual int codegen() const; 
 
         KIND_CLASS()
 };
@@ -588,6 +668,8 @@ class ArgsList : public ASTNode {
         virtual ~ArgsList();
 
         virtual void print() const;
+
+        virtual int codegen() const { return 0;};
 
         void push_arg(VarDecl * arg);
 
@@ -609,6 +691,8 @@ class FuncDecl : public ASTNode {
 
         virtual void print() const;
 
+        virtual int codegen() const;
+
         KIND_CLASS()
 };
 
@@ -621,6 +705,8 @@ class ReturnStatement : public Statement {
         virtual ~ReturnStatement();
 
         virtual void print() const;
+
+        virtual int codegen() const;
 
         KIND_CLASS()
 };
