@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <unordered_map>
-#include "parser.h"
+#include <utility>
 
 union Value {
     int i;
@@ -13,18 +13,17 @@ union Value {
 };
 
 enum SymbolKind {
-    VAR,
-    TYPE,
-    FUNC
+    Var,
+    Type,
+    Func
 };
 
 class Symbol {
     public:
         SymbolKind type;
         char * name;
-        Value value;
         Symbol * next;
-        Symbol(SymbolKind type, Value value) : type(type), value(value) {}
+        Symbol(SymbolKind type) : type(type) {}
         ~Symbol() {}
 };
 
@@ -34,8 +33,14 @@ class SymbolTable {
         SymbolTable * enclosing;
 
         // SymbolTable does not take ownership of `enclosing` and enclosing table
-        // should not be destroyed when this table is
+        // should not be destroyed when this table is destroyed
         SymbolTable(SymbolTable * enclosing) : enclosing(enclosing) {}
+
+        ~SymbolTable() {
+            for (std::pair<const std::string, Symbol *>& item : table) {
+                delete item.second;
+            }
+        }
 
         void put(std::string name, Symbol * symbol) {
             table[name] = symbol;
@@ -60,6 +65,12 @@ class SymbolTable {
 
 namespace x {
     extern SymbolTable * symtable;
+
+    // Creates a new scope and returns the corresponding symtable
+    SymbolTable * create_scope();
+
+    // Destroys the current scope
+    void destroy_scope();
 }
 
 #endif

@@ -7,6 +7,7 @@
 
 std::vector<std::string> x::kind_map;
 
+const int ProgramSource::kind = x::next_kind("program_source");
 const int IntLiteral::kind = x::next_kind("int_literal");
 const int FloatLiteral::kind = x::next_kind("float_literal");
 const int BoolLiteral::kind = x::next_kind("bool_literal");
@@ -32,6 +33,9 @@ const int CastExpr::kind = x::next_kind("cast_expr");
 const int TupleExpr::kind = x::next_kind("tuple_expr");
 const int FunctionCall::kind = x::next_kind("function_call");
 const int StatementList::kind = x::next_kind("statement_list");
+const int ArgsList::kind = x::next_kind("args_list");
+const int FuncDecl::kind = x::next_kind("func_decl");
+const int ReturnStatement::kind = x::next_kind("return_statement");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -224,7 +228,7 @@ StatementList::~StatementList() {
 void StatementList::print() const {
     for (auto &statement : statements) {
         statement->print();
-        putchar(';');
+        printf(";\n");
     }
 }
 
@@ -318,6 +322,10 @@ void VarDecl::print() const {
     var_name->print();
 }
 
+void VarDecl::add_to_scope(SymbolTable * symtable) {
+    symtable->put(var_name->id, new Symbol(Var));
+}
+
 VarDeclInit::VarDeclInit(const VarDecl * decl, const Expr * init) : decl(decl), init(init) {}
 
 VarDeclInit::~VarDeclInit() {
@@ -381,4 +389,84 @@ void FunctionCall::print() const {
     putchar('(');
     args->print();
     putchar(')');
+}
+
+ArgsList::ArgsList(std::vector<VarDecl *> args) : args(args) {}
+
+ArgsList::~ArgsList() {
+    for (auto &arg : args) {
+        delete arg;
+    }
+}
+
+void ArgsList::print() const {
+    for (size_t i = 0; i < args.size() - 1; i++) {
+        args[i]->print();
+        printf(", ");
+    }
+
+    args[args.size() - 1]->print();
+}
+
+void ArgsList::push_arg(VarDecl * arg) {
+    args.push_back(arg);
+}
+
+void ArgsList::add_to_scope(SymbolTable * symtable) {
+    for (auto &arg : args) {
+        arg->add_to_scope(symtable);
+    }
+}
+
+FuncDecl::FuncDecl(const Ident * name, const ArgsList * params, const Typename * ret_type, const StatementList * body) :
+    name(name),
+    params(params),
+    ret_type(ret_type),
+    body(body)
+    {}
+
+FuncDecl::~FuncDecl() {
+    delete name;
+    delete params;
+    delete ret_type;
+    delete body;
+}
+
+void FuncDecl::print() const {
+    ret_type->print();
+    putchar(' ');
+    name->print();
+    putchar('(');
+    params->print();
+    printf(") {\n");
+    body->print();
+    printf("}\n");
+}
+
+ProgramSource::ProgramSource(std::vector<ASTNode *> nodes) : nodes(nodes) {}
+
+ProgramSource::~ProgramSource() {
+    nodes.clear();
+}
+
+void ProgramSource::print() const {
+    for (auto &node : nodes) {
+        node->print();
+        printf(";\n");
+    }
+}
+
+void ProgramSource::add_node(ASTNode * node) {
+    nodes.push_back(node);
+}
+
+ReturnStatement::ReturnStatement(const Expr * val) : val(val) {}
+
+ReturnStatement::~ReturnStatement() {
+    delete val;
+}
+
+void ReturnStatement::print() const {
+    printf("return ");
+    val->print();
 }

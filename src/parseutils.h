@@ -18,7 +18,7 @@ namespace x {
     /**
      * The top level node after parsing. Will be nullptr until the parser is finished.
      */
-    extern ASTNode * top;
+    extern ProgramSource * top;
 }
 
 #endif

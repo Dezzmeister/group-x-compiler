@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+#include "symtable.h"
+
 #define KIND_CLASS() \
     const static int kind; \
     \
@@ -56,6 +58,21 @@ class ASTNode {
 
     protected:
         ASTNode() {}
+};
+
+class ProgramSource : public ASTNode {
+    public:
+        std::vector<ASTNode *> nodes;
+
+        ProgramSource(std::vector<ASTNode *> nodes);
+
+        virtual ~ProgramSource();
+
+        virtual void print() const;
+
+        void add_node(ASTNode * node);
+
+        KIND_CLASS()
 };
 
 class Expr : public ASTNode {
@@ -194,6 +211,11 @@ class FloatLiteral : public NumLiteral {
         FloatLiteral(const char * float_str);
         FloatLiteral(const float value);
 
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
 class TernaryExpr: public Expr {
     public:
         const static int kind = 11;
@@ -211,11 +233,6 @@ class TernaryExpr: public Expr {
             putchar(':');
             false_expr->print();
         }
-};
-
-        virtual void print() const;
-
-        KIND_CLASS()
 };
 
 class BoolLiteral : public Expr {
@@ -322,6 +339,8 @@ class VarDecl : public Statement {
         virtual ~VarDecl();
 
         virtual void print() const;
+
+        void add_to_scope(SymbolTable * symtable);
 
         KIND_CLASS()
 };
@@ -528,4 +547,51 @@ class LogicalExpr : public Expr {
             right->print();
         }
 };
+
+class ArgsList : public ASTNode {
+    public:
+        std::vector<VarDecl *> args;
+
+        ArgsList(std::vector<VarDecl *> args);
+
+        virtual ~ArgsList();
+
+        virtual void print() const;
+
+        void push_arg(VarDecl * arg);
+
+        void add_to_scope(SymbolTable * symtable);
+
+        KIND_CLASS()
+};
+
+class FuncDecl : public ASTNode {
+    public:
+        const Ident * name;
+        const ArgsList * params;
+        const Typename * ret_type;
+        const StatementList * body;
+
+        FuncDecl(const Ident * name, const ArgsList * params, const Typename * ret_body, const StatementList * body);
+
+        virtual ~FuncDecl();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
+class ReturnStatement : public Statement {
+    public:
+        const Expr * val;
+
+        ReturnStatement(const Expr * val);
+
+        virtual ~ReturnStatement();
+
+        virtual void print() const;
+
+        KIND_CLASS()
+};
+
 #endif
