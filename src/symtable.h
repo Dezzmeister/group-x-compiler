@@ -13,18 +13,18 @@ union Value {
 
 class Symbol {
     public:
-    int type;
-    char * name;
-    Value value;
-    Symbol * next;
-    Symbol(int type, Value value) : type(type), value(value) {}
-    Symbol() {}
+        int type;
+        char * name;
+        Value value;
+        Symbol * next;
+        Symbol(int type, Value value) : type(type), value(value) {}
+        Symbol() {}
 };
 
 class SymbolTable {
     public:
-    std::map<char *, Symbol *> table;
-    SymbolTable * enclosing;
+        std::map<char *, Symbol *> table;
+        SymbolTable * enclosing;
 };
 extern SymbolTable * symtable;
 #endif

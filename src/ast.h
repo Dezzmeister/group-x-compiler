@@ -1,3 +1,32 @@
+/**
+ * This file contains classes representing crucial elements of the syntax. These include things
+ * like int literals, variable declarations, type expressions, etc. Together the classes
+ * in this file can be used to build an AST that represents a program. Every class
+ * inherits from the abstract class ASTNode. The general model is that no class inherits
+ * from a non-abstract class, and abstract classes are used to define useful abstractions
+ * of different kinds of syntax elements. For example, the two abstract classes Expr and Statement
+ * both inherit from ASTNode, but they represent different things and their derived
+ * classes represent specific instances of Expr/Statement.
+ *
+ * The class hierarchy forms a tree where every leaf node is a non-abstract class, and every other
+ * node is abstract. The leaf nodes all have a unique static member called 'kind' which is used at runtime
+ * to narrow the abstract type. You can call get_kind() on the object in question and compare it to
+ * Class::kind to see if you can make a narrowing cast. The KIND_CLASS macro copies some of the
+ * boilerplate to add the static kind member and implement the abstract function. The kinds are
+ * initialized in ast.cpp with names; you can use x::kind_map to look up the name for a given kind.
+ *
+ * Many of these node classes have a similar structure; e.g., 'left' and 'right' Expr nodes as 
+ * members, or similar class members with different types in different classes. Usually we would
+ * use generics (templates) to reduce boilerplate and simplify the class hierarchy but in this case we chose
+ * not to because we wanted to restrict the set of allowable ASTNodes and keep the classes themselves
+ * very simple. The class hierarchy is nice because most classes match up with a grammar production.
+ *
+ * ======= Memory Model =======
+ *
+ * Many of these classes accept pointers to nodes in their constructors. In general, the class takes
+ * ownership of the node passed in and is responsible for destroying it. If you add a node that owns
+ * other nodes, please implement the destructor.
+ */
 #ifndef SRC_AST_H
 #define SRC_AST_H
 
