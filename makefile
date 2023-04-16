@@ -45,5 +45,5 @@ ${GENERATED_FILES}: src/parser.ypp src/scanner.lex
 
 .PHONY: clean
 clean:
-	rm -f debug_bin release_bin ${GENERATED_FILES}
+	rm -f debug_bin release_bin ${GENERATED_FILES} src/parser.dot src/parser.output parser.png
 

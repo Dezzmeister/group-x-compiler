@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
+#include "symtable.h"
 
 // static char string_buf[MAX_STR_LEN] = { 0 };
 // static char * string_buf_ptr;
@@ -66,8 +67,18 @@ mut         {return MUT;}
 \]          {return ']';}
 \=          {return '=';}
 ;           {return ';';}
-\{          {return '{';}
-\}          {return '}';}
+\{          {
+                // Create a new symbol table for the new scope
+                x::symtable = new SymbolTable(x::symtable);
+                return '{';
+            }
+\}          {
+                SymbolTable * old = x::symtable;
+                x::symtable = x::symtable->enclosing;
+                delete old;
+
+                return '}';
+            }
 &           {return '&';}
 
 %%
