@@ -20,5 +20,6 @@ class Quad  {
 class BasicBlock {
     // See Aho Section 8.4
     Quad * quads;
+    int num_instructions;
     BasicBlock(Quad * q) : quads(q) {}
 };

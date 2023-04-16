@@ -452,6 +452,26 @@ class VarDeclInit : public Statement {
         KIND_CLASS()
 };
 
+class PrintStmt : public Statement {
+    const Expr * expr;
+    PrintStmt(Expr * expr);
+    KIND_CLASS()
+};
+
+class IfStmt : public Statement {
+    const Expr * cond; 
+    const StatementList * then;
+    const StatementList * els;
+};
+
+class WhileStmt : public Statement {
+
+};
+
+class ForStmt : public Statement {
+
+};
+
 class AddrOf : public Expr {
     public:
         const Expr * expr;

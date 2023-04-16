@@ -20,10 +20,18 @@ extern SymbolTable * symtable;
 
 int main(int argc, char ** argv) {
     if (YYDEBUG) { yydebug = 1; }  /* Enable tracing */
-
-    /*
-    * Print hello world with make, then ./release_bin examples/hello.x
-    */
+    if (argc == 2) {
+      yyin = fopen(argv[1], "r");
+      if (!yyin) {
+          fprintf(stderr, "Cannot open file %s for reading.\n", argv[1]);
+          exit(1);
+      }
+        close(0);
+        if(dup(fileno(yyin))) {
+          fprintf(stderr, "dup error.\n");
+          exit(1);
+        }
+    }
     int val = yyparse();
     printf("status code: %d\n", val);
     printf("expr: ");

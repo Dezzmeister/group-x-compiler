@@ -2,7 +2,7 @@
 #define SYMTABLE_H
 #include <string.h>
 #include "parser.h"
-#include <map>
+#include <unordered_map>
 
 union Value {
     int i;
@@ -23,8 +23,16 @@ class Symbol {
 
 class SymbolTable {
     public:
-        std::map<char *, Symbol *> table;
+        std::unordered_map<std::string, Symbol *> table;
         SymbolTable * enclosing;
+    
+        void Put(std::string name, Symbol * symbol) {
+            table[name] = symbol;
+        }
+    
+        Symbol * Get(std::string name) {
+            return table[name];
+        }
 };
 extern SymbolTable * symtable;
 #endif
