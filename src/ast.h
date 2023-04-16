@@ -218,21 +218,17 @@ class FloatLiteral : public NumLiteral {
 
 class TernaryExpr: public Expr {
     public:
-        const static int kind = 11;
-        Expr * condition;
-        Expr * true_expr;
-        Expr * false_expr;
-        TernaryExpr(Expr *, Expr *, Expr *);
-        int get_kind() {
-            return kind;
-        }
-        void print() {
-            condition->print();
-            putchar('?');
-            true_expr->print();
-            putchar(':');
-            false_expr->print();
-        }
+        const Expr * cond;
+        const Expr * tru;
+        const Expr * fals;
+
+        TernaryExpr(const Expr * cond, const Expr * tru, const Expr * fals);
+
+        virtual ~TernaryExpr();
+
+        virtual void print() const;
+
+        KIND_CLASS()
 };
 
 class BoolLiteral : public Expr {
@@ -472,8 +468,15 @@ class VarDeclInit : public Statement {
 };
 
 class PrintStmt : public Statement {
+    public:
     const Expr * expr;
-    PrintStmt(Expr * expr);
+
+    PrintStmt(const Expr * expr);
+
+    virtual ~PrintStmt();
+
+    virtual void print() const;
+
     KIND_CLASS()
 };
 
@@ -481,14 +484,44 @@ class IfStmt : public Statement {
     const Expr * cond; 
     const StatementList * then;
     const StatementList * els;
+
+    IfStmt(const Expr * cond, const StatementList *then,
+    const StatementList * els); 
+
+    virtual ~IfStmt();
+
+    virtual void print() const;
+
+    KIND_CLASS()
 };
 
 class WhileStmt : public Statement {
+    public:
+    const Expr * cond;
+    const StatementList * body;
 
+    WhileStmt(const Expr * cond, const StatementList * body);
+
+    virtual ~WhileStmt();
+
+    virtual void print() const;
+
+    KIND_CLASS()
 };
 
 class ForStmt : public Statement {
+    public:
+    const Expr * init, *condition, *update;
+    const StatementList * body;
 
+    ForStmt(const Expr *init, const Expr *condition, 
+    const Expr *update, const StatementList * body);
+
+    virtual ~ForStmt();
+
+    virtual void print() const;
+
+    KIND_CLASS()
 };
 
 class AddrOf : public Expr {
@@ -533,19 +566,17 @@ class CastExpr : public Expr {
 
 class LogicalExpr : public Expr {
     public:
-        const static int kind = 13;
-        const char * op;
-        Expr * left;
-        Expr * right;
-        LogicalExpr(const char *, Expr *, Expr *);
-        int get_kind() {
-            return kind;
-        }
-        void print() {
-            left->print();
-            printf("%s", op);
-            right->print();
-        }
+        const std::string op;
+        const Expr * left;
+        const Expr * right;
+
+        LogicalExpr(std::string op , const Expr *l, const Expr *r);
+
+        virtual ~LogicalExpr();
+
+        virtual void print() const; 
+
+        KIND_CLASS()
 };
 
 class ArgsList : public ASTNode {
