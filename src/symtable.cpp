@@ -12,6 +12,7 @@ static SymbolTable * init_symtable() {
     out->put(std::string("float"), new Symbol(Type));
     out->put(std::string("bool"), new Symbol(Type));
     out->put(std::string("char"), new Symbol(Type));
+    out->put(std::string("void"), new Symbol(Type));
 
     // Built-in functions
     out->put(std::string("print"), new Symbol(Func));

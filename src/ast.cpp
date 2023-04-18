@@ -41,7 +41,7 @@ const int LogicalExpr::kind = x::next_kind("logical_expr");
 const int TupleExpr::kind = x::next_kind("tuple_expr");
 const int FunctionCall::kind = x::next_kind("function_call");
 const int StatementList::kind = x::next_kind("statement_list");
-const int ArgsList::kind = x::next_kind("args_list");
+const int ParamsList::kind = x::next_kind("params_list");
 const int FuncDecl::kind = x::next_kind("func_decl");
 const int ReturnStatement::kind = x::next_kind("return_statement");
 
@@ -297,12 +297,14 @@ std::vector<ASTNode *> VarDeclList::children() {
 ExprList::ExprList(std::vector<Expr *> exprs) : exprs(exprs) {}
 
 ExprList::~ExprList() {
-    for (auto &expr : exprs) {
-        delete expr;
-    }
+    exprs.clear();
 }
 
 void ExprList::print() const {
+    if (exprs.size() == 0) {
+        return;
+    }
+
     for (size_t i = 0; i < exprs.size() - 1; i++) {
         exprs[i]->print();
         printf(", ");
@@ -652,38 +654,40 @@ std::vector<ASTNode *> FunctionCall::children() {
     return {(ASTNode *) func, (ASTNode *) args};
 }
 
-ArgsList::ArgsList(std::vector<VarDecl *> args) : args(args) {}
+ParamsList::ParamsList(std::vector<VarDecl *> params) : params(params) {}
 
-ArgsList::~ArgsList() {
-    for (auto &arg : args) {
-        delete arg;
-    }
+ParamsList::~ParamsList() {
+    params.clear();
 }
 
-void ArgsList::print() const {
-    for (size_t i = 0; i < args.size() - 1; i++) {
-        args[i]->print();
+void ParamsList::print() const {
+    if (params.size() == 0) {
+        return;
+    }
+
+    for (size_t i = 0; i < params.size() - 1; i++) {
+        params[i]->print();
         printf(", ");
     }
 
-    args[args.size() - 1]->print();
+    params[params.size() - 1]->print();
 }
 
-void ArgsList::push_arg(VarDecl * arg) {
-    args.push_back(arg);
+void ParamsList::push_param(VarDecl * param) {
+    params.push_back(param);
 }
 
-void ArgsList::add_to_scope(SymbolTable * symtable) {
-    for (auto &arg : args) {
-        arg->add_to_scope(symtable);
+void ParamsList::add_to_scope(SymbolTable * symtable) {
+    for (auto &param : params) {
+        param->add_to_scope(symtable);
     }
 }
 
-std::vector<ASTNode *> ArgsList::children() {
-    return cast_nodes(args);
+std::vector<ASTNode *> ParamsList::children() {
+    return cast_nodes(params);
 }
 
-FuncDecl::FuncDecl(const Ident * name, const ArgsList * params, const Typename * ret_type, const StatementList * body) :
+FuncDecl::FuncDecl(const Ident * name, const ParamsList * params, const Typename * ret_type, const StatementList * body) :
     name(name),
     params(params),
     ret_type(ret_type),

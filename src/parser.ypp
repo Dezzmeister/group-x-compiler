@@ -44,7 +44,7 @@ extern void yyerror(const char * const error);
     CastExpr * cast_expr;
     TupleExpr * tuple_expr;
     FunctionCall * function_call;
-    ArgsList * args_list;
+    ParamsList * params_list;
     FuncDecl * func_decl;
     ReturnStatement * return_statement;
     IfStmt * if_statement;
@@ -85,6 +85,7 @@ extern void yyerror(const char * const error);
 %type <num_literal> num
 %type <expr> expr
 %type <expr_list> expr_list
+%type <expr_list> args_list
 %type <math_expr> math_expr
 %type <bool_expr> bool_expr
 %type <type_name> type_name
@@ -106,7 +107,7 @@ extern void yyerror(const char * const error);
 %type <cast_expr> cast_expr
 %type <tuple_expr> tuple_expr
 %type <function_call> function_call
-%type <args_list> args_list
+%type <params_list> params_list
 %type <func_decl> func_decl
 %type <return_statement> return_statement
 %type <if_statement> if_statement
@@ -178,8 +179,8 @@ cast_expr : expr CAST_KW type_name {$$ = new CastExpr($3, $1);}
 tuple_expr : '[' expr_list ']' {$$ = new TupleExpr($2);}
            ;
 
-function_call : DECLARED_FUNC '(' expr_list ')' {$$ = new FunctionCall($1, $3);}
-              | '(' expr ')' '(' expr_list ')' {$$ = new FunctionCall(new ParensExpr($2), $5);}
+function_call : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCall($1, $3);}
+              | '(' expr ')' '(' args_list ')' {$$ = new FunctionCall(new ParensExpr($2), $5);}
               ;
 
 type_decl : type_alias {$$ = $1;}
@@ -228,12 +229,17 @@ struct_decl : STRUCT_KW IDENT '{' {
                 }
             ;
 
-args_list : args_list ',' var_decl {$1->push_arg($3); $$ = $1;}
-          | var_decl {$$ = new ArgsList({$1});}
-          | /* empty */ {$$ = new ArgsList({});}
+args_list : args_list ',' expr {$1->push_expr($3); $$ = $1;}
+          | expr {$$ = new ExprList({$1});}
+          | /* empty */ {$$ = new ExprList({});}
           ;
 
-func_decl : type_name IDENT '(' args_list ')' '{' {
+params_list : params_list ',' var_decl {$1->push_param($3); $$ = $1;}
+            | var_decl {$$ = new ParamsList({$1});}
+            | /* empty */ {$$ = new ParamsList({});}
+            ;
+
+func_decl : type_name IDENT '(' params_list ')' '{' {
                 x::symtable->put($2->id, new Symbol(Func));
                 x::create_scope();
                 $4->add_to_scope(x::symtable);

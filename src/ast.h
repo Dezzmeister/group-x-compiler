@@ -381,6 +381,24 @@ class VarDecl : public Statement {
         KIND_CLASS()
 };
 
+class ParamsList : public ASTNode {
+    public:
+        std::vector<VarDecl *> params;
+
+        ParamsList(std::vector<VarDecl *> params);
+
+        virtual ~ParamsList();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        void push_param(VarDecl * param);
+
+        void add_to_scope(SymbolTable * symtable);
+
+        KIND_CLASS()
+};
+
 class FunctionCall : public Statement, public Expr {
     public:
         const CallingExpr * func;
@@ -636,32 +654,14 @@ class LogicalExpr : public Expr {
         KIND_CLASS()
 };
 
-class ArgsList : public ASTNode {
-    public:
-        std::vector<VarDecl *> args;
-
-        ArgsList(std::vector<VarDecl *> args);
-
-        virtual ~ArgsList();
-
-        virtual void print() const;
-        virtual std::vector<ASTNode *> children();
-
-        void push_arg(VarDecl * arg);
-
-        void add_to_scope(SymbolTable * symtable);
-
-        KIND_CLASS()
-};
-
 class FuncDecl : public ASTNode {
     public:
         const Ident * name;
-        const ArgsList * params;
+        const ParamsList * params;
         const Typename * ret_type;
         const StatementList * body;
 
-        FuncDecl(const Ident * name, const ArgsList * params, const Typename * ret_body, const StatementList * body);
+        FuncDecl(const Ident * name, const ParamsList * params, const Typename * ret_body, const StatementList * body);
 
         virtual ~FuncDecl();
 
