@@ -46,6 +46,7 @@ return      {return RETURN_KW;}
 if          {return IF_KW;}
 else        {return ELSE_KW;}
 while       {return WHILE_KW;}
+for         {return FOR_KW;}
 
 mut         {return MUT;}
 

@@ -596,11 +596,13 @@ class WhileStmt : public Statement {
 
 class ForStmt : public Statement {
     public:
-        const Expr * init, *condition, *update;
+        const Statement * init;
+        const Expr * condition;
+        const Statement * update;
         const StatementList * body;
 
-        ForStmt(const Expr *init, const Expr *condition, 
-        const Expr *update, const StatementList * body);
+        ForStmt(const Statement *init, const Expr *condition, 
+        const Statement *update, const StatementList * body);
 
         virtual ~ForStmt();
 

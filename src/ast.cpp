@@ -32,9 +32,9 @@ const int StructDecl::kind = x::next_kind("struct_decl");
 const int VarDecl::kind = x::next_kind("var_decl");
 const int VarDeclInit::kind = x::next_kind("var_decl_init");
 const int ArrayLiteral::kind = x::next_kind("array_literal");
-const int IfStmt::kind = x::next_kind("if_statement");
-const int IfElseStmt::kind = x::next_kind("if_else_statement");
-const int WhileStmt::kind = x::next_kind("while_statement");
+const int IfStmt::kind = x::next_kind("if");
+const int IfElseStmt::kind = x::next_kind("if_else");
+const int WhileStmt::kind = x::next_kind("while");
 const int ForStmt::kind = x::next_kind("for");
 const int AddrOf::kind = x::next_kind("addr_of");
 const int Deref::kind = x::next_kind("deref");
@@ -578,7 +578,7 @@ std::vector<ASTNode *> WhileStmt::children() {
     return {(ASTNode *) cond, (ASTNode *) body};
 }
 
-ForStmt::ForStmt(const Expr * init, const Expr * cond, const Expr * update, const StatementList * body) :
+ForStmt::ForStmt(const Statement * init, const Expr * cond, const Statement * update, const StatementList * body) :
     init(init),
     condition(cond),
     update(update),

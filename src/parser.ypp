@@ -52,6 +52,7 @@ extern void yyerror(const char * const error);
     IfStmt * if_statement;
     IfElseStmt * if_else_statement;
     WhileStmt * while_statement;
+    ForStmt * for_statement;
     TypeIdent * type_ident;
     Assignment * assignment;
 }
@@ -71,7 +72,7 @@ extern void yyerror(const char * const error);
 %right MUT
 %left '*'
 %right '&'
-%right IF_KW WHILE_KW
+%right IF_KW WHILE_KW FOR_KW
 %right ELSE_KW
 
 %nonassoc CALL_PREC
@@ -117,6 +118,7 @@ extern void yyerror(const char * const error);
 %type <if_statement> if_statement
 %type <if_else_statement> if_else_statement
 %type <while_statement> while_statement
+%type <for_statement> for_statement
 %type <assignment> assignment
 
 %%
@@ -139,6 +141,7 @@ statement : type_decl {$$ = $1;}
           | if_statement {$$ = $1;}
           | if_else_statement {$$ = $1;}
           | while_statement {$$ = $1;}
+          | for_statement {$$ = $1;}
           | assignment {$$ = $1;}
           ;
 
@@ -225,6 +228,12 @@ while_statement : WHILE_KW '(' expr ')' '{'
                         x::destroy_scope();
                     }
                 ;
+
+for_statement : FOR_KW '(' statement ';' {x::create_scope();} expr ';' statement ')' '{' statement_list '}' {
+                    $$ = new ForStmt($3, $6, $8, $11);
+                    x::destroy_scope();
+                }
+              ;
 
 assignment : expr '=' expr {$$ = new Assignment($1, $3);}
            ;
