@@ -23,6 +23,8 @@ extern void yyerror(const char * const error);
     IntLiteral * int_literal;
     FloatLiteral * float_literal;
     BoolLiteral * bool_literal;
+    CharLiteral * char_literal;
+    StringLiteral * str_literal;
     Ident * ident;
     MathExpr * math_expr;
     BoolExpr * bool_expr;
@@ -57,7 +59,7 @@ extern void yyerror(const char * const error);
     Assignment * assignment;
 }
 
-%token FUNC_TYPE_OP NEWLINE
+%token FUNC_TYPE_OP
 
 %right '='
 %right TYPE_ALIAS_KW STRUCT_KW RETURN_KW
@@ -82,6 +84,8 @@ extern void yyerror(const char * const error);
 %nonassoc <int_literal> INT
 %nonassoc <float_literal> FLOAT
 %nonassoc <bool_literal> BOOL
+%nonassoc <str_literal> STR
+%nonassoc <char_literal> CHAR
 
 %type <program_source> program
 %type <statement> statement
@@ -158,7 +162,9 @@ expr : '(' expr ')' {$$ = new ParensExpr($2);}
      | tuple_expr {$$ = $1;}
      | array_literal {$$ = $1;}
      | function_call %prec CALL_PREC {$$ = (Expr *) $1;}
+     | STR {$$ = $1;}
      | BOOL {$$ = $1;}
+     | CHAR {$$ = $1;}
      | num {$$ = $1;}
      | DECLARED_VAR {$$ = $1;}
      ;

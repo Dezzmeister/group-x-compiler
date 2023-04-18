@@ -263,6 +263,30 @@ class BoolLiteral : public Expr {
         KIND_CLASS()
 };
 
+class CharLiteral : public Expr {
+    public:
+        const char value;
+
+        CharLiteral(const char value);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        KIND_CLASS()
+};
+
+class StringLiteral : public Expr {
+    public:
+        const std::string value;
+
+        StringLiteral(const char * const value);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        KIND_CLASS()
+};
+
 class TypeIdent : public Typename {
     public:
         const std::string id;

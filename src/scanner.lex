@@ -6,15 +6,11 @@
 #include "parser.h"
 #include "symtable.h"
 
-// static char string_buf[MAX_STR_LEN] = { 0 };
-// static char * string_buf_ptr;
-
 int x::lineno = 1;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 %}
-%x str
 
 str_literal \"[^\"\n]*\"
 delim       [ \t]
@@ -30,7 +26,15 @@ ident       ({letter}|_)({letter}|[[:digit:]]|_)*
 comment     \/\/.*\n
 
 %%
-{str_literal}  {yylval.c_str = strdup(yytext);}
+{str_literal}   {
+                    char * str = strdup(yytext);
+                    int len = strlen(str);
+                    // Remove quotes
+                    str[len - 1] = '\0';
+                    yylval.str_literal = new StringLiteral(str + 1);
+                    free(str);
+                    return STR;
+                }
 {ws}        {}
 {comment}   {x::lineno++;}
 \n          {x::lineno++;}
@@ -92,6 +96,13 @@ mut         {return MUT;}
 \{          {return '{';}
 \}          {return '}';}
 &           {return '&';}
+
+\'\\n\'     {yylval.char_literal = new CharLiteral('\n'); return CHAR;}
+\'\\t\'     {yylval.char_literal = new CharLiteral('\t'); return CHAR;}
+\'\\0\'     {yylval.char_literal = new CharLiteral('\0'); return CHAR;}
+\'\\e\'     {yylval.char_literal = new CharLiteral('\e'); return CHAR;}
+\'\\r\'     {yylval.char_literal = new CharLiteral('\r'); return CHAR;}
+\'.\'       {yylval.char_literal = new CharLiteral(yytext[1]); return CHAR;}
 
 %%
 

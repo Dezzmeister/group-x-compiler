@@ -13,6 +13,8 @@ const int IntLiteral::kind = x::next_kind("int_literal");
 const int FloatLiteral::kind = x::next_kind("float_literal");
 const int TernaryExpr::kind = x::next_kind("ternary_expr");
 const int BoolLiteral::kind = x::next_kind("bool_literal");
+const int CharLiteral::kind = x::next_kind("char_literal");
+const int StringLiteral::kind = x::next_kind("str_literal");
 const int TypeIdent::kind = x::next_kind("type_ident");
 const int Ident::kind = x::next_kind("ident");
 const int ParensExpr::kind = x::next_kind("parens_expr");
@@ -100,6 +102,46 @@ void BoolLiteral::print() const {
 }
 
 std::vector<ASTNode *> BoolLiteral::children() {
+    return {};
+}
+
+CharLiteral::CharLiteral(const char value) : value(value) {}
+
+void CharLiteral::print() const {
+    switch (value) {
+        case '\n':
+            printf("\\n");
+            break;
+        case '\t':
+            printf("\\t");
+            break;
+        case '\0':
+            printf("\\0");
+            break;
+        case '\e':
+            printf("\\e");
+            break;
+        case '\r':
+            printf("\\r");
+            break;
+        default:
+            printf("%c", value);
+    }
+}
+
+std::vector<ASTNode *> CharLiteral::children() {
+    return {};
+}
+
+StringLiteral::StringLiteral(const char * const value) : value(std::string(value)) {}
+
+void StringLiteral::print() const {
+    putchar('"');
+    std::cout << value;
+    putchar('"');
+}
+
+std::vector<ASTNode *> StringLiteral::children() {
     return {};
 }
 

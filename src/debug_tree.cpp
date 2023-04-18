@@ -43,6 +43,12 @@ static std::string label(ASTNode * node) {
         return std::to_string(lit->value);
     }
 
+    if (node->get_kind() == BoolLiteral::kind) {
+        BoolLiteral * lit = (BoolLiteral *) node;
+
+        return std::string(lit->value ? "true" : "false");
+    }
+
     return x::kind_map[node->get_kind()];
 }
 
