@@ -38,3 +38,20 @@ You may want to add the following line to your .vimrc:
     au BufReadPost *.ypp set syntax=yacc
 
 This tells Vim to use yacc syntax highlighting for .ypp files.
+
+==================================== TODOs ====================================
+
+1. We are still finishing the parser. We still need include/imports, boolean
+    expressions, static array types, and functions with no arguments. We should
+    also fix up the grammar so that it resembles our LRM more closely.
+
+2. We may need a way to parse command line args and options. unistd.h has some 
+    utils for this but the C++ standard library might have better ones. We should
+    have a command line argument to specify an optional AST graph for now and binary
+    output later.
+
+3. Typechecker - I will start work on this when the parser is mostly done
+
+4. Three address code
+
+5. LLVM backend? Or maybe just target linux on x86
