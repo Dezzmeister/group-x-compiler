@@ -31,7 +31,6 @@ const int VarDeclInit::kind = x::next_kind("var_decl_init");
 const int IfStmt::kind = x::next_kind("if_statement");
 const int IfElseStmt::kind = x::next_kind("if_else_statement");
 const int WhileStmt::kind = x::next_kind("while_statement");
-const int PrintStmt::kind = x::next_kind("print");
 const int ForStmt::kind = x::next_kind("for");
 const int AddrOf::kind = x::next_kind("addr_of");
 const int Deref::kind = x::next_kind("deref");
