@@ -53,6 +53,9 @@ while       {return WHILE_KW;}
 for         {return FOR_KW;}
 
 mut         {return MUT;}
+not         {return NOT_KW;}
+in          {return IN_KW;}
+not[ \t]+in {return NOT_IN_KW;}
 
 {ident}     {
                 yylval.ident = new Ident(yytext); 
@@ -89,6 +92,9 @@ mut         {return MUT;}
 ">="        {return GEQ;}
 "<="        {return LEQ;}
 
+"++"        {return INC;}
+"--"        {return DEC;}
+
 \+          {return '+';}
 \-          {return '-';}
 \/          {return '/';}
@@ -104,6 +110,7 @@ mut         {return MUT;}
 \}          {return '}';}
 &           {return '&';}
 %           {return '%';}
+!           {return '!';}
 
 \'\\n\'     {yylval.char_literal = new CharLiteral('\n'); return CHAR;}
 \'\\t\'     {yylval.char_literal = new CharLiteral('\t'); return CHAR;}

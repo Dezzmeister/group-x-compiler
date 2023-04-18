@@ -49,6 +49,9 @@ const int ParamsList::kind = x::next_kind("params_list");
 const int FuncDecl::kind = x::next_kind("func_decl");
 const int ReturnStatement::kind = x::next_kind("return_statement");
 const int Assignment::kind = x::next_kind("assignment");
+const int BangExpr::kind = x::next_kind("bang_expr");
+const int NotExpr::kind = x::next_kind("not_expr");
+const int PreExpr::kind = x::next_kind("pre_expr");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -852,4 +855,49 @@ void Assignment::print() const {
 
 std::vector<ASTNode *> Assignment::children() {
     return {(ASTNode *) lhs, (ASTNode *) rhs};
+}
+
+BangExpr::BangExpr(const Expr * expr) : expr(expr) {}
+
+BangExpr::~BangExpr() {
+    delete expr;
+}
+
+void BangExpr::print() const {
+    putchar('!');
+    expr->print();
+}
+
+std::vector<ASTNode *> BangExpr::children() {
+    return {(ASTNode *) expr};
+}
+
+NotExpr::NotExpr(const Expr * expr) : expr(expr) {}
+
+NotExpr::~NotExpr() {
+    delete expr;
+}
+
+void NotExpr::print() const {
+    printf("not ");
+    expr->print();
+}
+
+std::vector<ASTNode *> NotExpr::children() {
+    return {(ASTNode *) expr};
+}
+
+PreExpr::PreExpr(const char * const op, const Expr * expr) : op(std::string(op)), expr(expr) {}
+
+PreExpr::~PreExpr() {
+    delete expr;
+}
+
+void PreExpr::print() const {
+    std::cout << op;
+    expr->print();
+}
+
+std::vector<ASTNode *> PreExpr::children() {
+    return {(ASTNode *) expr};
 }

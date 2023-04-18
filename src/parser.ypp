@@ -58,6 +58,7 @@ extern void yyerror(const char * const error);
     ForStmt * for_statement;
     TypeIdent * type_ident;
     Assignment * assignment;
+    PreExpr * pre_expr;
 }
 
 %token FUNC_TYPE_OP
@@ -70,6 +71,7 @@ extern void yyerror(const char * const error);
 %right BOOL_AND BOOL_OR
 %nonassoc EQU NEQ
 %nonassoc GTR LES GEQ LEQ
+%nonassoc IN_KW NOT_IN_KW
 %right '+' '-'
 %right '/' '%'
 %nonassoc MUL_OP
@@ -79,6 +81,8 @@ extern void yyerror(const char * const error);
 %right '&'
 %right IF_KW WHILE_KW FOR_KW
 %right ELSE_KW
+%right '!' NOT_KW
+%right INC DEC
 
 %nonassoc CALL_PREC
 
@@ -128,6 +132,7 @@ extern void yyerror(const char * const error);
 %type <while_statement> while_statement
 %type <for_statement> for_statement
 %type <assignment> assignment
+%type <pre_expr> pre_expr
 
 %%
 
@@ -167,6 +172,9 @@ expr : '(' expr ')' {$$ = new ParensExpr($2);}
      | tuple_expr {$$ = $1;}
      | array_literal {$$ = $1;}
      | function_call %prec CALL_PREC {$$ = (Expr *) $1;}
+     | '!' expr {$$ = new BangExpr($2);}
+     | NOT_KW expr {$$ = new NotExpr($2);}
+     | pre_expr {$$ = $1;}
      | STR {$$ = $1;}
      | BOOL {$$ = $1;}
      | CHAR {$$ = $1;}
@@ -195,6 +203,8 @@ logical_expr : expr EQU expr {$$ = new LogicalExpr("==", $1, $3);}
              | expr LES expr {$$ = new LogicalExpr("<", $1, $3);}
              | expr GEQ expr {$$ = new LogicalExpr(">=", $1, $3);}
              | expr LEQ expr {$$ = new LogicalExpr("<=", $1, $3);}
+             | expr IN_KW expr {$$ = new LogicalExpr("in", $1, $3);}
+             | expr NOT_IN_KW expr {$$ = new LogicalExpr("not in", $1, $3);}
              ;
 
 addr_of_expr : '&' expr %prec '&' {$$ = new AddrOf($2);}
@@ -208,6 +218,10 @@ cast_expr : expr CAST_KW type_name {$$ = new CastExpr($3, $1);}
 
 tuple_expr : '[' expr_list ']' {$$ = new TupleExpr($2);}
            ;
+
+pre_expr : INC expr {$$ = new PreExpr("++", $2);}
+         | DEC expr {$$ = new PreExpr("--", $2);}
+         ;
 
 function_call : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCall($1, $3);}
               | '(' expr ')' '(' args_list ')' {$$ = new FunctionCall(new ParensExpr($2), $5);}

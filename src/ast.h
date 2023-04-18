@@ -742,4 +742,47 @@ class Assignment : public Statement {
         KIND_CLASS()
 };
 
+class BangExpr : public Expr {
+    public:
+        const Expr * expr;
+
+        BangExpr(const Expr * expr);
+
+        virtual ~BangExpr();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        KIND_CLASS()
+};
+
+class NotExpr : public Expr {
+    public:
+        const Expr * expr;
+
+        NotExpr(const Expr * expr);
+
+        virtual ~NotExpr();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        KIND_CLASS()
+};
+
+class PreExpr : public Expr {
+    public:
+        const std::string op;
+        const Expr * expr;
+
+        PreExpr(const char * const op, const Expr * expr);
+
+        virtual ~PreExpr();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        KIND_CLASS()
+};
+
 #endif
