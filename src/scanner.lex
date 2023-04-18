@@ -50,8 +50,7 @@ while       {return WHILE_KW;}
 mut         {return MUT;}
 
 {ident}     {
-                yylval.ident = new Ident(yytext);
-                
+                yylval.ident = new Ident(yytext); 
                 // Our grammar is not context free because of this: the lexer returns
                 // a different token depending on whether the identifier has been declared
                 // as a type, variable, or function, or if it's undeclared. This is great because
@@ -62,6 +61,8 @@ mut         {return MUT;}
                     if (sym->type == Var) {
                         return DECLARED_VAR;
                     } else if (sym->type == Type) {
+                        delete yylval.ident;
+                        yylval.type_ident = new TypeIdent(yytext);
                         return DECLARED_TYPE;
                     }
 

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <stdio.h>
 #include <string.h>
 
@@ -12,6 +13,7 @@ const int IntLiteral::kind = x::next_kind("int_literal");
 const int FloatLiteral::kind = x::next_kind("float_literal");
 const int TernaryExpr::kind = x::next_kind("ternary_expr");
 const int BoolLiteral::kind = x::next_kind("bool_literal");
+const int TypeIdent::kind = x::next_kind("type_ident");
 const int Ident::kind = x::next_kind("ident");
 const int ParensExpr::kind = x::next_kind("parens_expr");
 const int MathExpr::kind = x::next_kind("math_expr");
@@ -50,12 +52,26 @@ int x::next_kind(const char * const name) {
     return kind++;
 }
 
+template<typename T> static std::vector<ASTNode *> cast_nodes(std::vector<T> &vec) {
+    std::vector<ASTNode *> out;
+
+    std::transform(vec.begin(), vec.end(), std::back_inserter(out), [](auto &item){
+        return (ASTNode *) item;
+    });
+
+    return out;
+}
+
 IntLiteral::IntLiteral(const char * int_str) : value(atoi(int_str)) {}
 
 IntLiteral::IntLiteral(const int value) : value(value) {}
 
 void IntLiteral::print() const {
     printf("%d", value);
+}
+
+std::vector<ASTNode *> IntLiteral::children() {
+    return {};
 }
 
 FloatLiteral::FloatLiteral(const char * float_str) : value(atof(float_str)) {}
@@ -66,6 +82,10 @@ void FloatLiteral::print() const {
     printf("%f", value);
 }
 
+std::vector<ASTNode *> FloatLiteral::children() {
+    return {};
+}
+
 BoolLiteral::BoolLiteral(const bool value) : value(value) {}
 
 void BoolLiteral::print() const {
@@ -74,6 +94,10 @@ void BoolLiteral::print() const {
     } else {
         printf("false");
     }
+}
+
+std::vector<ASTNode *> BoolLiteral::children() {
+    return {};
 }
 
 TernaryExpr::TernaryExpr(const Expr * cond, const Expr * tru, const Expr * fals) :
@@ -94,10 +118,28 @@ void TernaryExpr::print() const {
     tru->print();  printf(" : "); fals->print();
 }
 
+std::vector<ASTNode *> TernaryExpr::children() {
+    return {(ASTNode *) cond, (ASTNode *) tru, (ASTNode *) fals};
+}
+
+TypeIdent::TypeIdent(const char * const _id) : id(std::string(_id)) {}
+
+void TypeIdent::print() const {
+    std::cout << id;
+}
+
+std::vector<ASTNode *> TypeIdent::children() {
+    return {};
+}
+
 Ident::Ident(const char * const _id) : id(std::string(_id)) {}
 
 void Ident::print() const {
     std::cout << id;
+}
+
+std::vector<ASTNode *> Ident::children() {
+    return {};
 }
 
 MathExpr::MathExpr(const char op, const Expr * left, const Expr * right) :
@@ -117,6 +159,10 @@ void MathExpr::print() const {
     right->print();
 }
 
+std::vector<ASTNode *> MathExpr::children() {
+    return {(ASTNode *) left, (ASTNode *) right};
+}
+
 BoolExpr::BoolExpr(const char * const op, const Expr * left, const Expr * right) :
     op(std::string(op)),
     left(left),
@@ -134,6 +180,10 @@ void BoolExpr::print() const {
     right->print();
 }
 
+std::vector<ASTNode *> BoolExpr::children() {
+    return {(ASTNode *) left, (ASTNode *) right};
+}
+
 ParensExpr::ParensExpr(const Expr * expr) : expr(expr) {}
 
 ParensExpr::~ParensExpr() {
@@ -144,6 +194,10 @@ void ParensExpr::print() const {
     putchar('(');
     expr->print();
     putchar(')');
+}
+
+std::vector<ASTNode *> ParensExpr::children() {
+    return {(ASTNode *) expr};
 }
 
 ParensTypename::ParensTypename(const Typename * name) : name(name) {}
@@ -158,6 +212,10 @@ void ParensTypename::print() const {
     putchar(')');
 }
 
+std::vector<ASTNode *> ParensTypename::children() {
+    return {(ASTNode *) name};
+}
+
 PtrTypename::PtrTypename(const Typename * name) : name(name) {}
 
 PtrTypename::~PtrTypename() {
@@ -169,6 +227,10 @@ void PtrTypename::print() const {
     putchar('*');
 }
 
+std::vector<ASTNode *> PtrTypename::children() {
+    return {(ASTNode *) name};
+}
+
 MutTypename::MutTypename(const Typename * name) : name(name) {}
 
 MutTypename::~MutTypename() {
@@ -178,6 +240,10 @@ MutTypename::~MutTypename() {
 void MutTypename::print() const {
     printf("mut ");
     name->print();
+}
+
+std::vector<ASTNode *> MutTypename::children() {
+    return {(ASTNode *) name};
 }
 
 TypenameList::TypenameList(std::vector<Typename *> types) : types(types) {}
@@ -201,6 +267,10 @@ void TypenameList::push_type(Typename * type_name) {
     types.push_back(type_name);
 }
 
+std::vector<ASTNode *> TypenameList::children() {
+    return cast_nodes(types);
+}
+
 VarDeclList::VarDeclList(std::vector<VarDecl *> decls) : decls(decls) {}
 
 VarDeclList::~VarDeclList() {
@@ -218,6 +288,10 @@ void VarDeclList::print() const {
 
 void VarDeclList::push_decl(VarDecl * decl) {
     decls.push_back(decl);
+}
+
+std::vector<ASTNode *> VarDeclList::children() {
+    return cast_nodes(decls);
 }
 
 ExprList::ExprList(std::vector<Expr *> exprs) : exprs(exprs) {}
@@ -241,6 +315,10 @@ void ExprList::push_expr(Expr * expr) {
     exprs.push_back(expr);
 }
 
+std::vector<ASTNode *> ExprList::children() {
+    return cast_nodes(exprs);
+}
+
 StatementList::StatementList(std::vector<Statement *> statements) : statements(statements) {}
 
 StatementList::~StatementList() {
@@ -260,6 +338,10 @@ void StatementList::push_statement(Statement * statement) {
     statements.push_back(statement);
 }
 
+std::vector<ASTNode *> StatementList::children() {
+    return cast_nodes(statements);
+}
+
 TupleTypename::TupleTypename(const TypenameList * type_list) : type_list(type_list) {}
 
 TupleTypename::~TupleTypename() {
@@ -272,6 +354,10 @@ void TupleTypename::print() const {
     putchar(']');
 }
 
+std::vector<ASTNode *> TupleTypename::children() {
+    return {(ASTNode *) type_list};
+}
+
 TupleExpr::TupleExpr(const ExprList * expr_list) : expr_list(expr_list) {}
 
 TupleExpr::~TupleExpr() {
@@ -282,6 +368,10 @@ void TupleExpr::print() const {
     putchar('[');
     expr_list->print();
     putchar(']');
+}
+
+std::vector<ASTNode *> TupleExpr::children() {
+    return {(ASTNode *) expr_list};
 }
 
 FuncTypename::FuncTypename(const TypenameList * params, const Typename * ret_type) :
@@ -301,6 +391,10 @@ void FuncTypename::print() const {
     ret_type->print();
 }
 
+std::vector<ASTNode *> FuncTypename::children() {
+    return {(ASTNode *) params, (ASTNode *) ret_type};
+}
+
 TypeAlias::TypeAlias(const Ident * name, const Typename * type_expr) : name(name), type_expr(type_expr) {}
 
 TypeAlias::~TypeAlias() {
@@ -313,6 +407,10 @@ void TypeAlias::print() const {
     name->print();
     printf(" = ");
     type_expr->print();
+}
+
+std::vector<ASTNode *> TypeAlias::children() {
+    return {(Typename *) name, (ASTNode *) type_expr};
 }
 
 StructDecl::StructDecl(const Ident * name, const VarDeclList * members) : name(name), members(members) {}
@@ -328,6 +426,10 @@ void StructDecl::print() const {
     printf(" {\n");
     members->print();
     printf("};\n");
+}
+
+std::vector<ASTNode *> StructDecl::children() {
+    return {(Expr *) name, (ASTNode *) members};
 }
 
 VarDecl::VarDecl(const Typename * type_name, const Ident * var_name) :
@@ -350,6 +452,10 @@ void VarDecl::add_to_scope(SymbolTable * symtable) {
     symtable->put(var_name->id, new Symbol(Var));
 }
 
+std::vector<ASTNode *> VarDecl::children() {
+    return {(ASTNode *) type_name, (Expr *) var_name};
+}
+
 VarDeclInit::VarDeclInit(const VarDecl * decl, const Expr * init) : decl(decl), init(init) {}
 
 VarDeclInit::~VarDeclInit() {
@@ -361,6 +467,10 @@ void VarDeclInit::print() const {
     decl->print();
     printf(" = ");
     init->print();
+}
+
+std::vector<ASTNode *> VarDeclInit::children() {
+    return {(ASTNode *) decl, (ASTNode *) init};
 }
 
 IfStmt::IfStmt(const Expr * cond, const StatementList * then) :
@@ -381,6 +491,10 @@ void IfStmt::print() const {
     printf("}");
 }
 
+std::vector<ASTNode *> IfStmt::children() {
+    return {(ASTNode *) cond, (ASTNode *) then};
+}
+
 IfElseStmt::IfElseStmt(const IfStmt * if_stmt, const StatementList * els) : if_stmt(if_stmt), els(els) {}
 
 IfElseStmt::~IfElseStmt() {
@@ -393,6 +507,10 @@ void IfElseStmt::print() const {
     printf(" else {\n");
     els->print();
     printf("}");
+}
+
+std::vector<ASTNode *> IfElseStmt::children() {
+    return {(ASTNode *) if_stmt, (ASTNode *) els};
 }
 
 WhileStmt::WhileStmt(const Expr * cond, const StatementList * body) : cond(cond), body(body) {}
@@ -408,6 +526,10 @@ void WhileStmt::print() const {
     printf(") {\n");
     body->print();
     printf("};\n");
+}
+
+std::vector<ASTNode *> WhileStmt::children() {
+    return {(ASTNode *) cond, (ASTNode *) body};
 }
 
 ForStmt::ForStmt(const Expr * init, const Expr * cond, const Expr * update, const StatementList * body) :
@@ -437,6 +559,10 @@ void ForStmt::print() const {
     printf("}");
 }
 
+std::vector<ASTNode *> ForStmt::children() {
+    return {(ASTNode *) init, (ASTNode *) condition, (ASTNode *) update, (ASTNode *) body};
+}
+
 AddrOf::AddrOf(const Expr * expr) : expr(expr) {}
 
 AddrOf::~AddrOf() {
@@ -446,6 +572,10 @@ AddrOf::~AddrOf() {
 void AddrOf::print() const {
     putchar('&');
     expr->print();
+}
+
+std::vector<ASTNode *> AddrOf::children() {
+    return {(ASTNode *) expr};
 }
 
 Deref::Deref(const Expr * expr) : expr(expr) {}
@@ -459,6 +589,10 @@ void Deref::print() const {
     expr->print();
 }
 
+std::vector<ASTNode *> Deref::children() {
+    return {(ASTNode *) expr};
+}
+
 CastExpr::CastExpr(const Typename * dest_type, const Expr * expr) : dest_type(dest_type), expr(expr) {}
 
 CastExpr::~CastExpr() {
@@ -470,6 +604,10 @@ void CastExpr::print() const {
     expr->print();
     printf(" as ");
     dest_type->print();
+}
+
+std::vector<ASTNode *> CastExpr::children() {
+    return {(ASTNode *) dest_type, (ASTNode *) expr};
 }
 
 LogicalExpr::LogicalExpr(const std::string op, const Expr *l, const Expr *r) :
@@ -489,6 +627,10 @@ void LogicalExpr::print() const {
     right->print();
 }
 
+std::vector<ASTNode *> LogicalExpr::children() {
+    return {(ASTNode *) left, (ASTNode *) right};
+}
+
 FunctionCall::FunctionCall(const CallingExpr * func, const ExprList * args) :
     func(func),
     args(args)
@@ -504,6 +646,10 @@ void FunctionCall::print() const {
     putchar('(');
     args->print();
     putchar(')');
+}
+
+std::vector<ASTNode *> FunctionCall::children() {
+    return {(ASTNode *) func, (ASTNode *) args};
 }
 
 ArgsList::ArgsList(std::vector<VarDecl *> args) : args(args) {}
@@ -533,6 +679,10 @@ void ArgsList::add_to_scope(SymbolTable * symtable) {
     }
 }
 
+std::vector<ASTNode *> ArgsList::children() {
+    return cast_nodes(args);
+}
+
 FuncDecl::FuncDecl(const Ident * name, const ArgsList * params, const Typename * ret_type, const StatementList * body) :
     name(name),
     params(params),
@@ -558,6 +708,10 @@ void FuncDecl::print() const {
     printf("}\n");
 }
 
+std::vector<ASTNode *> FuncDecl::children() {
+    return {(Expr *) name, (ASTNode *) params, (ASTNode *) ret_type, (ASTNode *) body};
+}
+
 ProgramSource::ProgramSource(std::vector<ASTNode *> nodes) : nodes(nodes) {}
 
 ProgramSource::~ProgramSource() {
@@ -575,6 +729,10 @@ void ProgramSource::add_node(ASTNode * node) {
     nodes.push_back(node);
 }
 
+std::vector<ASTNode *> ProgramSource::children() {
+    return nodes;
+}
+
 ReturnStatement::ReturnStatement(const Expr * val) : val(val) {}
 
 ReturnStatement::~ReturnStatement() {
@@ -584,4 +742,8 @@ ReturnStatement::~ReturnStatement() {
 void ReturnStatement::print() const {
     printf("return ");
     val->print();
+}
+
+std::vector<ASTNode *> ReturnStatement::children() {
+    return {(ASTNode *) val};
 }

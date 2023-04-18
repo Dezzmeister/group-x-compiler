@@ -50,6 +50,7 @@ extern void yyerror(const char * const error);
     IfStmt * if_statement;
     IfElseStmt * if_else_statement;
     WhileStmt * while_statement;
+    TypeIdent * type_ident;
 }
 
 %token FUNC_TYPE_OP NEWLINE
@@ -72,7 +73,8 @@ extern void yyerror(const char * const error);
 
 %nonassoc CALL_PREC
 
-%nonassoc <ident> IDENT DECLARED_TYPE DECLARED_VAR DECLARED_FUNC
+%nonassoc <ident> IDENT DECLARED_VAR DECLARED_FUNC
+%nonassoc <type_ident> DECLARED_TYPE
 %nonassoc <int_literal> INT
 %nonassoc <float_literal> FLOAT
 %nonassoc <bool_literal> BOOL
@@ -86,7 +88,7 @@ extern void yyerror(const char * const error);
 %type <math_expr> math_expr
 %type <bool_expr> bool_expr
 %type <type_name> type_name
-%type <ident> simple_type_name
+%type <type_ident> simple_type_name
 %type <ptr_type_name> ptr_type_name
 %type <mut_type_name> mut_type_name
 %type <tuple_type_name> tuple_type_name

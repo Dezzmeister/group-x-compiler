@@ -1,3 +1,5 @@
+#include <fstream>
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +39,12 @@ int main(int argc, char ** argv) {
     printf("expr: ");
     x::top->print();
     printf("\nkind: %s\n", x::kind_map[x::top->get_kind()].c_str());
+
+    // TODO: Command line argument to generate dotfile
+    std::ofstream dotfile;
+    dotfile.open("prog.dot");
+    x::tree_dotfile(dotfile, x::top);
+    dotfile.close();
 
     return val;
 }
