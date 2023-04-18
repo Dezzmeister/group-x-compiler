@@ -82,6 +82,13 @@ mut         {return MUT;}
 "&&"        {return BOOL_AND;}
 "||"        {return BOOL_OR;}
 
+"=="        {return EQU;}
+"!="        {return NEQ;}
+">"         {return GTR;}
+"<"         {return LES;}
+">="        {return GEQ;}
+"<="        {return LEQ;}
+
 \+          {return '+';}
 \-          {return '-';}
 \/          {return '/';}
@@ -96,6 +103,7 @@ mut         {return MUT;}
 \{          {return '{';}
 \}          {return '}';}
 &           {return '&';}
+%           {return '%';}
 
 \'\\n\'     {yylval.char_literal = new CharLiteral('\n'); return CHAR;}
 \'\\t\'     {yylval.char_literal = new CharLiteral('\t'); return CHAR;}

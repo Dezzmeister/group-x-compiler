@@ -685,7 +685,7 @@ class LogicalExpr : public Expr {
         const Expr * left;
         const Expr * right;
 
-        LogicalExpr(std::string op , const Expr *l, const Expr *r);
+        LogicalExpr(const char * const op , const Expr *l, const Expr *r);
 
         virtual ~LogicalExpr();
 

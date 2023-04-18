@@ -30,7 +30,7 @@ int cool_func_1(int a, int b) {
         int z = fac(10);
     }; // TODO: Remove trailing comma from grammar for if/while/for/etc.
 
-    for (mut int i = 0; false; i = i + 1) {
+    for (mut int i = 0; i <= 100; i = i + 1) {
         print(i);
     };
 

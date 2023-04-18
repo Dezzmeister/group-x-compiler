@@ -125,7 +125,7 @@ void CharLiteral::print() const {
             printf("\\r");
             break;
         default:
-            printf("%c", value);
+            printf("'%c'", value);
     }
 }
 
@@ -637,12 +637,11 @@ ForStmt::~ForStmt() {
 void ForStmt::print() const {
     printf("for (");
     init->print();
-    putchar(' ');
+    printf("; ");
     condition->print();
-    putchar(' ');
+    printf("; ");
     update->print();
-    putchar(' ');
-    printf(" {\n");
+    printf(") {\n");
     body->print();
     printf("}");
 }
@@ -698,8 +697,8 @@ std::vector<ASTNode *> CastExpr::children() {
     return {(ASTNode *) dest_type, (ASTNode *) expr};
 }
 
-LogicalExpr::LogicalExpr(const std::string op, const Expr *l, const Expr *r) :
-    op(op),
+LogicalExpr::LogicalExpr(const char * const op, const Expr *l, const Expr *r) :
+    op(std::string(op)),
     left(l),
     right(r)
     {}
