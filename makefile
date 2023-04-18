@@ -19,6 +19,10 @@ release: compiler_release
 
 test_all: test_debug test_release
 
+# So make doesn't try to build everytime.
+debug_bin: ${DEPS} main.cpp
+	${CC} ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
+
 compiler_debug: ${DEPS} main.cpp
 	${CC} ${DBG_FLAGS} $^ -o debug_bin ${LD_FLAGS}
 

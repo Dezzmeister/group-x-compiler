@@ -10,6 +10,7 @@ std::vector<std::string> x::kind_map;
 const int ProgramSource::kind = x::next_kind("program_source");
 const int IntLiteral::kind = x::next_kind("int_literal");
 const int FloatLiteral::kind = x::next_kind("float_literal");
+const int TernaryExpr::kind = x::next_kind("ternary_expr");
 const int BoolLiteral::kind = x::next_kind("bool_literal");
 const int Ident::kind = x::next_kind("ident");
 const int ParensExpr::kind = x::next_kind("parens_expr");
@@ -30,9 +31,12 @@ const int VarDeclInit::kind = x::next_kind("var_decl_init");
 const int IfStmt::kind = x::next_kind("if_statement");
 const int IfElseStmt::kind = x::next_kind("if_else_statement");
 const int WhileStmt::kind = x::next_kind("while_statement");
+const int PrintStmt::kind = x::next_kind("print");
+const int ForStmt::kind = x::next_kind("for");
 const int AddrOf::kind = x::next_kind("addr_of");
 const int Deref::kind = x::next_kind("deref");
 const int CastExpr::kind = x::next_kind("cast_expr");
+const int LogicalExpr::kind = x::next_kind("logical_expr");
 const int TupleExpr::kind = x::next_kind("tuple_expr");
 const int FunctionCall::kind = x::next_kind("function_call");
 const int StatementList::kind = x::next_kind("statement_list");
@@ -71,6 +75,24 @@ void BoolLiteral::print() const {
     } else {
         printf("false");
     }
+}
+
+TernaryExpr::TernaryExpr(const Expr * cond, const Expr * tru, const Expr * fals) :
+    cond(cond),
+    tru(tru),
+    fals(fals)
+    {}
+
+TernaryExpr::~TernaryExpr() {
+    delete cond;
+    delete tru;
+    delete fals;
+}
+
+void TernaryExpr::print() const {
+    cond->print();
+    printf(" ? ");
+    tru->print();  printf(" : "); fals->print();
 }
 
 Ident::Ident(const char * const _id) : id(std::string(_id)) {}
@@ -389,6 +411,33 @@ void WhileStmt::print() const {
     printf("};\n");
 }
 
+ForStmt::ForStmt(const Expr * init, const Expr * cond, const Expr * update, const StatementList * body) :
+    init(init),
+    condition(cond),
+    update(update),
+    body(body)
+    {}
+
+ForStmt::~ForStmt() {
+    delete init;
+    delete condition;
+    delete update;
+    delete body;
+}
+
+void ForStmt::print() const {
+    printf("for (");
+    init->print();
+    putchar(' ');
+    condition->print();
+    putchar(' ');
+    update->print();
+    putchar(' ');
+    printf(" {\n");
+    body->print();
+    printf("}");
+}
+
 AddrOf::AddrOf(const Expr * expr) : expr(expr) {}
 
 AddrOf::~AddrOf() {
@@ -422,6 +471,23 @@ void CastExpr::print() const {
     expr->print();
     printf(" as ");
     dest_type->print();
+}
+
+LogicalExpr::LogicalExpr(const std::string op, const Expr *l, const Expr *r) :
+    op(op),
+    left(l),
+    right(r)
+    {}
+
+LogicalExpr::~LogicalExpr() {
+    delete left;
+    delete right;
+}
+
+void LogicalExpr::print() const {
+    left->print();
+    printf(" %s ", op.c_str());
+    right->print();
 }
 
 FunctionCall::FunctionCall(const CallingExpr * func, const ExprList * args) :

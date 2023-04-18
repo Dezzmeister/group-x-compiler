@@ -1,6 +1,6 @@
 #!/bin/bash
 
-make debug
+make debug_bin
 
 if [ $? -ne 0 ]; then
     echo $?

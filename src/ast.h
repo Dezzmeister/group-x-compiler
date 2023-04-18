@@ -218,21 +218,17 @@ class FloatLiteral : public NumLiteral {
 
 class TernaryExpr: public Expr {
     public:
-        const static int kind = 11;
-        Expr * condition;
-        Expr * true_expr;
-        Expr * false_expr;
-        TernaryExpr(Expr *, Expr *, Expr *);
-        int get_kind() {
-            return kind;
-        }
-        void print() {
-            condition->print();
-            putchar('?');
-            true_expr->print();
-            putchar(':');
-            false_expr->print();
-        }
+        const Expr * cond;
+        const Expr * tru;
+        const Expr * fals;
+
+        TernaryExpr(const Expr * cond, const Expr * tru, const Expr * fals);
+
+        virtual ~TernaryExpr();
+
+        virtual void print() const;
+
+        KIND_CLASS()
 };
 
 class BoolLiteral : public Expr {
@@ -514,7 +510,18 @@ class WhileStmt : public Statement {
 };
 
 class ForStmt : public Statement {
+    public:
+    const Expr * init, *condition, *update;
+    const StatementList * body;
 
+    ForStmt(const Expr *init, const Expr *condition, 
+    const Expr *update, const StatementList * body);
+
+    virtual ~ForStmt();
+
+    virtual void print() const;
+
+    KIND_CLASS()
 };
 
 class AddrOf : public Expr {
@@ -559,19 +566,17 @@ class CastExpr : public Expr {
 
 class LogicalExpr : public Expr {
     public:
-        const static int kind = 13;
-        const char * op;
-        Expr * left;
-        Expr * right;
-        LogicalExpr(const char *, Expr *, Expr *);
-        int get_kind() {
-            return kind;
-        }
-        void print() {
-            left->print();
-            printf("%s", op);
-            right->print();
-        }
+        const std::string op;
+        const Expr * left;
+        const Expr * right;
+
+        LogicalExpr(std::string op , const Expr *l, const Expr *r);
+
+        virtual ~LogicalExpr();
+
+        virtual void print() const; 
+
+        KIND_CLASS()
 };
 
 class ArgsList : public ASTNode {
