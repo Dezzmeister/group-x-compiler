@@ -37,7 +37,5 @@ int main(int argc, char ** argv) {
     x::top->print();
     printf("\nkind: %s\n", x::kind_map[x::top->get_kind()].c_str());
 
-    x::top->codegen();
-
     return val;
 }

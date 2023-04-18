@@ -10,3 +10,4 @@ src/parser.dot
 parser.png
 debug_bin
 release_bin
+.vscode/
