@@ -47,7 +47,9 @@ ${GENERATED_FILES}: src/parser.ypp src/scanner.lex
 	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
 
-.PHONY: clean
+.PHONY: clean todo
 clean:
 	rm -f debug_bin release_bin ${GENERATED_FILES} src/parser.dot src/parser.output parser.png
 
+todo:
+	grep -R TODO

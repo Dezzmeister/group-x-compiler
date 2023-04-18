@@ -34,5 +34,14 @@ int cool_func_1(int a, int b) {
         print(i);
     };
 
+    bool b0 = true && false;
+    bool b1 = b0 || false;
+    bool b2 = (b0 and b1) or true;
+    bool b3 = 5 in {1, 2, 3, 4, 5};
+    bool b4 = fac(3) not in {1, 2, 3, 4, 5};
+    bool b5 = not (fac(3) == 1);
+    bool b6 = !b5;
+    bool b7 = !!!true;
+
     return epic_ptr;
 };

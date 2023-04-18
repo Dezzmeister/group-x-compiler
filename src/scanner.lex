@@ -56,6 +56,8 @@ mut         {return MUT;}
 not         {return NOT_KW;}
 in          {return IN_KW;}
 not[ \t]+in {return NOT_IN_KW;}
+and         {return AND_KW;}
+or          {return OR_KW;}
 
 {ident}     {
                 yylval.ident = new Ident(yytext); 
