@@ -399,6 +399,7 @@ class ParamsList : public ASTNode {
         KIND_CLASS()
 };
 
+// TODO: Find a way to avoid diamond inheritance here
 class FunctionCall : public Statement, public Expr {
     public:
         const CallingExpr * func;
@@ -527,6 +528,20 @@ class VarDeclInit : public Statement {
         VarDeclInit(const VarDecl * decl, const Expr * init);
 
         virtual ~VarDeclInit();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        KIND_CLASS()
+};
+
+class ArrayLiteral : public Expr {
+    public:
+        const ExprList * items;
+
+        ArrayLiteral(const ExprList * items);
+
+        virtual ~ArrayLiteral();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
@@ -678,6 +693,22 @@ class ReturnStatement : public Statement {
         ReturnStatement(const Expr * val);
 
         virtual ~ReturnStatement();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        KIND_CLASS()
+};
+
+class Assignment : public Statement {
+    public:
+        // TODO (maybe): Distinguish between lvalue and rvalue at parser level?
+        const Expr * lhs;
+        const Expr * rhs;
+
+        Assignment(const Expr * lhs, const Expr * rhs);
+
+        virtual ~Assignment();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();

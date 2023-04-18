@@ -42,8 +42,9 @@ This tells Vim to use yacc syntax highlighting for .ypp files.
 ==================================== TODOs ====================================
 
 1. We are still finishing the parser. We still need include/imports, boolean
-    expressions, static array types, and functions with no arguments. We should
-    also fix up the grammar so that it resembles our LRM more closely.
+    expressions, static array types, for loops, string literals, char literals, and
+    better error messages. We should also fix up the grammar so that it resembles 
+    our LRM more closely.
 
 2. We may need a way to parse command line args and options. unistd.h has some 
     utils for this but the C++ standard library might have better ones. We should

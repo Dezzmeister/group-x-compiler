@@ -26,10 +26,12 @@ const int VarDeclList::kind = x::next_kind("var_decl_list");
 const int ExprList::kind = x::next_kind("expr_list");
 const int TupleTypename::kind = x::next_kind("tuple_typename");
 const int FuncTypename::kind = x::next_kind("func_typename");
+const int StaticArrayTypename::kind = x::next_kind("static_array_typename");
 const int TypeAlias::kind = x::next_kind("type_alias");
 const int StructDecl::kind = x::next_kind("struct_decl");
 const int VarDecl::kind = x::next_kind("var_decl");
 const int VarDeclInit::kind = x::next_kind("var_decl_init");
+const int ArrayLiteral::kind = x::next_kind("array_literal");
 const int IfStmt::kind = x::next_kind("if_statement");
 const int IfElseStmt::kind = x::next_kind("if_else_statement");
 const int WhileStmt::kind = x::next_kind("while_statement");
@@ -44,6 +46,7 @@ const int StatementList::kind = x::next_kind("statement_list");
 const int ParamsList::kind = x::next_kind("params_list");
 const int FuncDecl::kind = x::next_kind("func_decl");
 const int ReturnStatement::kind = x::next_kind("return_statement");
+const int Assignment::kind = x::next_kind("assignment");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -401,6 +404,27 @@ std::vector<ASTNode *> FuncTypename::children() {
     return {(ASTNode *) params, (ASTNode *) ret_type};
 }
 
+StaticArrayTypename::StaticArrayTypename(const Typename * element_type, const IntLiteral * size) :
+    element_type(element_type),
+    size(size)
+    {}
+
+StaticArrayTypename::~StaticArrayTypename() {
+    delete element_type;
+    delete size;
+}
+
+void StaticArrayTypename::print() const {
+    element_type->print();
+    putchar('[');
+    size->print();
+    putchar(']');
+}
+
+std::vector<ASTNode *> StaticArrayTypename::children() {
+    return {(ASTNode *) element_type, (ASTNode *) size};
+}
+
 TypeAlias::TypeAlias(const Ident * name, const Typename * type_expr) : name(name), type_expr(type_expr) {}
 
 TypeAlias::~TypeAlias() {
@@ -477,6 +501,22 @@ void VarDeclInit::print() const {
 
 std::vector<ASTNode *> VarDeclInit::children() {
     return {(ASTNode *) decl, (ASTNode *) init};
+}
+
+ArrayLiteral::ArrayLiteral(const ExprList * items) : items(items) {}
+
+ArrayLiteral::~ArrayLiteral() {
+    delete items;
+}
+
+void ArrayLiteral::print() const {
+    putchar('{');
+    items->print();
+    putchar('}');
+}
+
+std::vector<ASTNode *> ArrayLiteral::children() {
+    return {(ASTNode *) items};
 }
 
 IfStmt::IfStmt(const Expr * cond, const StatementList * then) :
@@ -754,4 +794,21 @@ void ReturnStatement::print() const {
 
 std::vector<ASTNode *> ReturnStatement::children() {
     return {(ASTNode *) val};
+}
+
+Assignment::Assignment(const Expr * lhs, const Expr * rhs) : lhs(lhs), rhs(rhs) {}
+
+Assignment::~Assignment() {
+    delete lhs;
+    delete rhs;
+}
+
+void Assignment::print() const {
+    lhs->print();
+    printf(" = ");
+    rhs->print();
+}
+
+std::vector<ASTNode *> Assignment::children() {
+    return {(ASTNode *) lhs, (ASTNode *) rhs};
 }

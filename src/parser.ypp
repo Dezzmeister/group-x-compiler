@@ -34,11 +34,13 @@ extern void yyerror(const char * const error);
     TypenameList * type_list;
     VarDeclList * var_decl_list;
     FuncTypename * func_type_name;
+    StaticArrayTypename * static_arr_type_name;
     TypeAlias * type_alias;
     TypeDecl * type_decl;
     StructDecl * struct_decl;
     VarDecl * var_decl;
     VarDeclInit * var_decl_init;
+    ArrayLiteral * array_literal;
     AddrOf * addr_of;
     Deref * deref;
     CastExpr * cast_expr;
@@ -51,6 +53,7 @@ extern void yyerror(const char * const error);
     IfElseStmt * if_else_statement;
     WhileStmt * while_statement;
     TypeIdent * type_ident;
+    Assignment * assignment;
 }
 
 %token FUNC_TYPE_OP NEWLINE
@@ -94,6 +97,7 @@ extern void yyerror(const char * const error);
 %type <tuple_type_name> tuple_type_name
 %type <parens_type_name> parens_type_name
 %type <func_type_name> func_type_name
+%type <static_arr_type_name> static_arr_type_name
 %type <type_list> type_list
 %type <var_decl_list> var_decl_list
 %type <struct_decl> struct_decl
@@ -101,6 +105,7 @@ extern void yyerror(const char * const error);
 %type <type_decl> type_decl
 %type <var_decl> var_decl
 %type <var_decl_init> var_decl_init
+%type <array_literal> array_literal
 %type <addr_of> addr_of_expr
 %type <deref> deref_expr
 %type <cast_expr> cast_expr
@@ -112,6 +117,7 @@ extern void yyerror(const char * const error);
 %type <if_statement> if_statement
 %type <if_else_statement> if_else_statement
 %type <while_statement> while_statement
+%type <assignment> assignment
 
 %%
 
@@ -133,6 +139,7 @@ statement : type_decl {$$ = $1;}
           | if_statement {$$ = $1;}
           | if_else_statement {$$ = $1;}
           | while_statement {$$ = $1;}
+          | assignment {$$ = $1;}
           ;
 
 statement_list : statement ';' {$$ = new StatementList({$1});}
@@ -146,6 +153,7 @@ expr : '(' expr ')' {$$ = new ParensExpr($2);}
      | deref_expr {$$ = $1;}
      | cast_expr {$$ = $1;}
      | tuple_expr {$$ = $1;}
+     | array_literal {$$ = $1;}
      | function_call %prec CALL_PREC {$$ = (Expr *) $1;}
      | BOOL {$$ = $1;}
      | num {$$ = $1;}
@@ -189,6 +197,9 @@ type_decl : type_alias {$$ = $1;}
 var_decl_init : var_decl '=' expr {$$ = new VarDeclInit($1, $3);}
               ;
 
+array_literal : '{' expr_list '}' {$$ = new ArrayLiteral($2);}
+              ;
+
 var_decl : type_name IDENT {
                 $$ = new VarDecl($1, $2);
                 x::symtable->put($2->id, new Symbol(Var));
@@ -214,6 +225,9 @@ while_statement : WHILE_KW '(' expr ')' '{'
                         x::destroy_scope();
                     }
                 ;
+
+assignment : expr '=' expr {$$ = new Assignment($1, $3);}
+           ;
 
 var_decl_list : var_decl ';' {$$ = new VarDeclList({$1});}
               | var_decl_list var_decl ';' {$1->push_decl($2); $$ = $1;}
@@ -256,12 +270,16 @@ type_name : simple_type_name {$$ = $1;}
           | mut_type_name {$$ = $1;}
           | tuple_type_name {$$ = $1;}
           | func_type_name {$$ = $1;}
+          | static_arr_type_name {$$ = $1;}
           | parens_type_name {$$ = $1;}
           ;
 
 func_type_name : '[' ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename(new TypenameList({}), $4);}
                | '[' type_list ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename($2, $5);}
                ;
+
+static_arr_type_name : type_name '[' INT ']' {$$ = new StaticArrayTypename($1, $3);}
+                     ;
 
 parens_type_name : '(' type_name ')' {$$ = new ParensTypename($2);}
                  ;
