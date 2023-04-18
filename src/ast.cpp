@@ -27,6 +27,9 @@ const int TypeAlias::kind = x::next_kind("type_alias");
 const int StructDecl::kind = x::next_kind("struct_decl");
 const int VarDecl::kind = x::next_kind("var_decl");
 const int VarDeclInit::kind = x::next_kind("var_decl_init");
+const int IfStmt::kind = x::next_kind("if_statement");
+const int IfElseStmt::kind = x::next_kind("if_else_statement");
+const int WhileStmt::kind = x::next_kind("while_statement");
 const int AddrOf::kind = x::next_kind("addr_of");
 const int Deref::kind = x::next_kind("deref");
 const int CastExpr::kind = x::next_kind("cast_expr");
@@ -337,6 +340,53 @@ void VarDeclInit::print() const {
     decl->print();
     printf(" = ");
     init->print();
+}
+
+IfStmt::IfStmt(const Expr * cond, const StatementList * then) :
+    cond(cond),
+    then(then)
+    {}
+
+IfStmt::~IfStmt() {
+    delete cond;
+    delete then;
+}
+
+void IfStmt::print() const {
+    printf("if (");
+    cond->print();
+    printf(") {\n");
+    then->print();
+    printf("}");
+}
+
+IfElseStmt::IfElseStmt(const IfStmt * if_stmt, const StatementList * els) : if_stmt(if_stmt), els(els) {}
+
+IfElseStmt::~IfElseStmt() {
+    delete if_stmt;
+    delete els;
+}
+
+void IfElseStmt::print() const {
+    if_stmt->print();
+    printf(" else {\n");
+    els->print();
+    printf("}");
+}
+
+WhileStmt::WhileStmt(const Expr * cond, const StatementList * body) : cond(cond), body(body) {}
+
+WhileStmt::~WhileStmt() {
+    delete cond;
+    delete body;
+}
+
+void WhileStmt::print() const {
+    printf("while (");
+    cond->print();
+    printf(") {\n");
+    body->print();
+    printf("};\n");
 }
 
 AddrOf::AddrOf(const Expr * expr) : expr(expr) {}

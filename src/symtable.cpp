@@ -6,11 +6,15 @@ SymbolTable * x::symtable = init_symtable();
 
 static SymbolTable * init_symtable() {
     SymbolTable * out = new SymbolTable(nullptr);
+
     // Built-in types
     out->put(std::string("int"), new Symbol(Type));
     out->put(std::string("float"), new Symbol(Type));
+    out->put(std::string("bool"), new Symbol(Type));
     out->put(std::string("char"), new Symbol(Type));
-    // TODO: Built-in functions
+
+    // Built-in functions
+    out->put(std::string("print"), new Symbol(Func));
 
     return out;
 }
