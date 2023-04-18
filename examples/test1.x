@@ -13,10 +13,22 @@ struct CoolStruct {
     X epic_func;
 };
 
+int fac(int n) {
+    if (n) {
+        return n * fac(n - 1);
+    };
+
+    return 1;
+};
+
 int cool_func_1(int a, int b) {
     mut int sum = a + b;
     (mut int)* epic_ptr = &sum;
     CoolStruct* cool_struct_ptr = 0;
+
+    if (true) {
+        int z = fac(10);
+    }; // TODO: Remove trailing comma from grammar for if/while/for/etc.
 
     return epic_ptr;
 };

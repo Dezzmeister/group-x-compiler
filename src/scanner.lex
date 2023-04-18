@@ -25,9 +25,6 @@ float       (\-)?[[:digit:]]+\.[[:digit:]]*f?
 bool        (true)|(false)
 letter      [a-zA-Z]
 
-if          if
-else        else
-
 ident       ({letter}|_)({letter}|[[:digit:]]|_)*
 
 comment     \/\/.*\n
@@ -35,7 +32,7 @@ comment     \/\/.*\n
 %%
 {str_literal}  {yylval.c_str = strdup(yytext);}
 {ws}        {}
-{comment}   {}
+{comment}   {x::lineno++;}
 \n          {x::lineno++;}
 {int}       {yylval.int_literal = new IntLiteral(yytext); return INT;}
 {float}     {yylval.float_literal = new FloatLiteral(yytext); return FLOAT;}
@@ -46,12 +43,19 @@ type        {return TYPE_ALIAS_KW;}
 struct      {return STRUCT_KW;}
 as          {return CAST_KW;}
 return      {return RETURN_KW;}
+if          {return IF_KW;}
+else        {return ELSE_KW;}
+while       {return WHILE_KW;}
 
 mut         {return MUT;}
 
 {ident}     {
                 yylval.ident = new Ident(yytext);
-
+                
+                // Our grammar is not context free because of this: the lexer returns
+                // a different token depending on whether the identifier has been declared
+                // as a type, variable, or function, or if it's undeclared. This is great because
+                // it lets us do more with the grammar without running into conflicts
                 const Symbol * sym = x::symtable->get(std::string(yytext));
 
                 if (sym != nullptr) {

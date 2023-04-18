@@ -28,9 +28,9 @@ const int TypeAlias::kind = x::next_kind("type_alias");
 const int StructDecl::kind = x::next_kind("struct_decl");
 const int VarDecl::kind = x::next_kind("var_decl");
 const int VarDeclInit::kind = x::next_kind("var_decl_init");
-const int PrintStmt::kind = x::next_kind("print");
-const int IfStmt::kind = x::next_kind("if");
-const int WhileStmt::kind = x::next_kind("while");
+const int IfStmt::kind = x::next_kind("if_statement");
+const int IfElseStmt::kind = x::next_kind("if_else_statement");
+const int WhileStmt::kind = x::next_kind("while_statement");
 const int ForStmt::kind = x::next_kind("for");
 const int AddrOf::kind = x::next_kind("addr_of");
 const int Deref::kind = x::next_kind("deref");
@@ -363,41 +363,36 @@ void VarDeclInit::print() const {
     init->print();
 }
 
-PrintStmt::PrintStmt(const Expr * expr) : expr(expr) {}
-
-PrintStmt::~PrintStmt() {
-    delete expr;
-}
-
-void PrintStmt::print() const {
-    printf("print ");
-    expr->print();
-}
-
-IfStmt::IfStmt(const Expr * cond, const StatementList * then, const StatementList * els) :
+IfStmt::IfStmt(const Expr * cond, const StatementList * then) :
     cond(cond),
-    then(then),
-    els(els)
+    then(then)
     {}
 
 IfStmt::~IfStmt() {
     delete cond;
     delete then;
-    delete els;
 }
 
 void IfStmt::print() const {
-    printf("if ");
+    printf("if (");
     cond->print();
-    printf(" {\n");
+    printf(") {\n");
     then->print();
     printf("}");
+}
 
-    if (els) {
-        printf(" else {\n");
-        els->print();
-        printf("}");
-    }
+IfElseStmt::IfElseStmt(const IfStmt * if_stmt, const StatementList * els) : if_stmt(if_stmt), els(els) {}
+
+IfElseStmt::~IfElseStmt() {
+    delete if_stmt;
+    delete els;
+}
+
+void IfElseStmt::print() const {
+    if_stmt->print();
+    printf(" else {\n");
+    els->print();
+    printf("}");
 }
 
 WhileStmt::WhileStmt(const Expr * cond, const StatementList * body) : cond(cond), body(body) {}
@@ -408,11 +403,11 @@ WhileStmt::~WhileStmt() {
 }
 
 void WhileStmt::print() const {
-    printf("while ");
+    printf("while (");
     cond->print();
-    printf(" {\n");
+    printf(") {\n");
     body->print();
-    printf("}");
+    printf("};\n");
 }
 
 ForStmt::ForStmt(const Expr * init, const Expr * cond, const Expr * update, const StatementList * body) :

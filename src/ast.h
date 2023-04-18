@@ -467,46 +467,46 @@ class VarDeclInit : public Statement {
         KIND_CLASS()
 };
 
-class PrintStmt : public Statement {
+class IfStmt : public Statement {
     public:
-    const Expr * expr;
+        const Expr * cond;
+        const StatementList * then;
 
-    PrintStmt(const Expr * expr);
+        IfStmt(const Expr * cond, const StatementList * then);
 
-    virtual ~PrintStmt();
+        virtual ~IfStmt();
 
-    virtual void print() const;
+        virtual void print() const;
 
-    KIND_CLASS()
+        KIND_CLASS()
 };
 
-class IfStmt : public Statement {
-    const Expr * cond; 
-    const StatementList * then;
-    const StatementList * els;
+class IfElseStmt : public Statement {
+    public:
+        const IfStmt * if_stmt;
+        const StatementList * els;
 
-    IfStmt(const Expr * cond, const StatementList *then,
-    const StatementList * els); 
+        IfElseStmt(const IfStmt * if_stmt, const StatementList * els);
 
-    virtual ~IfStmt();
+        virtual ~IfElseStmt();
 
-    virtual void print() const;
+        virtual void print() const;
 
-    KIND_CLASS()
+        KIND_CLASS()
 };
 
 class WhileStmt : public Statement {
     public:
-    const Expr * cond;
-    const StatementList * body;
+        const Expr * cond;
+        const StatementList * body;
 
-    WhileStmt(const Expr * cond, const StatementList * body);
+        WhileStmt(const Expr * cond, const StatementList * body);
 
-    virtual ~WhileStmt();
+        virtual ~WhileStmt();
 
-    virtual void print() const;
+        virtual void print() const;
 
-    KIND_CLASS()
+        KIND_CLASS()
 };
 
 class ForStmt : public Statement {
