@@ -84,8 +84,7 @@ extern void yyerror(const char * const error);
 %type <statement_list> statement_list
 %type <num_literal> num
 %type <expr> expr
-%type <expr_list> expr_list
-%type <expr_list> args_list
+%type <expr_list> expr_list args_list
 %type <math_expr> math_expr
 %type <bool_expr> bool_expr
 %type <type_name> type_name
@@ -260,7 +259,8 @@ type_name : simple_type_name {$$ = $1;}
           | parens_type_name {$$ = $1;}
           ;
 
-func_type_name : '[' type_list ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename($2, $5);}
+func_type_name : '[' ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename(new TypenameList({}), $4);}
+               | '[' type_list ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename($2, $5);}
                ;
 
 parens_type_name : '(' type_name ')' {$$ = new ParensTypename($2);}

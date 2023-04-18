@@ -255,6 +255,10 @@ TypenameList::~TypenameList() {
 }
 
 void TypenameList::print() const {
+    if (types.size() == 0) {
+        return;
+    }
+
     for (size_t i = 0; i < types.size() - 1; i++) {
         types[i]->print();
         printf(", ");
