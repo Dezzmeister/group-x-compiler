@@ -98,14 +98,25 @@ void TernaryExpr::print() const {
     tru->print();  printf(" : "); fals->print();
 }
 
-// should compile to an if statement
-// if (cond) { var = tru; } else { var = fals; }
-
+// Translates to an if statement.
+// if (cond) goto tru_label  else goto false_label
+int TernaryExpr::gen() const {
+    int idx = cond->gen();
+    // Label of -1 represents empty label. Must be filled in by backpatching.
+    int ret = BasicBlock::add_instr(CondJumpTAC(idx, -1));
+    tru->gen();
+    fals->gen();
+    return ret; 
+}
 
 Ident::Ident(const char * const _id) : id(std::string(_id)) {}
 
 void Ident::print() const {
     std::cout << id;
+}
+
+int Ident::gen() const {
+    return BasicBlock::add_instr(LoadTAC(x::symtable->get(id))); 
 }
 
 MathExpr::MathExpr(const char op, const Expr * left, const Expr * right) :
@@ -125,6 +136,10 @@ void MathExpr::print() const {
     right->print();
 }
 
+int MathExpr::gen() const {
+    return 0;
+    // return BasicBlock::add_instr(AssignTAC(op, left->codegen(), right->codegen()));
+}
 
 
 BoolExpr::BoolExpr(const char * const op, const Expr * left, const Expr * right) :
@@ -144,7 +159,10 @@ void BoolExpr::print() const {
     right->print();
 }
 
-
+int  BoolExpr::gen() const {
+    return 0;
+    // return BasicBlock::add_instr(AssignTAC<bool, bool>(op, left->codegen(), right->codegen()));
+}
 
 ParensExpr::ParensExpr(const Expr * expr) : expr(expr) {}
 
@@ -158,7 +176,11 @@ void ParensExpr::print() const {
     putchar(')');
 }
 
-
+// Returns the index of the three address code
+// for its expression.
+int ParensExpr::gen() const {
+    return expr->gen();
+}
 
 ParensTypename::ParensTypename(const Typename * name) : name(name) {}
 
@@ -256,6 +278,15 @@ void ExprList::push_expr(Expr * expr) {
     exprs.push_back(expr);
 }
 
+int ExprList::gen() const {
+    int i = 0;
+    for (auto &expr : exprs) {
+        expr->gen();
+        ++i;
+    }
+    return i;
+}
+
 
 StatementList::StatementList(std::vector<Statement *> statements) : statements(statements) {}
 
@@ -274,6 +305,15 @@ void StatementList::print() const {
 
 void StatementList::push_statement(Statement * statement) {
     statements.push_back(statement);
+}
+
+int StatementList::gen() const {
+    int i = 0;
+    for (auto &statement : statements) {
+        statement->gen();
+        ++i;
+    }
+    return i;
 }
 
 
@@ -301,6 +341,9 @@ void TupleExpr::print() const {
     putchar(']');
 }
 
+int TupleExpr::gen() const {
+    return expr_list->gen();
+}
 
 
 FuncTypename::FuncTypename(const TypenameList * params, const Typename * ret_type) :
@@ -398,7 +441,10 @@ void PrintStmt::print() const {
     expr->print();
 }
 
-
+int PrintStmt::gen() const {
+    expr->gen();
+    return BasicBlock::add_instr(CallTAC(x::symtable->get("print"), 1));
+}
 
 IfStmt::IfStmt(const Expr * cond, const StatementList * then, const StatementList * els) :
     cond(cond),
@@ -426,7 +472,9 @@ void IfStmt::print() const {
     }
 }
 
-
+int IfStmt::gen() const {
+    return 0;
+}
 
 WhileStmt::WhileStmt(const Expr * cond, const StatementList * body) : cond(cond), body(body) {}
 
@@ -443,7 +491,10 @@ void WhileStmt::print() const {
     printf("}");
 }
 
-
+int WhileStmt::gen() const {
+    int body_idx = body->gen();
+    return BasicBlock::add_instr(CondJumpTAC(cond->gen(), body_idx));
+}
 
 ForStmt::ForStmt(const Expr * init, const Expr * cond, const Expr * update, const StatementList * body) :
     init(init),
@@ -472,6 +523,13 @@ void ForStmt::print() const {
     printf("}");
 }
 
+// translates to while loop
+int ForStmt::gen() const {
+    init->gen();
+    int body_idx = body->gen();
+    update->gen();
+    return BasicBlock::add_instr(CondJumpTAC(condition->gen(), body_idx));
+}
 
 
 AddrOf::AddrOf(const Expr * expr) : expr(expr) {}
@@ -485,7 +543,9 @@ void AddrOf::print() const {
     expr->print();
 }
 
-
+int AddrOf::gen() const {
+    return BasicBlock::add_instr(AddrTac(expr->gen()));
+}
 
 Deref::Deref(const Expr * expr) : expr(expr) {}
 
@@ -498,7 +558,9 @@ void Deref::print() const {
     expr->print();
 }
 
-
+int Deref::gen() const {
+    return BasicBlock::add_instr(DerefTAC(expr->gen()));
+}
 
 CastExpr::CastExpr(const Typename * dest_type, const Expr * expr) : dest_type(dest_type), expr(expr) {}
 
@@ -513,7 +575,9 @@ void CastExpr::print() const {
     dest_type->print();
 }
 
-
+int CastExpr::gen() const {
+    return BasicBlock::add_instr(CastTAC(dest_type, expr->gen()));
+}
 
 LogicalExpr::LogicalExpr(const std::string op, const Expr *l, const Expr *r) :
     op(op),
@@ -532,7 +596,10 @@ void LogicalExpr::print() const {
     right->print();
 }
 
-
+int LogicalExpr::gen() const {
+    return 0;
+    // return BasicBlock::add_instr(AssignTAC(op, left->codegen(), right->codegen()));
+}
 
 FunctionCall::FunctionCall(const CallingExpr * func, const ExprList * args) :
     func(func),
@@ -551,7 +618,12 @@ void FunctionCall::print() const {
     putchar(')');
 }
 
-
+int FunctionCall::gen() const {
+    // int num_args = args->codegen();
+    // Need some way to get the smybol table entry for calling expr.
+    // return BasicBlock::add_instr(CallTAC(x::symtable->get(func), num_args));
+    return 0;
+}
 
 ArgsList::ArgsList(std::vector<VarDecl *> args) : args(args) {}
 
@@ -578,6 +650,15 @@ void ArgsList::add_to_scope(SymbolTable * symtable) {
     for (auto &arg : args) {
         arg->add_to_scope(symtable);
     }
+}
+
+int ArgsList::gen() const {
+    int i = 0;
+    for (auto &arg : args) {
+        arg->gen();
+        ++i;
+    }
+    return i;
 }
 
 FuncDecl::FuncDecl(const Ident * name, const ArgsList * params, const Typename * ret_type, const StatementList * body) :
@@ -625,6 +706,15 @@ void ProgramSource::add_node(ASTNode * node) {
     nodes.push_back(node);
 }
 
+int ProgramSource::gen() const {
+    int i = 0;
+    for (auto &node : nodes) {
+        node->gen();
+        ++i;
+    }
+    return i;
+}
+
 ReturnStatement::ReturnStatement(const Expr * val) : val(val) {}
 
 ReturnStatement::~ReturnStatement() {
@@ -634,4 +724,8 @@ ReturnStatement::~ReturnStatement() {
 void ReturnStatement::print() const { 
     printf("return ");
     val->print();
+}
+
+int ReturnStatement::gen() const {
+    return BasicBlock::add_instr(ReturnTAC(val->gen()));
 }

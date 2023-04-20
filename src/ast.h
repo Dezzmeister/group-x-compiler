@@ -54,6 +54,8 @@ class ASTNode {
 
         virtual void print() const = 0;
 
+        virtual int gen() const = 0;
+
         virtual ~ASTNode() {}
 
 
@@ -71,6 +73,8 @@ class ProgramSource : public ASTNode {
 
         virtual void print() const;
 
+        virtual int gen() const;
+
         void add_node(ASTNode * node);
 
 
@@ -81,6 +85,7 @@ class Expr : public ASTNode {
     public:
         virtual void print() const = 0;
 
+        virtual int gen() const = 0;
 
         virtual ~Expr() {}
 
@@ -98,6 +103,7 @@ class ExprList : public ASTNode {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         void push_expr(Expr * expr);
 
@@ -108,6 +114,7 @@ class CallingExpr : public Expr {
     public:
         virtual void print() const = 0;
 
+        virtual int gen() const = 0;
 
         virtual ~CallingExpr() {}
 
@@ -119,6 +126,7 @@ class Statement : public ASTNode {
     public:
         virtual void print() const = 0;
 
+        virtual int gen() const = 0;
 
         virtual ~Statement() {}
 
@@ -136,6 +144,8 @@ class StatementList : public ASTNode {
 
         virtual void print() const;
 
+        virtual int gen() const;
+
 
         void push_statement(Statement * statement);
 
@@ -152,6 +162,7 @@ class ParensExpr : public CallingExpr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -159,6 +170,8 @@ class ParensExpr : public CallingExpr {
 class TypeDecl : public Statement {
     public:
         virtual void print() const = 0;
+
+        virtual int gen() const = 0;
 
         virtual ~TypeDecl() {}
 
@@ -170,6 +183,7 @@ class Typename : public ASTNode {
     public:
         virtual void print() const = 0;
 
+        virtual int gen() const = 0;
 
         virtual ~Typename() {}
 
@@ -187,7 +201,7 @@ class ParensTypename : public Typename {
 
         virtual void print() const;
 
-        // Should not be called
+        virtual int gen() const {return -1;};
 
         KIND_CLASS()
 };
@@ -196,6 +210,7 @@ class NumLiteral : public Expr {
     public:
         virtual void print() const = 0;
 
+        virtual int gen() const = 0;
 
         virtual ~NumLiteral() {}
 
@@ -213,6 +228,8 @@ class IntLiteral : public NumLiteral {
 
         virtual void print() const;
 
+        // Should not be called.
+        virtual int gen() const {return -1;};
 
         KIND_CLASS()
 };
@@ -226,6 +243,7 @@ class FloatLiteral : public NumLiteral {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -242,6 +260,7 @@ class TernaryExpr: public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -254,6 +273,7 @@ class BoolLiteral : public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -266,6 +286,7 @@ class Ident : public Typename, public CallingExpr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -282,6 +303,7 @@ class MathExpr : public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -298,6 +320,7 @@ class BoolExpr : public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -312,6 +335,7 @@ class PtrTypename : public Typename {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS() 
 };
@@ -326,6 +350,7 @@ class MutTypename : public Typename {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -340,6 +365,7 @@ class TypenameList : public ASTNode {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         // Pushes the typename onto the back of the type list
         void push_type(Typename * type_name);
@@ -358,6 +384,7 @@ class VarDecl : public Statement {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         void add_to_scope(SymbolTable * symtable);
 
@@ -375,6 +402,7 @@ class FunctionCall : public Statement, public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -389,6 +417,7 @@ class VarDeclList : public ASTNode {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         // Pushes the var decl onto the back of the type list
         void push_decl(VarDecl * decl);
@@ -406,6 +435,7 @@ class TupleTypename : public Typename {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -420,6 +450,7 @@ class TupleExpr : public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const;        
 
         KIND_CLASS()
 };
@@ -435,6 +466,7 @@ class FuncTypename : public Typename {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -450,6 +482,7 @@ class StaticArrayTypename : public Typename {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -465,6 +498,7 @@ class TypeAlias : public TypeDecl {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -480,6 +514,7 @@ class StructDecl : public TypeDecl {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -495,6 +530,7 @@ class VarDeclInit : public Statement {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -509,6 +545,7 @@ class PrintStmt : public Statement {
 
     virtual void print() const;
 
+    virtual int gen() const;
 
     KIND_CLASS()
 };
@@ -525,6 +562,7 @@ class IfStmt : public Statement {
 
     virtual void print() const;
 
+    virtual int gen() const;
 
     KIND_CLASS()
 };
@@ -540,6 +578,7 @@ class WhileStmt : public Statement {
 
     virtual void print() const;
 
+    virtual int gen() const;
 
     KIND_CLASS()
 };
@@ -556,6 +595,7 @@ class ForStmt : public Statement {
 
     virtual void print() const;
 
+    virtual int gen() const;
 
     KIND_CLASS()
 };
@@ -570,6 +610,7 @@ class AddrOf : public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -584,6 +625,7 @@ class Deref : public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -599,6 +641,7 @@ class CastExpr : public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -615,6 +658,7 @@ class LogicalExpr : public Expr {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
@@ -629,6 +673,7 @@ class ArgsList : public ASTNode {
 
         virtual void print() const;
 
+        virtual int gen() const; 
 
         void push_arg(VarDecl * arg);
 
@@ -650,6 +695,7 @@ class FuncDecl : public ASTNode {
 
         virtual void print() const;
 
+        virtual int gen() const { return -1; };
 
         KIND_CLASS()
 };
@@ -664,6 +710,7 @@ class ReturnStatement : public Statement {
 
         virtual void print() const;
 
+        virtual int gen() const;
 
         KIND_CLASS()
 };
