@@ -13,3 +13,13 @@ int stub_test() {
     return EXIT_SUCCESS;
 }
 
+int hello_world_test() {
+    printf("Running %s\n", __FUNCTION__);
+    string str = "Hello World";
+    assert(str == "Hello World");
+    return EXIT_SUCCESS;
+}
+
+int test_string_literal() {
+    
+}

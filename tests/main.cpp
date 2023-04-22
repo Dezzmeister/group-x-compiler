@@ -6,9 +6,11 @@ typedef int (*test_func)(void);
 
 extern int stub_test();
 
+extern int hello_world_test();
+
 // Tests to be run are declared 'extern' and stored in this vector
 std::vector<test_func> TESTS = {
-    stub_test
+    stub_test, hello_world_test
 };
 
 int main() {
