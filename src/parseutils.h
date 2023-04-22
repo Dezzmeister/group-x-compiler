@@ -4,21 +4,22 @@
 #include "ast.h"
 #include "parser.h"
 
-#define MAX_STR_LEN     2048
+#define MAX_STR_LEN 2048
 
-extern char * yytext;
-extern FILE * yyin;
+extern char* yytext;
+extern FILE* yyin;
 
 extern int yylex();
 extern int yylen;
 
 namespace x {
-    extern int lineno;
+extern int lineno;
 
-    /**
-     * The top level node after parsing. Will be nullptr until the parser is finished.
-     */
-    extern ProgramSource * top;
-}
+/**
+ * The top level node after parsing. Will be nullptr until the parser is
+ * finished.
+ */
+extern ProgramSource* top;
+}  // namespace x
 
 #endif

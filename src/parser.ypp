@@ -23,9 +23,12 @@ extern void yyerror(const char * const error);
     IntLiteral * int_literal;
     FloatLiteral * float_literal;
     BoolLiteral * bool_literal;
+    CharLiteral * char_literal;
+    StringLiteral * str_literal;
     Ident * ident;
     MathExpr * math_expr;
     BoolExpr * bool_expr;
+    LogicalExpr * logical_expr;
     Typename * type_name;
     PtrTypename * ptr_type_name;
     MutTypename * mut_type_name;
@@ -34,57 +37,80 @@ extern void yyerror(const char * const error);
     TypenameList * type_list;
     VarDeclList * var_decl_list;
     FuncTypename * func_type_name;
+    StaticArrayTypename * static_arr_type_name;
     TypeAlias * type_alias;
     TypeDecl * type_decl;
     StructDecl * struct_decl;
     VarDecl * var_decl;
     VarDeclInit * var_decl_init;
+    ArrayLiteral * array_literal;
     AddrOf * addr_of;
     Deref * deref;
     CastExpr * cast_expr;
     TupleExpr * tuple_expr;
     FunctionCall * function_call;
-    ArgsList * args_list;
+    ParamsList * params_list;
     FuncDecl * func_decl;
     ReturnStatement * return_statement;
+    IfStmt * if_statement;
+    IfElseStmt * if_else_statement;
+    WhileStmt * while_statement;
+    ForStmt * for_statement;
+    TypeIdent * type_ident;
+    Assignment * assignment;
+    PreExpr * pre_expr;
 }
 
-%token FUNC_TYPE_OP NEWLINE
+%token FUNC_TYPE_OP
 
 %right '='
 %right TYPE_ALIAS_KW STRUCT_KW RETURN_KW
 %precedence FUNC_PREC
 %nonassoc '(' ')'
 %nonassoc '[' ']'
-%right BOOL_AND BOOL_OR
+%right BOOL_AND BOOL_OR AND_KW OR_KW
+%nonassoc EQU NEQ
+%nonassoc GTR LES GEQ LEQ
+%nonassoc IN_KW NOT_IN_KW
 %right '+' '-'
+%right '/' '%'
+%nonassoc MUL_OP
 %nonassoc CAST_KW
 %right MUT
 %left '*'
 %right '&'
+%right IF_KW WHILE_KW FOR_KW
+%right ELSE_KW
+%right '!' NOT_KW
+%right INC DEC
 
 %nonassoc CALL_PREC
 
-%nonassoc <ident> IDENT DECLARED_TYPE DECLARED_VAR DECLARED_FUNC
+%nonassoc <ident> IDENT DECLARED_VAR DECLARED_FUNC
+%nonassoc <type_ident> DECLARED_TYPE
 %nonassoc <int_literal> INT
 %nonassoc <float_literal> FLOAT
 %nonassoc <bool_literal> BOOL
+%nonassoc <str_literal> STR
+%nonassoc <char_literal> CHAR
 
 %type <program_source> program
 %type <statement> statement
 %type <statement_list> statement_list
 %type <num_literal> num
 %type <expr> expr
-%type <expr_list> expr_list
+%type <expr_list> expr_list args_list
 %type <math_expr> math_expr
 %type <bool_expr> bool_expr
+%type <logical_expr> logical_expr
 %type <type_name> type_name
-%type <ident> simple_type_name
+%type <type_ident> simple_type_name
 %type <ptr_type_name> ptr_type_name
 %type <mut_type_name> mut_type_name
 %type <tuple_type_name> tuple_type_name
 %type <parens_type_name> parens_type_name
 %type <func_type_name> func_type_name
+%type <static_arr_type_name> static_arr_type_name
 %type <type_list> type_list
 %type <var_decl_list> var_decl_list
 %type <struct_decl> struct_decl
@@ -92,14 +118,21 @@ extern void yyerror(const char * const error);
 %type <type_decl> type_decl
 %type <var_decl> var_decl
 %type <var_decl_init> var_decl_init
+%type <array_literal> array_literal
 %type <addr_of> addr_of_expr
 %type <deref> deref_expr
 %type <cast_expr> cast_expr
 %type <tuple_expr> tuple_expr
 %type <function_call> function_call
-%type <args_list> args_list
+%type <params_list> params_list
 %type <func_decl> func_decl
 %type <return_statement> return_statement
+%type <if_statement> if_statement
+%type <if_else_statement> if_else_statement
+%type <while_statement> while_statement
+%type <for_statement> for_statement
+%type <assignment> assignment
+%type <pre_expr> pre_expr
 
 %%
 
@@ -118,6 +151,11 @@ statement : type_decl {$$ = $1;}
           | var_decl_init {$$ = $1;}
           | function_call {$$ = (Statement *) $1;}
           | return_statement {$$ = $1;}
+          | if_statement {$$ = $1;}
+          | if_else_statement {$$ = $1;}
+          | while_statement {$$ = $1;}
+          | for_statement {$$ = $1;}
+          | assignment {$$ = $1;}
           ;
 
 statement_list : statement ';' {$$ = new StatementList({$1});}
@@ -127,12 +165,19 @@ statement_list : statement ';' {$$ = new StatementList({$1});}
 expr : '(' expr ')' {$$ = new ParensExpr($2);}
      | math_expr {$$ = $1;}
      | bool_expr {$$ = $1;}
+     | logical_expr {$$ = $1;}
      | addr_of_expr {$$ = $1;}
      | deref_expr {$$ = $1;}
      | cast_expr {$$ = $1;}
      | tuple_expr {$$ = $1;}
+     | array_literal {$$ = $1;}
      | function_call %prec CALL_PREC {$$ = (Expr *) $1;}
+     | '!' expr {$$ = new BangExpr($2);}
+     | NOT_KW expr {$$ = new NotExpr($2);}
+     | pre_expr {$$ = $1;}
+     | STR {$$ = $1;}
      | BOOL {$$ = $1;}
+     | CHAR {$$ = $1;}
      | num {$$ = $1;}
      | DECLARED_VAR {$$ = $1;}
      ;
@@ -143,16 +188,31 @@ expr_list : expr {$$ = new ExprList({$1});}
 
 math_expr : expr '+' expr {$$ = new MathExpr('+', $1, $3);}
           | expr '-' expr {$$ = new MathExpr('-', $1, $3);}
+          | expr '*' expr %prec MUL_OP {$$ = new MathExpr('*', $1, $3);}
+          | expr '/' expr %prec MUL_OP {$$ = new MathExpr('/', $1, $3);}
+          | expr '%' expr %prec MUL_OP {$$ = new MathExpr('%', $1, $3);}
           ;
 
 bool_expr : expr BOOL_AND expr {$$ = new BoolExpr("&&", $1, $3);}
           | expr BOOL_OR expr {$$ = new BoolExpr("||", $1, $3);}
+          | expr AND_KW expr {$$ = new BoolExpr("and", $1, $3);}
+          | expr OR_KW expr {$$ = new BoolExpr("or", $1, $3);}
           ;
 
-addr_of_expr : '&' expr {$$ = new AddrOf($2);}
+logical_expr : expr EQU expr {$$ = new LogicalExpr("==", $1, $3);}
+             | expr NEQ expr {$$ = new LogicalExpr("!=", $1, $3);}
+             | expr GTR expr {$$ = new LogicalExpr(">", $1, $3);}
+             | expr LES expr {$$ = new LogicalExpr("<", $1, $3);}
+             | expr GEQ expr {$$ = new LogicalExpr(">=", $1, $3);}
+             | expr LEQ expr {$$ = new LogicalExpr("<=", $1, $3);}
+             | expr IN_KW expr {$$ = new LogicalExpr("in", $1, $3);}
+             | expr NOT_IN_KW expr {$$ = new LogicalExpr("not in", $1, $3);}
              ;
 
-deref_expr : '*' expr {$$ = new Deref($2);}
+addr_of_expr : '&' expr %prec '&' {$$ = new AddrOf($2);}
+             ;
+
+deref_expr : '*' expr %prec '*' {$$ = new Deref($2);}
            ;
 
 cast_expr : expr CAST_KW type_name {$$ = new CastExpr($3, $1);}
@@ -161,8 +221,12 @@ cast_expr : expr CAST_KW type_name {$$ = new CastExpr($3, $1);}
 tuple_expr : '[' expr_list ']' {$$ = new TupleExpr($2);}
            ;
 
-function_call : DECLARED_FUNC '(' expr_list ')' {$$ = new FunctionCall($1, $3);}
-              | '(' expr ')' '(' expr_list ')' {$$ = new FunctionCall(new ParensExpr($2), $5);}
+pre_expr : INC expr {$$ = new PreExpr("++", $2);}
+         | DEC expr {$$ = new PreExpr("--", $2);}
+         ;
+
+function_call : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCall($1, $3);}
+              | '(' expr ')' '(' args_list ')' {$$ = new FunctionCall(new ParensExpr($2), $5);}
               ;
 
 type_decl : type_alias {$$ = $1;}
@@ -172,11 +236,43 @@ type_decl : type_alias {$$ = $1;}
 var_decl_init : var_decl '=' expr {$$ = new VarDeclInit($1, $3);}
               ;
 
+array_literal : '{' expr_list '}' {$$ = new ArrayLiteral($2);}
+              ;
+
 var_decl : type_name IDENT {
                 $$ = new VarDecl($1, $2);
                 x::symtable->put($2->id, new Symbol(Var));
             }
          ;
+
+if_statement : IF_KW '(' expr ')' '{' 
+                {x::create_scope();} statement_list '}' %prec IF_KW {
+                    $$ = new IfStmt($3, $7);
+                    x::destroy_scope();
+                }
+             ;
+
+if_else_statement : if_statement ELSE_KW '{' {x::create_scope();} statement_list '}' {
+                        $$ = new IfElseStmt($1, $5);
+                        x::destroy_scope();
+                    }
+                  ;
+
+while_statement : WHILE_KW '(' expr ')' '{'
+                    {x::create_scope();} statement_list '}' %prec WHILE_KW {
+                        $$ = new WhileStmt($3, $7);
+                        x::destroy_scope();
+                    }
+                ;
+
+for_statement : FOR_KW '(' statement ';' {x::create_scope();} expr ';' statement ')' '{' statement_list '}' {
+                    $$ = new ForStmt($3, $6, $8, $11);
+                    x::destroy_scope();
+                }
+              ;
+
+assignment : expr '=' expr {$$ = new Assignment($1, $3);}
+           ;
 
 var_decl_list : var_decl ';' {$$ = new VarDeclList({$1});}
               | var_decl_list var_decl ';' {$1->push_decl($2); $$ = $1;}
@@ -191,12 +287,17 @@ struct_decl : STRUCT_KW IDENT '{' {
                 }
             ;
 
-args_list : args_list ',' var_decl {$1->push_arg($3); $$ = $1;}
-          | var_decl {$$ = new ArgsList({$1});}
-          | /* empty */ {$$ = new ArgsList({});}
+args_list : args_list ',' expr {$1->push_expr($3); $$ = $1;}
+          | expr {$$ = new ExprList({$1});}
+          | /* empty */ {$$ = new ExprList({});}
           ;
 
-func_decl : type_name IDENT '(' args_list ')' '{' {
+params_list : params_list ',' var_decl {$1->push_param($3); $$ = $1;}
+            | var_decl {$$ = new ParamsList({$1});}
+            | /* empty */ {$$ = new ParamsList({});}
+            ;
+
+func_decl : type_name IDENT '(' params_list ')' '{' {
                 x::symtable->put($2->id, new Symbol(Func));
                 x::create_scope();
                 $4->add_to_scope(x::symtable);
@@ -214,11 +315,16 @@ type_name : simple_type_name {$$ = $1;}
           | mut_type_name {$$ = $1;}
           | tuple_type_name {$$ = $1;}
           | func_type_name {$$ = $1;}
+          | static_arr_type_name {$$ = $1;}
           | parens_type_name {$$ = $1;}
           ;
 
-func_type_name : '[' type_list ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename($2, $5);}
+func_type_name : '[' ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename(new TypenameList({}), $4);}
+               | '[' type_list ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename($2, $5);}
                ;
+
+static_arr_type_name : type_name '[' INT ']' {$$ = new StaticArrayTypename($1, $3);}
+                     ;
 
 parens_type_name : '(' type_name ')' {$$ = new ParensTypename($2);}
                  ;
