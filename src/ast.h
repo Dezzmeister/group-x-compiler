@@ -63,6 +63,7 @@ class ASTNode {
 
   virtual void print() const = 0;
   virtual std::vector<ASTNode *> children() = 0;
+  virtual void gen() {}
 
   virtual ~ASTNode() {}
 
@@ -552,6 +553,7 @@ class VarDeclInit : public Statement {
  public:
   const VarDecl *decl;
   const Expr *init;
+  int type;
 
   VarDeclInit(const VarDecl *decl, const Expr *init);
 

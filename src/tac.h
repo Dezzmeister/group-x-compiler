@@ -8,60 +8,65 @@
 #include "symtable.h"
 
 // Abstract TAC class.
-class Triple {};
+class Quad {
+  // Returns temporary names in a sequence like t1, t2, ...
+  // These temporaries will be put into the symbol table.
+  std::string next_temp() {
+    static int counter = 1;
+    return "t" + std::to_string(counter++);
+}
+};
 
-template <typename T, typename U>
+template <typename T>
 // x = y op z
-class AssignTAC : public Triple {
+class AssignTAC : public Quad {
  public:
   char op;
   T addr1;
-  U addr2;
-  AssignTAC(char o, T a1, U a2) : op(o), addr1(a1), addr2(a2) {}
+  T addr2;
+  std::string result;
+  AssignTAC(char o, T a1, T a2) : op(o), addr1(a1), addr2(a2) {}
 };
 
 // x = y
-class CopyTAC : public Triple {
+class CopyTAC : public Quad {
  public:
-  Symbol* symbol;
+  const Symbol* symbol;
+  std::string target;
+  CopyTAC(const Symbol* s) : symbol(s) {}
 };
 
-// x - y
+template <typename T>
+// x relop y
 // jne L
-template <typename T, typename U>
-class CondJumpRelopTAC : public Triple {
+class CondJumpRelopTAC : public Quad {
  public:
   char op;
   T addr1;
-  U addr2;
+  T addr2;
   int label;
+  CondJumpRelopTAC(T a1, T a2, int l) : addr1(a1), addr2(a2), label(l) {}
 };
 
-class CondJumpTAC : public Triple {
+// if x goto L
+class CondJumpTAC : public Quad {
  public:
-  Symbol* addr;
   int index;
   int label;
   CondJumpTAC(int i, int l) : index(i), label(l) {}
-  CondJumpTAC(Symbol* s, int l) : addr(s), label(l) {}
-};
-
-class LoadTAC : public Triple {
- public:
-  Symbol* addr;
-  LoadTAC(Symbol* s) : addr(s) {}
 };
 
 // jmp L
-class JumpTac : public Triple {
+class JumpTac : public Quad {
  public:
   int label;
+  JumpTac(int l) : label(l) {}
 };
 
-// param x1
-// param x2
-// call f 2  /* call function f with two parameters */
-class CallTAC : public Triple {
+// arg 1
+// arg 2
+// call f 2
+class CallTAC : public Quad {
  public:
   Symbol* fun;
   int num_args;
@@ -69,58 +74,60 @@ class CallTAC : public Triple {
 };
 
 template <typename T>
-class ParamTAC : public Triple {
+// arg x
+class ArgTAC : public Quad {
  public:
-  T param;
+  T arg;
+  ArgTAC(T a) : arg(a) {}
 };
 
-// t = y[i]
-class IndexTAC : public Triple {
+// x = y[i]
+class IndexCopyTAC : public Quad {
  public:
+  const Symbol* arr;
   int index;
-  Symbol* arr;
+  std::string result;
+  IndexCopyTAC(const Symbol* a, int i) : arr(a), index(i) {}
 };
 
 // x = &y
-class AddrTac : public Triple {
+class AddrTac : public Quad {
  public:
   int index;
+  std::string result;
   AddrTac(int i) : index(i) {}
 };
 
 // x = *y
-class DerefTAC : public Triple {
+class DerefTAC : public Quad {
  public:
   int index;
+  std::string result;
   DerefTAC(int i) : index(i) {}
 };
 
-class CastTAC : public Triple {
+class CastTAC : public Quad {
  public:
   const Typename* type;
   int index;
+  std::string result;
   CastTAC(const Typename* t, int i) : type(t), index(i) {}
 };
 
-class ReturnTAC : public Triple {
+class ReturnTAC : public Quad {
  public:
   int index;
+  std::string result;
   ReturnTAC(int i) : index(i) {}
 };
 
 class BasicBlock {
-  // See Aho Section 8.4
  public:
-  std::vector<Triple> trips;
+  std::vector<Quad> trips;
   int num_instr;
-  BasicBlock(std::vector<Triple> t) : trips(t) {}
-  BasicBlock() {
-    num_instr = 0;
-    trips = std::vector<Triple>();
-  }
+  BasicBlock(std::vector<Quad> t) : trips(t) {}
 
-  static int new_label();
-  static int add_instr(Triple trip);
+  static int add_instr(Quad trip);
 };
 
 namespace x {
