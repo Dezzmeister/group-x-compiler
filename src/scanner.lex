@@ -1,4 +1,5 @@
 %option warn
+%option noyywrap
 
 %{
 #include <stdio.h>

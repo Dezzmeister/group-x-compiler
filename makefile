@@ -2,12 +2,11 @@ CC = g++
 COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native
 DBG_FLAGS = ${COMMON_FLAGS} -Og
 RELEASE_FLAGS = ${COMMON_FLAGS} -O3
-LD_FLAGS = -ll
 
 SRC_DIR := src
-GENERATED_FILES := ${addprefix ${SRC_DIR}/, scanner.cpp parser.cpp parser.h}
+GENERATED_FILES := ${addprefix ${SRC_DIR}/, scanner.cpp parser.cpp }
 
-DEPS = ${GENERATED_FILES} ${wildcard ${SRC_DIR}/*.h} ${wildcard ${SRC_DIR}/*.cpp}
+DEPS = ${GENERATED_FILES}  ${wildcard ${SRC_DIR}/*.cpp}
 
 TEST_DIR := tests
 
@@ -47,9 +46,15 @@ ${GENERATED_FILES}: src/parser.ypp src/scanner.lex
 	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
 
-.PHONY: clean todo
+.PHONY: clean todo parser lexer
 clean:
 	rm -f debug_bin release_bin ${GENERATED_FILES} src/parser.dot src/parser.output parser.png prog.dot
 
 todo:
 	grep -R TODO
+
+parser:
+	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
+
+lexer: 
+	flex -Cfe -o src/scanner.cpp src/scanner.lex
