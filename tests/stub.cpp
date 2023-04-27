@@ -21,5 +21,20 @@ int hello_world_test() {
 }
 
 int test_string_literal() {
-    
+    printf("Running %s\n", __FUNCTION__);
+    return EXIT_SUCCESS;
+}
+
+int test_parse_tree() {
+    printf("Running %s\n", __FUNCTION__);
+    struct Point {
+        self.name
+        int x;
+        int y;
+    };
+    new struct Point Alec {};
+    assert(Alec);
+    assert(Alec.x == NULL);
+    assert(Alec.y == NULL);
+    return EXIT_SUCCESS;
 }
