@@ -29,13 +29,13 @@ int test_parse_tree() {
     printf("Running %s\n", __FUNCTION__);
     struct Point {
         Ident * Point = new Ident("Alec");
-        VarDecl * x = new VarDecl(Ident("x"), Typename);
-        VarDecl * y = new VarDecl(Ident("y"), Typename);
+        VarDecl * x = new VarDecl(new TypeIdent("x"), new Ident("x"));
+        VarDecl * y = new VarDecl(new TypeIdent("y"), new Ident("y"));
         std::vector<VarDecl *> decls) = {
             x, y
         };
-        new VarDeclList(std::vector<VarDecl *> decls);
-        new StructDecl(point, decls);
+        new VarDeclList(decls);
+        new StructDecl(Point, decls);
     };
     new struct Point Alec {};
     assert(Alec);
