@@ -28,9 +28,14 @@ int test_string_literal() {
 int test_parse_tree() {
     printf("Running %s\n", __FUNCTION__);
     struct Point {
-        self.name
-        int x;
-        int y;
+        Ident * Point = new Ident("Alec");
+        VarDecl * x = new VarDecl(Ident("x"), Typename);
+        VarDecl * y = new VarDecl(Ident("y"), Typename);
+        std::vector<VarDecl *> decls) = {
+            x, y
+        };
+        new VarDeclList(std::vector<VarDecl *> decls);
+        new StructDecl(point, decls);
     };
     new struct Point Alec {};
     assert(Alec);
