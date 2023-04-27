@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "../src/ast.h"
 #include "../src/parser.h"
 
 int stub_test() {
@@ -27,19 +28,20 @@ int test_string_literal() {
 
 int test_parse_tree() {
     printf("Running %s\n", __FUNCTION__);
-    struct Point {
-        Ident * Point = new Ident("Alec");
-        VarDecl * x = new VarDecl(new TypeIdent("x"), new Ident("x"));
-        VarDecl * y = new VarDecl(new TypeIdent("y"), new Ident("y"));
-        std::vector<VarDecl *> decls) = {
-            x, y
-        };
-        new VarDeclList(decls);
-        new StructDecl(Point, decls);
+    int val = yyparse();
+    ProgramSource * output = x::top;
+    Ident * Point = new Ident("Alec");
+    VarDecl * x = new VarDecl(new TypeIdent("x"), new Ident("x"));
+    VarDecl * y = new VarDecl(new TypeIdent("y"), new Ident("y"));
+    std::vector<VarDecl *> decls) = {
+        x, y
     };
-    new struct Point Alec {};
-    assert(Alec);
-    assert(Alec.x == NULL);
-    assert(Alec.y == NULL);
+    VarDeclList * varss = new VarDeclList(decls);
+    StructDecl * strukt = new StructDecl(Point, varss);
+    for (ASTNode* child: output->children) {
+        StructDecl * struct = static_cast<StructDecl *>(child);
+        assert(struct->name->id == "Point");
+        assert(strct->members->decls[0]->var_name->id == "x");
+    }
     return EXIT_SUCCESS;
 }
