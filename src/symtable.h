@@ -6,13 +6,6 @@
 #include <unordered_map>
 #include <utility>
 
-union Value {
-  int i;
-  float f;
-  char c;
-  char *c_str;
-};
-
 enum SymbolKind { Var, Type, Func };
 
 class Symbol {

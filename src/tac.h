@@ -2,19 +2,11 @@
 #define TAC_H
 
 #include <cstdint>
-#include <vector>
 
 #include "ast.h"
 #include "symtable.h"
 
-// Abstract TAC class.
 class Quad {
-  // Returns temporary names in a sequence like t1, t2, ...
-  // These temporaries will be put into the symbol table.
-  std::string next_temp() {
-    static int counter = 1;
-    return "t" + std::to_string(counter++);
-}
 };
 
 template <typename T>
@@ -25,7 +17,8 @@ class AssignTAC : public Quad {
   T addr1;
   T addr2;
   std::string result;
-  AssignTAC(char o, T a1, T a2) : op(o), addr1(a1), addr2(a2) {}
+  int kind;
+  AssignTAC(char o, T a1, T a2, int k) : op(o), addr1(a1), addr2(a2), kind(k) {}
 };
 
 // x = y
@@ -33,7 +26,8 @@ class CopyTAC : public Quad {
  public:
   const Symbol* symbol;
   std::string target;
-  CopyTAC(const Symbol* s) : symbol(s) {}
+  int kind;
+  CopyTAC(const Symbol* s, int k) : symbol(s), kind(k) {}
 };
 
 template <typename T>
@@ -45,7 +39,9 @@ class CondJumpRelopTAC : public Quad {
   T addr1;
   T addr2;
   int label;
-  CondJumpRelopTAC(T a1, T a2, int l) : addr1(a1), addr2(a2), label(l) {}
+  int kind;
+  CondJumpRelopTAC(T a1, T a2, int l, int k)
+      : addr1(a1), addr2(a2), label(l), kind(k) {}
 };
 
 // if x goto L
@@ -53,7 +49,8 @@ class CondJumpTAC : public Quad {
  public:
   int index;
   int label;
-  CondJumpTAC(int i, int l) : index(i), label(l) {}
+  int kind;
+  CondJumpTAC(int i, int l, int k) : index(i), label(l), kind(k) {}
 };
 
 // jmp L
@@ -77,8 +74,9 @@ template <typename T>
 // arg x
 class ArgTAC : public Quad {
  public:
+  int kind; 
   T arg;
-  ArgTAC(T a) : arg(a) {}
+  ArgTAC(T a, int k) : arg(a), kind(k) {}
 };
 
 // x = y[i]
@@ -87,7 +85,8 @@ class IndexCopyTAC : public Quad {
   const Symbol* arr;
   int index;
   std::string result;
-  IndexCopyTAC(const Symbol* a, int i) : arr(a), index(i) {}
+  int kind;
+  IndexCopyTAC(const Symbol* a, int i, int k) : arr(a), index(i), kind(k) {}
 };
 
 // x = &y
@@ -95,7 +94,8 @@ class AddrTac : public Quad {
  public:
   int index;
   std::string result;
-  AddrTac(int i) : index(i) {}
+  int kind;
+  AddrTac(int i, int k) : index(i), kind(k) {}
 };
 
 // x = *y
@@ -103,30 +103,25 @@ class DerefTAC : public Quad {
  public:
   int index;
   std::string result;
-  DerefTAC(int i) : index(i) {}
+  int kind;
+  DerefTAC(int i, int k) : index(i), kind(k) {}
 };
 
-class CastTAC : public Quad {
- public:
-  const Typename* type;
-  int index;
-  std::string result;
-  CastTAC(const Typename* t, int i) : type(t), index(i) {}
-};
 
+// mov(suffix) %eax
 class ReturnTAC : public Quad {
  public:
   int index;
   std::string result;
-  ReturnTAC(int i) : index(i) {}
+  int kind; 
+  ReturnTAC(int i, int k) : index(i), kind(k) {}
 };
 
 class BasicBlock {
  public:
   std::vector<Quad> trips;
-  int num_instr;
+  int n_instr;
   BasicBlock(std::vector<Quad> t) : trips(t) {}
-
   static int add_instr(Quad trip);
 };
 

@@ -2,6 +2,7 @@
 %option noyywrap
 
 %{
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
@@ -124,8 +125,13 @@ or          {return OR_KW;}
 
 %%
 
-void yyerror(const char * const error) {
-    fprintf(stderr, "%s\nyytext: %s, line: %d\n", error, yytext, x::lineno);
+void yyerror(char const *format, ...) {
+    fprintf(stderr, "line: %d\n", x::lineno);
+    va_list args;
+    va_start (args, format);
+    vfprintf (stderr, format, args);
+    va_end (args);
+    putc ('\n', stderr);
     exit(1);
 }
 
