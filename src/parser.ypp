@@ -248,7 +248,7 @@ var_decl : type_name IDENT {
             }
          ;
 
-if_statement : IF_KW '(' expr ')' '{' 
+if_statement : IF_KW '(' expr ')' '{'
                 {x::create_scope();} statement_list '}' %prec IF_KW {
                     $$ = new IfStmt($3, $7);
                     x::destroy_scope();
