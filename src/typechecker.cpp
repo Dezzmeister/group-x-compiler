@@ -3,6 +3,10 @@
 #include "ast.h"
 #include "symtable.h"
 
+/**
+ * Returns a type which is semantically equivalent to typ, but is not an alias or a 
+ * typename in parens.
+ */
 static const Typename * unaliased(const Typename * typ, SymbolTable * symtable) {
     if (typ->get_kind() == ParensTypename::kind) {
         const ParensTypename * p = (ParensTypename *) typ;
@@ -18,6 +22,7 @@ static const Typename * unaliased(const Typename * typ, SymbolTable * symtable) 
 
     const Symbol * symbol = symtable->get(ident->id);
     if (!symbol) {
+        // TODO: Differentiate between primitive types and undeclared types
         return typ;
     }
 
