@@ -48,7 +48,8 @@ const int Deref::kind = x::next_kind("deref");
 const int CastExpr::kind = x::next_kind("cast_expr");
 const int LogicalExpr::kind = x::next_kind("logical_expr");
 const int TupleExpr::kind = x::next_kind("tuple_expr");
-const int FunctionCall::kind = x::next_kind("function_call");
+const int FunctionCallExpr::kind = x::next_kind("function_call_expr");
+const int FunctionCallStmt::kind = x::next_kind("function_call_stmt");
 const int StatementList::kind = x::next_kind("statement_list");
 const int ParamsList::kind = x::next_kind("params_list");
 const int FuncDecl::kind = x::next_kind("func_decl");
@@ -75,6 +76,21 @@ static std::vector<ASTNode *> cast_nodes(std::vector<T> &vec) {
   return out;
 }
 
+template <typename T>
+static bool cmp_vectors(const std::vector<T*> &v1, const std::vector<T*> &v2) {
+  if (v1.size() != v2.size()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < v1.size(); i++) {
+    if (*(v1[i]) != *(v2[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 IntLiteral::IntLiteral(const char *int_str) : value(atoi(int_str)) {}
 
 IntLiteral::IntLiteral(const int value) : value(value) {}
@@ -83,6 +99,14 @@ void IntLiteral::print() const { printf("%d", value); }
 
 std::vector<ASTNode *> IntLiteral::children() { return {}; }
 
+bool IntLiteral::operator==(const ASTNode &node) const {
+  if (node.get_kind() != IntLiteral::kind) {
+    return false;
+  }
+
+  return value == ((IntLiteral&) node).value;
+}
+
 FloatLiteral::FloatLiteral(const char *float_str) : value(atof(float_str)) {}
 
 FloatLiteral::FloatLiteral(const float value) : value(value) {}
@@ -90,6 +114,14 @@ FloatLiteral::FloatLiteral(const float value) : value(value) {}
 void FloatLiteral::print() const { printf("%f", value); }
 
 std::vector<ASTNode *> FloatLiteral::children() { return {}; }
+
+bool FloatLiteral::operator==(const ASTNode &node) const {
+  if (node.get_kind() != FloatLiteral::kind) {
+    return false;
+  }
+
+  return value == ((FloatLiteral&) node).value;
+}
 
 BoolLiteral::BoolLiteral(const bool value) : value(value) {}
 
@@ -102,6 +134,14 @@ void BoolLiteral::print() const {
 }
 
 std::vector<ASTNode *> BoolLiteral::children() { return {}; }
+
+bool BoolLiteral::operator==(const ASTNode &node) const {
+  if (node.get_kind() != BoolLiteral::kind) {
+    return false;
+  }
+
+  return value == ((BoolLiteral&) node).value;
+}
 
 CharLiteral::CharLiteral(const char value) : value(value) {}
 
@@ -129,6 +169,14 @@ void CharLiteral::print() const {
 
 std::vector<ASTNode *> CharLiteral::children() { return {}; }
 
+bool CharLiteral::operator==(const ASTNode &node) const {
+  if (node.get_kind() != CharLiteral::kind) {
+    return false;
+  }
+
+  return value == ((CharLiteral&) node).value;
+}
+
 StringLiteral::StringLiteral(const char *const value)
     : value(std::string(value)) {}
 
@@ -139,6 +187,14 @@ void StringLiteral::print() const {
 }
 
 std::vector<ASTNode *> StringLiteral::children() { return {}; }
+
+bool StringLiteral::operator==(const ASTNode &node) const {
+  if (node.get_kind() != StringLiteral::kind) {
+    return false;
+  }
+
+  return value == ((StringLiteral&) node).value;
+}
 
 TernaryExpr::TernaryExpr(const Expr *cond, const Expr *tru, const Expr *fals)
     : cond(cond), tru(tru), fals(fals) {}
@@ -161,17 +217,47 @@ std::vector<ASTNode *> TernaryExpr::children() {
   return {(ASTNode *)cond, (ASTNode *)tru, (ASTNode *)fals};
 }
 
+bool TernaryExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != TernaryExpr::kind) {
+    return false;
+  }
+
+  const TernaryExpr &n = (TernaryExpr&) node;
+
+  return (*cond == *(n.cond) && *tru == *(n.tru) && *fals == *(n.fals));
+}
+
 TypeIdent::TypeIdent(const char *const _id) : id(std::string(_id)) {}
 
 void TypeIdent::print() const { std::cout << id; }
 
 std::vector<ASTNode *> TypeIdent::children() { return {}; }
 
+bool TypeIdent::operator==(const ASTNode &node) const {
+  if (node.get_kind() != TypeIdent::kind) {
+    return false;
+  }
+
+  const TypeIdent& n = (TypeIdent&) node;
+
+  return (id == n.id);
+}
+
 Ident::Ident(const char *const _id) : id(std::string(_id)) {}
 
 void Ident::print() const { std::cout << id; }
 
 std::vector<ASTNode *> Ident::children() { return {}; }
+
+bool Ident::operator==(const ASTNode &node) const {
+  if (node.get_kind() != Ident::kind) {
+    return false;
+  }
+
+  const Ident& n = (Ident&) node;
+
+  return (id == n.id);
+}
 
 MathExpr::MathExpr(const char op, const Expr *left, const Expr *right)
     : op(op), left(left), right(right) {}
@@ -189,6 +275,16 @@ void MathExpr::print() const {
 
 std::vector<ASTNode *> MathExpr::children() {
   return {(ASTNode *)left, (ASTNode *)right};
+}
+
+bool MathExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != MathExpr::kind) {
+    return false;
+  }
+
+  const MathExpr& n = (MathExpr&) node;
+
+  return (op == n.op && *left == *(n.left) && *right == *(n.right));
 }
 
 BoolExpr::BoolExpr(const char *const op, const Expr *left, const Expr *right)
@@ -209,6 +305,16 @@ std::vector<ASTNode *> BoolExpr::children() {
   return {(ASTNode *)left, (ASTNode *)right};
 }
 
+bool BoolExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != BoolExpr::kind) {
+    return false;
+  }
+
+  const BoolExpr& n = (BoolExpr&) node;
+
+  return (op == n.op && *left == *(n.left) && *right == *(n.right));
+}
+
 ParensExpr::ParensExpr(const Expr *expr) : expr(expr) {}
 
 ParensExpr::~ParensExpr() { delete expr; }
@@ -220,6 +326,16 @@ void ParensExpr::print() const {
 }
 
 std::vector<ASTNode *> ParensExpr::children() { return {(ASTNode *)expr}; }
+
+bool ParensExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != ParensExpr::kind) {
+    return false;
+  }
+
+  const ParensExpr& n = (ParensExpr&) node;
+
+  return (*expr == *(n.expr));
+}
 
 ParensTypename::ParensTypename(const Typename *name) : name(name) {}
 
@@ -233,6 +349,16 @@ void ParensTypename::print() const {
 
 std::vector<ASTNode *> ParensTypename::children() { return {(ASTNode *)name}; }
 
+bool ParensTypename::operator==(const ASTNode &node) const {
+  if (node.get_kind() != ParensTypename::kind) {
+    return false;
+  }
+
+  const ParensTypename& n = (ParensTypename&) node;
+
+  return (*name == *(n.name));
+}
+
 PtrTypename::PtrTypename(const Typename *name) : name(name) {}
 
 PtrTypename::~PtrTypename() { delete name; }
@@ -244,6 +370,16 @@ void PtrTypename::print() const {
 
 std::vector<ASTNode *> PtrTypename::children() { return {(ASTNode *)name}; }
 
+bool PtrTypename::operator==(const ASTNode &node) const {
+  if (node.get_kind() != PtrTypename::kind) {
+    return false;
+  }
+
+  const PtrTypename& n = (PtrTypename&) node;
+
+  return (*name == *(n.name));
+}
+
 MutTypename::MutTypename(const Typename *name) : name(name) {}
 
 MutTypename::~MutTypename() { delete name; }
@@ -254,6 +390,16 @@ void MutTypename::print() const {
 }
 
 std::vector<ASTNode *> MutTypename::children() { return {(ASTNode *)name}; }
+
+bool MutTypename::operator==(const ASTNode &node) const {
+  if (node.get_kind() != MutTypename::kind) {
+    return false;
+  }
+
+  const MutTypename& n = (MutTypename&) node;
+
+  return (*name == *(n.name));
+}
 
 TypenameList::TypenameList(std::vector<Typename *> types) : types(types) {}
 
@@ -282,6 +428,16 @@ void TypenameList::push_type(Typename *type_name) {
 
 std::vector<ASTNode *> TypenameList::children() { return cast_nodes(types); }
 
+bool TypenameList::operator==(const ASTNode &node) const {
+  if (node.get_kind() != TypenameList::kind) {
+    return false;
+  }
+
+  const TypenameList& n = (TypenameList&) node;
+
+  return cmp_vectors(types, n.types);
+}
+
 VarDeclList::VarDeclList(std::vector<VarDecl *> decls) : decls(decls) {}
 
 VarDeclList::~VarDeclList() {
@@ -300,6 +456,16 @@ void VarDeclList::print() const {
 void VarDeclList::push_decl(VarDecl *decl) { decls.push_back(decl); }
 
 std::vector<ASTNode *> VarDeclList::children() { return cast_nodes(decls); }
+
+bool VarDeclList::operator==(const ASTNode &node) const {
+  if (node.get_kind() != VarDeclList::kind) {
+    return false;
+  }
+
+  const VarDeclList& n = (VarDeclList&) node;
+
+  return cmp_vectors(decls, n.decls);
+}
 
 ExprList::ExprList(std::vector<Expr *> exprs) : exprs(exprs) {}
 
@@ -321,6 +487,16 @@ void ExprList::print() const {
 void ExprList::push_expr(Expr *expr) { exprs.push_back(expr); }
 
 std::vector<ASTNode *> ExprList::children() { return cast_nodes(exprs); }
+
+bool ExprList::operator==(const ASTNode &node) const {
+  if (node.get_kind() != ExprList::kind) {
+    return false;
+  }
+
+  const ExprList& n = (ExprList&) node;
+
+  return cmp_vectors(exprs, n.exprs);
+}
 
 StatementList::StatementList(std::vector<Statement *> statements)
     : statements(statements) {}
@@ -346,6 +522,16 @@ std::vector<ASTNode *> StatementList::children() {
   return cast_nodes(statements);
 }
 
+bool StatementList::operator==(const ASTNode &node) const {
+  if (node.get_kind() != StatementList::kind) {
+    return false;
+  }
+
+  const StatementList& n = (StatementList&) node;
+
+  return cmp_vectors(statements, n.statements);
+}
+
 TupleTypename::TupleTypename(const TypenameList *type_list)
     : type_list(type_list) {}
 
@@ -361,6 +547,16 @@ std::vector<ASTNode *> TupleTypename::children() {
   return {(ASTNode *)type_list};
 }
 
+bool TupleTypename::operator==(const ASTNode &node) const {
+  if (node.get_kind() != TupleTypename::kind) {
+    return false;
+  }
+
+  const TupleTypename& n = (TupleTypename&) node;
+
+  return (*type_list == *(n.type_list));
+}
+
 TupleExpr::TupleExpr(const ExprList *expr_list) : expr_list(expr_list) {}
 
 TupleExpr::~TupleExpr() { delete expr_list; }
@@ -372,6 +568,16 @@ void TupleExpr::print() const {
 }
 
 std::vector<ASTNode *> TupleExpr::children() { return {(ASTNode *)expr_list}; }
+
+bool TupleExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != TupleExpr::kind) {
+    return false;
+  }
+
+  const TupleExpr& n = (TupleExpr&) node;
+
+  return (*expr_list == *(n.expr_list));
+}
 
 FuncTypename::FuncTypename(const TypenameList *params, const Typename *ret_type)
     : params(params), ret_type(ret_type) {}
@@ -390,6 +596,16 @@ void FuncTypename::print() const {
 
 std::vector<ASTNode *> FuncTypename::children() {
   return {(ASTNode *)params, (ASTNode *)ret_type};
+}
+
+bool FuncTypename::operator==(const ASTNode &node) const {
+  if (node.get_kind() != FuncTypename::kind) {
+    return false;
+  }
+
+  const FuncTypename& n = (FuncTypename&) node;
+
+  return (*params == *(n.params) && *ret_type == *(n.ret_type));
 }
 
 StaticArrayTypename::StaticArrayTypename(const Typename *element_type,
@@ -412,6 +628,16 @@ std::vector<ASTNode *> StaticArrayTypename::children() {
   return {(ASTNode *)element_type, (ASTNode *)size};
 }
 
+bool StaticArrayTypename::operator==(const ASTNode &node) const {
+  if (node.get_kind() != StaticArrayTypename::kind) {
+    return false;
+  }
+
+  const StaticArrayTypename& n = (StaticArrayTypename&) node;
+
+  return (*element_type == *(n.element_type) && *size == *(n.size));
+}
+
 TypeAlias::TypeAlias(const Ident *name, const Typename *type_expr)
     : name(name), type_expr(type_expr) {}
 
@@ -429,6 +655,16 @@ void TypeAlias::print() const {
 
 std::vector<ASTNode *> TypeAlias::children() {
   return {(Typename *)name, (ASTNode *)type_expr};
+}
+
+bool TypeAlias::operator==(const ASTNode &node) const {
+  if (node.get_kind() != TypeAlias::kind) {
+    return false;
+  }
+
+  const TypeAlias& n = (TypeAlias&) node;
+
+  return (*name == *(n.name) && *type_expr == *(n.type_expr));
 }
 
 StructDecl::StructDecl(const Ident *name, const VarDeclList *members)
@@ -449,6 +685,16 @@ void StructDecl::print() const {
 
 std::vector<ASTNode *> StructDecl::children() {
   return {(Expr *)name, (ASTNode *)members};
+}
+
+bool StructDecl::operator==(const ASTNode &node) const {
+  if (node.get_kind() != StructDecl::kind) {
+    return false;
+  }
+
+  const StructDecl& n = (StructDecl&) node;
+
+  return (*name == *(n.name) && *members == *(n.members));
 }
 
 VarDecl::VarDecl(const Typename *type_name, const Ident *var_name)
@@ -473,6 +719,16 @@ std::vector<ASTNode *> VarDecl::children() {
   return {(ASTNode *)type_name, (Expr *)var_name};
 }
 
+bool VarDecl::operator==(const ASTNode &node) const {
+  if (node.get_kind() != VarDecl::kind) {
+    return false;
+  }
+
+  const VarDecl& n = (VarDecl&) node;
+
+  return (*type_name == *(n.type_name) && *var_name == *(n.var_name));
+}
+
 VarDeclInit::VarDeclInit(const VarDecl *decl, const Expr *init)
     : decl(decl), init(init) {}
 
@@ -491,6 +747,16 @@ std::vector<ASTNode *> VarDeclInit::children() {
   return {(ASTNode *)decl, (ASTNode *)init};
 }
 
+bool VarDeclInit::operator==(const ASTNode &node) const {
+  if (node.get_kind() != VarDeclInit::kind) {
+    return false;
+  }
+
+  const VarDeclInit& n = (VarDeclInit&) node;
+
+  return (*decl == *(n.decl) && *init == *(n.init));
+}
+
 ArrayLiteral::ArrayLiteral(const ExprList *items) : items(items) {}
 
 ArrayLiteral::~ArrayLiteral() { delete items; }
@@ -502,6 +768,16 @@ void ArrayLiteral::print() const {
 }
 
 std::vector<ASTNode *> ArrayLiteral::children() { return {(ASTNode *)items}; }
+
+bool ArrayLiteral::operator==(const ASTNode &node) const {
+  if (node.get_kind() != ArrayLiteral::kind) {
+    return false;
+  }
+
+  const ArrayLiteral& n = (ArrayLiteral&) node;
+
+  return (*items == *(n.items));
+}
 
 IfStmt::IfStmt(const Expr *cond, const StatementList *then)
     : cond(cond), then(then) {}
@@ -523,6 +799,16 @@ std::vector<ASTNode *> IfStmt::children() {
   return {(ASTNode *)cond, (ASTNode *)then};
 }
 
+bool IfStmt::operator==(const ASTNode &node) const {
+  if (node.get_kind() != IfStmt::kind) {
+    return false;
+  }
+
+  const IfStmt& n = (IfStmt&) node;
+
+  return (*cond == *(n.cond) && *then == *(n.then));
+}
+
 IfElseStmt::IfElseStmt(const IfStmt *if_stmt, const StatementList *els)
     : if_stmt(if_stmt), els(els) {}
 
@@ -540,6 +826,16 @@ void IfElseStmt::print() const {
 
 std::vector<ASTNode *> IfElseStmt::children() {
   return {(ASTNode *)if_stmt, (ASTNode *)els};
+}
+
+bool IfElseStmt::operator==(const ASTNode &node) const {
+  if (node.get_kind() != IfElseStmt::kind) {
+    return false;
+  }
+
+  const IfElseStmt& n = (IfElseStmt&) node;
+
+  return (*if_stmt == *(n.if_stmt) && *els == *(n.els));
 }
 
 WhileStmt::WhileStmt(const Expr *cond, const StatementList *body)
@@ -560,6 +856,16 @@ void WhileStmt::print() const {
 
 std::vector<ASTNode *> WhileStmt::children() {
   return {(ASTNode *)cond, (ASTNode *)body};
+}
+
+bool WhileStmt::operator==(const ASTNode &node) const {
+  if (node.get_kind() != WhileStmt::kind) {
+    return false;
+  }
+
+  const WhileStmt& n = (WhileStmt&) node;
+
+  return (*cond == *(n.cond) && *body == *(n.body));
 }
 
 ForStmt::ForStmt(const Statement *init, const Expr *cond,
@@ -590,6 +896,16 @@ std::vector<ASTNode *> ForStmt::children() {
           (ASTNode *)body};
 }
 
+bool ForStmt::operator==(const ASTNode &node) const {
+  if (node.get_kind() != ForStmt::kind) {
+    return false;
+  }
+
+  const ForStmt& n = (ForStmt&) node;
+
+  return (*init == *(n.init) && *condition == *(n.condition) && *update == *(n.update) && *body == *(n.body));
+}
+
 AddrOf::AddrOf(const Expr *expr) : expr(expr) {}
 
 AddrOf::~AddrOf() { delete expr; }
@@ -601,6 +917,16 @@ void AddrOf::print() const {
 
 std::vector<ASTNode *> AddrOf::children() { return {(ASTNode *)expr}; }
 
+bool AddrOf::operator==(const ASTNode &node) const {
+  if (node.get_kind() != AddrOf::kind) {
+    return false;
+  }
+
+  const AddrOf& n = (AddrOf&) node;
+
+  return (*expr == *(n.expr));
+}
+
 Deref::Deref(const Expr *expr) : expr(expr) {}
 
 Deref::~Deref() { delete expr; }
@@ -611,6 +937,16 @@ void Deref::print() const {
 }
 
 std::vector<ASTNode *> Deref::children() { return {(ASTNode *)expr}; }
+
+bool Deref::operator==(const ASTNode &node) const {
+  if (node.get_kind() != Deref::kind) {
+    return false;
+  }
+
+  const Deref& n = (Deref&) node;
+
+  return (*expr == *(n.expr));
+}
 
 CastExpr::CastExpr(const Typename *dest_type, const Expr *expr)
     : dest_type(dest_type), expr(expr) {}
@@ -628,6 +964,16 @@ void CastExpr::print() const {
 
 std::vector<ASTNode *> CastExpr::children() {
   return {(ASTNode *)dest_type, (ASTNode *)expr};
+}
+
+bool CastExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != CastExpr::kind) {
+    return false;
+  }
+
+  const CastExpr& n = (CastExpr&) node;
+
+  return (*dest_type == *(n.dest_type) && *expr == *(n.expr));
 }
 
 LogicalExpr::LogicalExpr(const char *const op, const Expr *l, const Expr *r)
@@ -648,23 +994,72 @@ std::vector<ASTNode *> LogicalExpr::children() {
   return {(ASTNode *)left, (ASTNode *)right};
 }
 
-FunctionCall::FunctionCall(const CallingExpr *func, const ExprList *args)
+bool LogicalExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != LogicalExpr::kind) {
+    return false;
+  }
+
+  const LogicalExpr& n = (LogicalExpr&) node;
+
+  return (op == n.op && *left == *(n.left) && *right == *(n.right));
+}
+
+FunctionCallExpr::FunctionCallExpr(const CallingExpr *func, const ExprList *args)
     : func(func), args(args) {}
 
-FunctionCall::~FunctionCall() {
+FunctionCallExpr::~FunctionCallExpr() {
   delete func;
   delete args;
 }
 
-void FunctionCall::print() const {
+void FunctionCallExpr::print() const {
   func->print();
   putchar('(');
   args->print();
   putchar(')');
 }
 
-std::vector<ASTNode *> FunctionCall::children() {
+std::vector<ASTNode *> FunctionCallExpr::children() {
   return {(ASTNode *)func, (ASTNode *)args};
+}
+
+bool FunctionCallExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != FunctionCallExpr::kind) {
+    return false;
+  }
+
+  const FunctionCallExpr& n = (FunctionCallExpr&) node;
+
+  return (*func == *(n.func) && *args == *(n.args));
+}
+
+FunctionCallStmt::FunctionCallStmt(const CallingExpr *func, const ExprList *args)
+    : func(func), args(args) {}
+
+FunctionCallStmt::~FunctionCallStmt() {
+  delete func;
+  delete args;
+}
+
+void FunctionCallStmt::print() const {
+  func->print();
+  putchar('(');
+  args->print();
+  putchar(')');
+}
+
+std::vector<ASTNode *> FunctionCallStmt::children() {
+  return {(ASTNode *)func, (ASTNode *)args};
+}
+
+bool FunctionCallStmt::operator==(const ASTNode &node) const {
+  if (node.get_kind() != FunctionCallStmt::kind) {
+    return false;
+  }
+
+  const FunctionCallStmt& n = (FunctionCallStmt&) node;
+
+  return (*func == *(n.func) && *args == *(n.args));
 }
 
 ParamsList::ParamsList(std::vector<VarDecl *> params) : params(params) {}
@@ -694,6 +1089,15 @@ void ParamsList::add_to_scope(SymbolTable *symtable) {
 
 std::vector<ASTNode *> ParamsList::children() { return cast_nodes(params); }
 
+bool ParamsList::operator==(const ASTNode &node) const {
+  if (node.get_kind() != ParamsList::kind) {
+    return false;
+  }
+
+  const ParamsList& n = (ParamsList&) node;
+
+  return cmp_vectors(params, n.params);
+}
 
 FuncDecl::FuncDecl(const Ident *name, const ParamsList *params,
                    const Typename *ret_type, const StatementList *body)
@@ -722,6 +1126,16 @@ std::vector<ASTNode *> FuncDecl::children() {
           (ASTNode *)body};
 }
 
+bool FuncDecl::operator==(const ASTNode &node) const {
+  if (node.get_kind() != FuncDecl::kind) {
+    return false;
+  }
+
+  const FuncDecl& n = (FuncDecl&) node;
+
+  return (*name == *(n.name) && *params == *(n.params) && *ret_type == *(n.ret_type) && *body == *(n.body));
+}
+
 ProgramSource::ProgramSource(std::vector<ASTNode *> nodes) : nodes(nodes) {}
 
 ProgramSource::~ProgramSource() { nodes.clear(); }
@@ -737,6 +1151,16 @@ void ProgramSource::add_node(ASTNode *node) { nodes.push_back(node); }
 
 std::vector<ASTNode *> ProgramSource::children() { return nodes; }
 
+bool ProgramSource::operator==(const ASTNode &node) const {
+  if (node.get_kind() != ProgramSource::kind) {
+    return false;
+  }
+
+  const ProgramSource& n = (ProgramSource&) node;
+
+  return cmp_vectors(nodes, n.nodes);
+}
+
 ReturnStatement::ReturnStatement(const Expr *val) : val(val) {}
 
 ReturnStatement::~ReturnStatement() { delete val; }
@@ -747,6 +1171,16 @@ void ReturnStatement::print() const {
 }
 
 std::vector<ASTNode *> ReturnStatement::children() { return {(ASTNode *)val}; }
+
+bool ReturnStatement::operator==(const ASTNode &node) const {
+  if (node.get_kind() != ReturnStatement::kind) {
+    return false;
+  }
+
+  const ReturnStatement& n = (ReturnStatement&) node;
+
+  return (*val == *(n.val));
+}
 
 Assignment::Assignment(const Expr *lhs, const Expr *rhs) : lhs(lhs), rhs(rhs) {}
 
@@ -765,6 +1199,16 @@ std::vector<ASTNode *> Assignment::children() {
   return {(ASTNode *)lhs, (ASTNode *)rhs};
 }
 
+bool Assignment::operator==(const ASTNode &node) const {
+  if (node.get_kind() != Assignment::kind) {
+    return false;
+  }
+
+  const Assignment& n = (Assignment&) node;
+
+  return (*lhs == *(n.lhs) && *rhs == *(n.rhs));
+}
+
 BangExpr::BangExpr(const Expr *expr) : expr(expr) {}
 
 BangExpr::~BangExpr() { delete expr; }
@@ -775,6 +1219,16 @@ void BangExpr::print() const {
 }
 
 std::vector<ASTNode *> BangExpr::children() { return {(ASTNode *)expr}; }
+
+bool BangExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != BangExpr::kind) {
+    return false;
+  }
+
+  const BangExpr& n = (BangExpr&) node;
+
+  return (*expr == *(n.expr));
+}
 
 NotExpr::NotExpr(const Expr *expr) : expr(expr) {}
 
@@ -787,6 +1241,16 @@ void NotExpr::print() const {
 
 std::vector<ASTNode *> NotExpr::children() { return {(ASTNode *)expr}; }
 
+bool NotExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != NotExpr::kind) {
+    return false;
+  }
+
+  const NotExpr& n = (NotExpr&) node;
+
+  return (*expr == *(n.expr));
+}
+
 PreExpr::PreExpr(const char *const op, const Expr *expr)
     : op(std::string(op)), expr(expr) {}
 
@@ -798,3 +1262,13 @@ void PreExpr::print() const {
 }
 
 std::vector<ASTNode *> PreExpr::children() { return {(ASTNode *)expr}; }
+
+bool PreExpr::operator==(const ASTNode &node) const {
+  if (node.get_kind() != PreExpr::kind) {
+    return false;
+  }
+
+  const PreExpr& n = (PreExpr&) node;
+
+  return (op == n.op && *expr == *(n.expr));
+}

@@ -47,6 +47,11 @@
                          \
   virtual int get_kind() const { return this->kind; }
 
+#define NEQ_OPERATOR()  \
+  virtual bool operator!=(const ASTNode &node) const {  \
+    return !(*this == node);  \
+  }
+
 class ProgramSource;
 
 namespace x {
@@ -65,6 +70,9 @@ class ASTNode {
   virtual std::vector<ASTNode *> children() = 0;
   virtual void gen() {}
 
+  virtual bool operator==(const ASTNode &node) const = 0;
+  virtual bool operator!=(const ASTNode &node) const = 0;
+
   virtual ~ASTNode() {}
 
  protected:
@@ -81,6 +89,9 @@ class ProgramSource : public ASTNode {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   void add_node(ASTNode *node);
 
@@ -105,6 +116,9 @@ class ExprList : public ASTNode {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   void push_expr(Expr *expr);
 
@@ -138,6 +152,9 @@ class StatementList : public ASTNode {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   void push_statement(Statement *statement);
 
   KIND_CLASS()
@@ -153,6 +170,9 @@ class ParensExpr : public CallingExpr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -184,6 +204,9 @@ class ParensTypename : public Typename {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -206,6 +229,9 @@ class IntLiteral : public NumLiteral {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -218,6 +244,9 @@ class FloatLiteral : public NumLiteral {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -235,6 +264,9 @@ class TernaryExpr : public Expr {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -246,6 +278,9 @@ class BoolLiteral : public Expr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -259,6 +294,9 @@ class CharLiteral : public Expr {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -270,6 +308,9 @@ class StringLiteral : public Expr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -283,6 +324,9 @@ class TypeIdent : public Typename {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -294,6 +338,9 @@ class Ident : public CallingExpr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -311,6 +358,9 @@ class MathExpr : public Expr {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -327,6 +377,9 @@ class BoolExpr : public Expr {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -340,6 +393,9 @@ class PtrTypename : public Typename {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -355,6 +411,9 @@ class MutTypename : public Typename {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -368,6 +427,9 @@ class TypenameList : public ASTNode {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   // Pushes the typename onto the back of the type list
   void push_type(Typename *type_name);
@@ -387,6 +449,9 @@ class VarDecl : public Statement {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   void add_to_scope(SymbolTable *symtable);
 
   KIND_CLASS()
@@ -403,6 +468,9 @@ class ParamsList : public ASTNode {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   void push_param(VarDecl *param);
 
   void add_to_scope(SymbolTable *symtable);
@@ -410,18 +478,41 @@ class ParamsList : public ASTNode {
   KIND_CLASS()
 };
 
-// TODO: Find a way to avoid diamond inheritance here
-class FunctionCall : public Statement, public Expr {
+class FunctionCallExpr : public Expr {
  public:
   const CallingExpr *func;
   const ExprList *args;
 
-  FunctionCall(const CallingExpr *func, const ExprList *args);
+  FunctionCallExpr(const CallingExpr *func, const ExprList *args);
 
-  virtual ~FunctionCall();
+  virtual ~FunctionCallExpr();
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
+  KIND_CLASS()
+};
+
+// Identical to FunctionCallExpr, except it inherits from Stmt instead. This is
+// to avoid diamond inheritance which causes major problems especially when
+// downcasting. Having two nearly identical classes is a lesser evil
+class FunctionCallStmt : public Statement {
+ public:
+  const CallingExpr *func;
+  const ExprList *args;
+
+  FunctionCallStmt(const CallingExpr *func, const ExprList *args);
+
+  virtual ~FunctionCallStmt();
+
+  virtual void print() const;
+  virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -436,6 +527,9 @@ class VarDeclList : public ASTNode {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   // Pushes the var decl onto the back of the type list
   void push_decl(VarDecl *decl);
@@ -454,6 +548,9 @@ class TupleTypename : public Typename {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -467,6 +564,9 @@ class TupleExpr : public Expr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -483,6 +583,9 @@ class FuncTypename : public Typename {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -497,6 +600,9 @@ class StaticArrayTypename : public Typename {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -513,6 +619,9 @@ class TypeAlias : public TypeDecl {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -527,6 +636,9 @@ class StructDecl : public TypeDecl {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -544,6 +656,9 @@ class VarDeclInit : public Statement {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -557,6 +672,9 @@ class ArrayLiteral : public Expr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -573,6 +691,9 @@ class IfStmt : public Statement {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -588,6 +709,9 @@ class IfElseStmt : public Statement {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -602,6 +726,9 @@ class WhileStmt : public Statement {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -621,6 +748,9 @@ class ForStmt : public Statement {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -635,6 +765,9 @@ class AddrOf : public Expr {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -648,6 +781,9 @@ class Deref : public Expr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -664,6 +800,9 @@ class CastExpr : public Expr {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -679,6 +818,9 @@ class LogicalExpr : public Expr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -698,6 +840,9 @@ class FuncDecl : public ASTNode {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -711,6 +856,9 @@ class ReturnStatement : public Statement {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -728,6 +876,9 @@ class Assignment : public Statement {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -741,6 +892,9 @@ class BangExpr : public Expr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
@@ -756,6 +910,9 @@ class NotExpr : public Expr {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
+
   KIND_CLASS()
 };
 
@@ -770,6 +927,9 @@ class PreExpr : public Expr {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool operator==(const ASTNode &node) const;
+  NEQ_OPERATOR()
 
   KIND_CLASS()
 };
