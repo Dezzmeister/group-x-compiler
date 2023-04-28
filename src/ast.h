@@ -45,7 +45,7 @@
 #define KIND_CLASS()     \
   const static int kind; \
                          \
-  int get_kind() { return this->kind; }
+  virtual int get_kind() const { return this->kind; }
 
 class ProgramSource;
 
@@ -59,7 +59,7 @@ void tree_dotfile(std::ostream &out, ProgramSource *prog);
 
 class ASTNode {
  public:
-  virtual int get_kind() = 0;
+  virtual int get_kind() const = 0;
 
   virtual void print() const = 0;
   virtual std::vector<ASTNode *> children() = 0;
