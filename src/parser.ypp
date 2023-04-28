@@ -1,14 +1,24 @@
+%define api.pure full
+
 %code requires {
 #include <stdio.h>
 #include "ast.h"
 #include "symtable.h"
 #include "parser.h"
 #include "parseutils.h"
+
+typedef void* yyscan_t;
 }
 
+%param { yyscan_t scanner }
+%parse-param { ParserState * parser_state }
 
 %code provides {
-extern void yyerror (char const *format, ...);
+extern void yyerror (yyscan_t scanner, ParserState * parser_state, char const *format, ...);
+}
+
+%code {
+int yylex(YYSTYPE * yylvalp, yyscan_t scanner);
 }
 
 %union {
@@ -141,7 +151,7 @@ extern void yyerror (char const *format, ...);
 
 %%
 
-top_level : program {x::top = $1; YYACCEPT;}
+top_level : program {parser_state->top = $1; YYACCEPT;}
           ;
 
 program : program type_decl ';' {$1->add_node($2); $$ = $1;}

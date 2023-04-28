@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "src/parseutils.h"
+#include "src/parser.h"
 #include "src/symtable.h"
 
 extern int yydebug;
@@ -37,6 +38,11 @@ bool option_exists(char** begin, char** end, const std::string& option) {
 extern SymbolTable* symtable;
 
 int main(int argc, char** argv) {
+  ParserState parser_state;
+  FILE * yyin;
+  yyscan_t scanner;
+  yylex_init_extra(&parser_state, &scanner);
+
   if (YYDEBUG) {
     yydebug = 1;
   } /* Enable tracing */
@@ -61,18 +67,20 @@ int main(int argc, char** argv) {
       fprintf(stderr, "dup error.\n");
       exit(1);
     }
+    yyset_in(yyin, scanner);
   }
 
-  int val = yyparse();
+  int val = yyparse(scanner, &parser_state);
+  yylex_destroy(scanner);
   printf("status code: %d\n", val);
   printf("expr: ");
-  x::top->print();
-  printf("\nkind: %s\n", x::kind_map[x::top->get_kind()].c_str());
+  parser_state.top->print();
+  printf("\nkind: %s\n", x::kind_map[parser_state.top->get_kind()].c_str());
 
   if (graph) {
     std::ofstream dotfile;
     dotfile.open("prog.dot");
-    x::tree_dotfile(dotfile, x::top);
+    x::tree_dotfile(dotfile, parser_state.top);
     dotfile.close();
   }
   return val;

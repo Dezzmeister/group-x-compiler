@@ -1,5 +1,4 @@
-%option warn
-%option noyywrap
+%option reentrant bison-bridge warn noyywrap
 
 %{
 #include <stdarg.h>
@@ -8,11 +7,11 @@
 #include "parser.h"
 #include "symtable.h"
 
-int x::lineno = 1;
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 %}
+
+%option extra-type="ParserState*"
 
 str_literal \"[^\"\n]*\"
 delim       [ \t]
@@ -33,17 +32,17 @@ comment     \/\/.*\n
                     int len = strlen(str);
                     // Remove quotes
                     str[len - 1] = '\0';
-                    yylval.str_literal = new StringLiteral(str + 1);
+                    yylval->str_literal = new StringLiteral(str + 1);
                     free(str);
                     return STR;
                 }
 {ws}        {}
-{comment}   {x::lineno++;}
-\n          {x::lineno++;}
-{int}       {yylval.int_literal = new IntLiteral(yytext); return INT;}
-{float}     {yylval.float_literal = new FloatLiteral(yytext); return FLOAT;}
-true        {yylval.bool_literal = new BoolLiteral(true); return BOOL;}
-false       {yylval.bool_literal = new BoolLiteral(false); return BOOL;}
+{comment}   {yyextra->lineno++;}
+\n          {yyextra->lineno++;}
+{int}       {yylval->int_literal = new IntLiteral(yytext); return INT;}
+{float}     {yylval->float_literal = new FloatLiteral(yytext); return FLOAT;}
+true        {yylval->bool_literal = new BoolLiteral(true); return BOOL;}
+false       {yylval->bool_literal = new BoolLiteral(false); return BOOL;}
 
 type        {return TYPE_ALIAS_KW;}
 struct      {return STRUCT_KW;}
@@ -62,7 +61,7 @@ and         {return AND_KW;}
 or          {return OR_KW;}
 
 {ident}     {
-                yylval.ident = new Ident(yytext); 
+                yylval->ident = new Ident(yytext); 
                 // Our grammar is not context free because of this: the lexer returns
                 // a different token depending on whether the identifier has been declared
                 // as a type, variable, or function, or if it's undeclared. This is great because
@@ -73,8 +72,8 @@ or          {return OR_KW;}
                     if (sym->kind == Var) {
                         return DECLARED_VAR;
                     } else if (sym->kind == Type) {
-                        delete yylval.ident;
-                        yylval.type_ident = new TypeIdent(yytext);
+                        delete yylval->ident;
+                        yylval->type_ident = new TypeIdent(yytext);
                         return DECLARED_TYPE;
                     }
 
@@ -116,17 +115,17 @@ or          {return OR_KW;}
 %           {return '%';}
 !           {return '!';}
 
-\'\\n\'     {yylval.char_literal = new CharLiteral('\n'); return CHAR;}
-\'\\t\'     {yylval.char_literal = new CharLiteral('\t'); return CHAR;}
-\'\\0\'     {yylval.char_literal = new CharLiteral('\0'); return CHAR;}
-\'\\e\'     {yylval.char_literal = new CharLiteral('\e'); return CHAR;}
-\'\\r\'     {yylval.char_literal = new CharLiteral('\r'); return CHAR;}
-\'.\'       {yylval.char_literal = new CharLiteral(yytext[1]); return CHAR;}
+\'\\n\'     {yylval->char_literal = new CharLiteral('\n'); return CHAR;}
+\'\\t\'     {yylval->char_literal = new CharLiteral('\t'); return CHAR;}
+\'\\0\'     {yylval->char_literal = new CharLiteral('\0'); return CHAR;}
+\'\\e\'     {yylval->char_literal = new CharLiteral('\e'); return CHAR;}
+\'\\r\'     {yylval->char_literal = new CharLiteral('\r'); return CHAR;}
+\'.\'       {yylval->char_literal = new CharLiteral(yytext[1]); return CHAR;}
 
 %%
 
-void yyerror(char const *format, ...) {
-    fprintf(stderr, "line: %d\n", x::lineno);
+void yyerror(yyscan_t scanner, ParserState * parser_state, char const *format, ...) {
+    fprintf(stderr, "line: %lu\n", parser_state->lineno);
     va_list args;
     va_start (args, format);
     vfprintf (stderr, format, args);

@@ -2,4 +2,4 @@
 
 #include <vector>
 
-ProgramSource* x::top = nullptr;
+ParserState::ParserState() : lineno(1), top(nullptr) {}
