@@ -713,7 +713,7 @@ void VarDecl::print() const {
 }
 
 void VarDecl::add_to_scope(SymbolTable *symtable) {
-  symtable->put(var_name->id, new Symbol(Var));
+  symtable->put(var_name->id, new Symbol(Var, (Decl) { .var=this }));
 }
 
 std::vector<ASTNode *> VarDecl::children() {

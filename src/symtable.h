@@ -8,12 +8,23 @@
 
 enum SymbolKind { Var, Type, Func };
 
+class VarDecl;
+class FuncDecl;
+class TypeDecl;
+
+typedef union {
+  VarDecl *var;
+  FuncDecl *func;
+  TypeDecl *typ;
+} Decl;
+
 class Symbol {
  public:
-  SymbolKind type;
+  SymbolKind kind;
   char *name;
+  Decl decl;
   Symbol *next;
-  Symbol(SymbolKind type) : type(type) {}
+  Symbol(SymbolKind kind, Decl decl) : kind(kind), decl(decl) {}
   ~Symbol() {}
 };
 

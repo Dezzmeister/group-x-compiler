@@ -70,9 +70,9 @@ or          {return OR_KW;}
                 const Symbol * sym = x::symtable->get(std::string(yytext));
 
                 if (sym != nullptr) {
-                    if (sym->type == Var) {
+                    if (sym->kind == Var) {
                         return DECLARED_VAR;
-                    } else if (sym->type == Type) {
+                    } else if (sym->kind == Type) {
                         delete yylval.ident;
                         yylval.type_ident = new TypeIdent(yytext);
                         return DECLARED_TYPE;

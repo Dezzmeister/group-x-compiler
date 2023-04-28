@@ -250,7 +250,7 @@ array_literal : '{' expr_list '}' {$$ = new ArrayLiteral($2);}
 
 var_decl : type_name IDENT {
                 $$ = new VarDecl($1, $2);
-                x::symtable->put($2->id, new Symbol(Var));
+                x::symtable->put($2->id, new Symbol(Var, { .var=$$ }));
             }
          ;
 
@@ -288,11 +288,15 @@ var_decl_list : var_decl ';' {$$ = new VarDeclList({$1});}
               ;
 
 struct_decl : STRUCT_KW IDENT '{' {
-                    x::symtable->put($2->id, new Symbol(Type));
+                    x::symtable->put($2->id, new Symbol(Type, { .typ=nullptr }));
                     x::create_scope();
                 } var_decl_list '}' {
                     SymbolTable * table = x::pop_scope();
                     $$ = new StructDecl($2, $5, table);
+                    // We have to get the symbol we made in the first action and
+                    // add the full type declaration
+                    Symbol * sym = x::symtable->get($2->id);
+                    sym->decl = (Decl) { .typ=$$ };
                 }
             ;
 
@@ -307,12 +311,14 @@ params_list : params_list ',' var_decl {$1->push_param($3); $$ = $1;}
             ;
 
 func_decl : type_name IDENT '(' params_list ')' '{' {
-                x::symtable->put($2->id, new Symbol(Func));
+                x::symtable->put($2->id, new Symbol(Func, { .func=nullptr }));
                 x::create_scope();
                 $4->add_to_scope(x::symtable);
             } statement_list '}' {
                 SymbolTable * table = x::pop_scope();
                 $$ = new FuncDecl($2, $4, $1, $8, table);
+                Symbol * sym = x::symtable->get($2->id);
+                sym->decl = (Decl) { .func=$$ };
             }
           ;
 
@@ -356,7 +362,7 @@ type_list : type_name {$$ = new TypenameList({$1});}
 
 type_alias : TYPE_ALIAS_KW IDENT '=' type_name {
                 $$ = new TypeAlias($2, $4);
-                x::symtable->put($2->id, new Symbol(Type));
+                x::symtable->put($2->id, new Symbol(Type, (Decl) { .typ=$$ }));
             }
            ;
 
