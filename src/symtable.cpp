@@ -2,10 +2,10 @@
 
 static SymbolTable* init_symtable();
 
-SymbolTable* x::symtable = init_symtable();
+SymbolTable * x::symtable = init_symtable();
 
-static SymbolTable* init_symtable() {
-  SymbolTable* out = new SymbolTable(nullptr);
+static SymbolTable * init_symtable() {
+  SymbolTable * out = new SymbolTable(nullptr);
 
   // Built-in types
   out->put(std::string("int"), new Symbol(Type));
@@ -20,16 +20,17 @@ static SymbolTable* init_symtable() {
   return out;
 }
 
-SymbolTable* x::create_scope() {
-  SymbolTable* out = new SymbolTable(x::symtable);
+SymbolTable * x::create_scope() {
+  SymbolTable * out = new SymbolTable(x::symtable);
   x::symtable = out;
 
   return out;
 }
 
-void x::destroy_scope() {
-  SymbolTable* parent = x::symtable->enclosing;
-  delete x::symtable;
+SymbolTable * x::pop_scope() {
+  SymbolTable * parent = x::symtable->enclosing;
+  SymbolTable * out = x::symtable;
 
   x::symtable = parent;
+  return out;
 }

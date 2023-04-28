@@ -629,8 +629,9 @@ class StructDecl : public TypeDecl {
  public:
   const Ident *name;
   const VarDeclList *members;
+  const SymbolTable *scope;
 
-  StructDecl(const Ident *name, const VarDeclList *members);
+  StructDecl(const Ident *name, const VarDeclList *members, const SymbolTable *scope);
 
   virtual ~StructDecl();
 
@@ -683,8 +684,9 @@ class IfStmt : public Statement {
  public:
   const Expr *cond;
   const StatementList *then;
+  const SymbolTable *scope;
 
-  IfStmt(const Expr *cond, const StatementList *then);
+  IfStmt(const Expr *cond, const StatementList *then, const SymbolTable *scope);
 
   virtual ~IfStmt();
 
@@ -701,8 +703,9 @@ class IfElseStmt : public Statement {
  public:
   const IfStmt *if_stmt;
   const StatementList *els;
+  const SymbolTable *scope;
 
-  IfElseStmt(const IfStmt *if_stmt, const StatementList *els);
+  IfElseStmt(const IfStmt *if_stmt, const StatementList *els, const SymbolTable *scope);
 
   virtual ~IfElseStmt();
 
@@ -719,8 +722,9 @@ class WhileStmt : public Statement {
  public:
   const Expr *cond;
   const StatementList *body;
+  const SymbolTable *scope;
 
-  WhileStmt(const Expr *cond, const StatementList *body);
+  WhileStmt(const Expr *cond, const StatementList *body, const SymbolTable *scope);
 
   virtual ~WhileStmt();
 
@@ -739,9 +743,10 @@ class ForStmt : public Statement {
   const Expr *condition;
   const Statement *update;
   const StatementList *body;
+  const SymbolTable *scope;
 
   ForStmt(const Statement *init, const Expr *condition, const Statement *update,
-          const StatementList *body);
+          const StatementList *body, const SymbolTable *scope);
 
   virtual ~ForStmt();
 
@@ -831,9 +836,10 @@ class FuncDecl : public ASTNode {
   const ParamsList *params;
   const Typename *ret_type;
   const StatementList *body;
+  const SymbolTable *scope;
 
   FuncDecl(const Ident *name, const ParamsList *params,
-           const Typename *ret_body, const StatementList *body);
+           const Typename *ret_body, const StatementList *body, const SymbolTable *scope);
 
   virtual ~FuncDecl();
 

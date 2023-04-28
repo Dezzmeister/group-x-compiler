@@ -57,8 +57,9 @@ extern SymbolTable *symtable;
 // Creates a new scope and returns the corresponding symtable
 SymbolTable *create_scope();
 
-// Destroys the current scope
-void destroy_scope();
+// Pops the current scope and returns it. It is the caller's responsibility to
+// free this memory
+SymbolTable * pop_scope();
 }  // namespace x
 
 #endif

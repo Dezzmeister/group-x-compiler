@@ -256,27 +256,27 @@ var_decl : type_name IDENT {
 
 if_statement : IF_KW '(' expr ')' '{'
                 {x::create_scope();} statement_list '}' %prec IF_KW {
-                    $$ = new IfStmt($3, $7);
-                    x::destroy_scope();
+                    SymbolTable * table = x::pop_scope();
+                    $$ = new IfStmt($3, $7, table);
                 }
              ;
 
 if_else_statement : if_statement ELSE_KW '{' {x::create_scope();} statement_list '}' {
-                        $$ = new IfElseStmt($1, $5);
-                        x::destroy_scope();
+                        SymbolTable * table = x::pop_scope();
+                        $$ = new IfElseStmt($1, $5, table);
                     }
                   ;
 
 while_statement : WHILE_KW '(' expr ')' '{'
                     {x::create_scope();} statement_list '}' %prec WHILE_KW {
-                        $$ = new WhileStmt($3, $7);
-                        x::destroy_scope();
+                        SymbolTable * table = x::pop_scope();
+                        $$ = new WhileStmt($3, $7, table);
                     }
                 ;
 
 for_statement : FOR_KW '(' statement ';' {x::create_scope();} expr ';' statement ')' '{' statement_list '}' {
-                    $$ = new ForStmt($3, $6, $8, $11);
-                    x::destroy_scope();
+                    SymbolTable * table = x::pop_scope();
+                    $$ = new ForStmt($3, $6, $8, $11, table);
                 }
               ;
 
@@ -291,8 +291,8 @@ struct_decl : STRUCT_KW IDENT '{' {
                     x::symtable->put($2->id, new Symbol(Type));
                     x::create_scope();
                 } var_decl_list '}' {
-                    $$ = new StructDecl($2, $5);
-                    x::destroy_scope();
+                    SymbolTable * table = x::pop_scope();
+                    $$ = new StructDecl($2, $5, table);
                 }
             ;
 
@@ -311,8 +311,8 @@ func_decl : type_name IDENT '(' params_list ')' '{' {
                 x::create_scope();
                 $4->add_to_scope(x::symtable);
             } statement_list '}' {
-                $$ = new FuncDecl($2, $4, $1, $8);
-                x::destroy_scope();
+                SymbolTable * table = x::pop_scope();
+                $$ = new FuncDecl($2, $4, $1, $8, table);
             }
           ;
 

@@ -667,12 +667,13 @@ bool TypeAlias::operator==(const ASTNode &node) const {
   return (*name == *(n.name) && *type_expr == *(n.type_expr));
 }
 
-StructDecl::StructDecl(const Ident *name, const VarDeclList *members)
-    : name(name), members(members) {}
+StructDecl::StructDecl(const Ident *name, const VarDeclList *members, const SymbolTable *scope)
+    : name(name), members(members), scope(scope) {}
 
 StructDecl::~StructDecl() {
   delete name;
   delete members;
+  delete scope;
 }
 
 void StructDecl::print() const {
@@ -779,12 +780,13 @@ bool ArrayLiteral::operator==(const ASTNode &node) const {
   return (*items == *(n.items));
 }
 
-IfStmt::IfStmt(const Expr *cond, const StatementList *then)
-    : cond(cond), then(then) {}
+IfStmt::IfStmt(const Expr *cond, const StatementList *then, const SymbolTable *scope)
+    : cond(cond), then(then), scope(scope) {}
 
 IfStmt::~IfStmt() {
   delete cond;
   delete then;
+  delete scope;
 }
 
 void IfStmt::print() const {
@@ -809,12 +811,13 @@ bool IfStmt::operator==(const ASTNode &node) const {
   return (*cond == *(n.cond) && *then == *(n.then));
 }
 
-IfElseStmt::IfElseStmt(const IfStmt *if_stmt, const StatementList *els)
-    : if_stmt(if_stmt), els(els) {}
+IfElseStmt::IfElseStmt(const IfStmt *if_stmt, const StatementList *els, const SymbolTable *scope)
+    : if_stmt(if_stmt), els(els), scope(scope) {}
 
 IfElseStmt::~IfElseStmt() {
   delete if_stmt;
   delete els;
+  delete scope;
 }
 
 void IfElseStmt::print() const {
@@ -838,12 +841,13 @@ bool IfElseStmt::operator==(const ASTNode &node) const {
   return (*if_stmt == *(n.if_stmt) && *els == *(n.els));
 }
 
-WhileStmt::WhileStmt(const Expr *cond, const StatementList *body)
-    : cond(cond), body(body) {}
+WhileStmt::WhileStmt(const Expr *cond, const StatementList *body, const SymbolTable *scope)
+    : cond(cond), body(body), scope(scope) {}
 
 WhileStmt::~WhileStmt() {
   delete cond;
   delete body;
+  delete scope;
 }
 
 void WhileStmt::print() const {
@@ -869,14 +873,15 @@ bool WhileStmt::operator==(const ASTNode &node) const {
 }
 
 ForStmt::ForStmt(const Statement *init, const Expr *cond,
-                 const Statement *update, const StatementList *body)
-    : init(init), condition(cond), update(update), body(body) {}
+                 const Statement *update, const StatementList *body, const SymbolTable *scope)
+    : init(init), condition(cond), update(update), body(body), scope(scope) {}
 
 ForStmt::~ForStmt() {
   delete init;
   delete condition;
   delete update;
   delete body;
+  delete scope;
 }
 
 void ForStmt::print() const {
@@ -1100,14 +1105,15 @@ bool ParamsList::operator==(const ASTNode &node) const {
 }
 
 FuncDecl::FuncDecl(const Ident *name, const ParamsList *params,
-                   const Typename *ret_type, const StatementList *body)
-    : name(name), params(params), ret_type(ret_type), body(body) {}
+                   const Typename *ret_type, const StatementList *body, const SymbolTable *scope)
+    : name(name), params(params), ret_type(ret_type), body(body), scope(scope) {}
 
 FuncDecl::~FuncDecl() {
   delete name;
   delete params;
   delete ret_type;
   delete body;
+  delete scope;
 }
 
 void FuncDecl::print() const {
