@@ -189,6 +189,8 @@ class Typename : public ASTNode {
  public:
   virtual ~Typename() {}
 
+  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const = 0;
+
  protected:
   Typename() {}
 };
@@ -203,6 +205,8 @@ class ParensTypename : public Typename {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
   virtual bool operator==(const ASTNode &node) const;
   NEQ_OPERATOR()
@@ -324,6 +328,8 @@ class TypeIdent : public Typename {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+
   virtual bool operator==(const ASTNode &node) const;
   NEQ_OPERATOR()
 
@@ -394,6 +400,8 @@ class PtrTypename : public Typename {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+
   virtual bool operator==(const ASTNode &node) const;
   NEQ_OPERATOR()
 
@@ -410,6 +418,8 @@ class MutTypename : public Typename {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
   virtual bool operator==(const ASTNode &node) const;
   NEQ_OPERATOR()
@@ -548,6 +558,8 @@ class TupleTypename : public Typename {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+
   virtual bool operator==(const ASTNode &node) const;
   NEQ_OPERATOR()
 
@@ -583,6 +595,8 @@ class FuncTypename : public Typename {
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
 
+  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+
   virtual bool operator==(const ASTNode &node) const;
   NEQ_OPERATOR()
 
@@ -600,6 +614,8 @@ class StaticArrayTypename : public Typename {
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
+
+  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
   virtual bool operator==(const ASTNode &node) const;
   NEQ_OPERATOR()
