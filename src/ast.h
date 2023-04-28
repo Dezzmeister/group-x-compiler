@@ -89,9 +89,6 @@ class ProgramSource : public ASTNode {
 
 class Expr : public ASTNode {
  public:
-  virtual void print() const = 0;
-  virtual std::vector<ASTNode *> children() = 0;
-
   virtual ~Expr() {}
 
  protected:
@@ -116,9 +113,6 @@ class ExprList : public ASTNode {
 
 class CallingExpr : public Expr {
  public:
-  virtual void print() const = 0;
-  virtual std::vector<ASTNode *> children() = 0;
-
   virtual ~CallingExpr() {}
 
  protected:
@@ -127,9 +121,6 @@ class CallingExpr : public Expr {
 
 class Statement : public ASTNode {
  public:
-  virtual void print() const = 0;
-  virtual std::vector<ASTNode *> children() = 0;
-
   virtual ~Statement() {}
 
  protected:
@@ -168,9 +159,6 @@ class ParensExpr : public CallingExpr {
 
 class TypeDecl : public Statement {
  public:
-  virtual void print() const = 0;
-  virtual std::vector<ASTNode *> children() = 0;
-
   virtual ~TypeDecl() {}
 
  protected:
@@ -179,9 +167,6 @@ class TypeDecl : public Statement {
 
 class Typename : public ASTNode {
  public:
-  virtual void print() const = 0;
-  virtual std::vector<ASTNode *> children() = 0;
-
   virtual ~Typename() {}
 
  protected:
@@ -204,9 +189,6 @@ class ParensTypename : public Typename {
 
 class NumLiteral : public Expr {
  public:
-  virtual void print() const = 0;
-  virtual std::vector<ASTNode *> children() = 0;
-
   virtual ~NumLiteral() {}
 
  protected:
