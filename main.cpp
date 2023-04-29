@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "src/parseutils.h"
+#include "src/parsedecls.h"
 #include "src/parser.h"
 #include "src/symtable.h"
 
@@ -39,7 +39,7 @@ extern SymbolTable* symtable;
 
 int main(int argc, char** argv) {
   ParserState parser_state;
-  FILE * yyin;
+  FILE * yyin = nullptr;
   yyscan_t scanner;
   yylex_init_extra(&parser_state, &scanner);
 
@@ -76,6 +76,10 @@ int main(int argc, char** argv) {
   printf("expr: ");
   parser_state.top->print();
   printf("\nkind: %s\n", x::kind_map[parser_state.top->get_kind()].c_str());
+
+  if (yyin != nullptr) {
+    fclose(yyin);
+  }
 
   if (graph) {
     std::ofstream dotfile;

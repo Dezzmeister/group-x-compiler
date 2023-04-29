@@ -66,7 +66,7 @@ or          {return OR_KW;}
                 // a different token depending on whether the identifier has been declared
                 // as a type, variable, or function, or if it's undeclared. This is great because
                 // it lets us do more with the grammar without running into conflicts
-                const Symbol * sym = x::symtable->get(std::string(yytext));
+                const Symbol * sym = yyextra->symtable->get(std::string(yytext));
 
                 if (sym != nullptr) {
                     if (sym->kind == Var) {
@@ -124,8 +124,8 @@ or          {return OR_KW;}
 
 %%
 
-void yyerror(yyscan_t scanner, ParserState * parser_state, char const *format, ...) {
-    fprintf(stderr, "line: %lu\n", parser_state->lineno);
+void yyerror(yyscan_t scanner, ParserState * state, char const *format, ...) {
+    fprintf(stderr, "line: %lu\n", state->lineno);
     va_list args;
     va_start (args, format);
     vfprintf (stderr, format, args);

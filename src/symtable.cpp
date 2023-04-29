@@ -1,10 +1,6 @@
 #include "symtable.h"
 
-static SymbolTable* init_symtable();
-
-SymbolTable * x::symtable = init_symtable();
-
-static SymbolTable * init_symtable() {
+SymbolTable * x::default_symtable() {
   SymbolTable * out = new SymbolTable(nullptr);
 
   // These are the same in memory, they only exist to make the meaning clear
@@ -24,17 +20,14 @@ static SymbolTable * init_symtable() {
   return out;
 }
 
-SymbolTable * x::create_scope() {
-  SymbolTable * out = new SymbolTable(x::symtable);
-  x::symtable = out;
-
-  return out;
+void x::create_scope(SymbolTable ** table) {
+  SymbolTable * next = new SymbolTable(*table);
+  *table = next;
 }
 
-SymbolTable * x::pop_scope() {
-  SymbolTable * parent = x::symtable->enclosing;
-  SymbolTable * out = x::symtable;
+SymbolTable * x::pop_scope(SymbolTable ** table) {
+  SymbolTable * out = *table;
+  *table = (*table)->enclosing;
 
-  x::symtable = parent;
   return out;
 }
