@@ -18,6 +18,8 @@ typedef struct ParseResult ParseResult;
 
 namespace x {
     ParseResult parse_file(const char * const path);
+
+    ParseResult parse_stdin();
 }
 
 

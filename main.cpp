@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "src/parsedecls.h"
+#include "src/parseutils.h"
 #include "src/parser.h"
 #include "src/symtable.h"
 
@@ -38,11 +39,6 @@ bool option_exists(char** begin, char** end, const std::string& option) {
 extern SymbolTable* symtable;
 
 int main(int argc, char** argv) {
-  ParserState parser_state;
-  FILE * yyin = nullptr;
-  yyscan_t scanner;
-  yylex_init_extra(&parser_state, &scanner);
-
   if (YYDEBUG) {
     yydebug = 1;
   } /* Enable tracing */
@@ -56,36 +52,20 @@ int main(int argc, char** argv) {
     graph = true;
   }
 
-  if (argc == options + 1) {
-    yyin = fopen(argv[options], "r");
-    if (!yyin) {
-      fprintf(stderr, "Cannot open file %s for reading.\n", argv[options]);
-      exit(1);
-    }
-    close(0);
-    if (dup(fileno(yyin))) {
-      fprintf(stderr, "dup error.\n");
-      exit(1);
-    }
-    yyset_in(yyin, scanner);
+  ParseResult result = (argc == options + 1) ? x::parse_file(argv[options]) : x::parse_stdin();
+
+  if (result.error) {
+    perror("Error: ");
+    return 1;
   }
 
-  int val = yyparse(scanner, &parser_state);
-  yylex_destroy(scanner);
-  printf("status code: %d\n", val);
-  printf("expr: ");
-  parser_state.top->print();
-  printf("\nkind: %s\n", x::kind_map[parser_state.top->get_kind()].c_str());
-
-  if (yyin != nullptr) {
-    fclose(yyin);
-  }
+  result.parser_state->top->print();
 
   if (graph) {
     std::ofstream dotfile;
     dotfile.open("prog.dot");
-    x::tree_dotfile(dotfile, parser_state.top);
+    x::tree_dotfile(dotfile, result.parser_state->top);
     dotfile.close();
   }
-  return val;
+  return 0;
 }
