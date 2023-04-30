@@ -61,3 +61,27 @@ ParseResult x::parse_stdin() {
 
     return ParseResult(error, state);
 }
+
+ParseResult x::parse_str(const char * code) {
+    ParserState * state = new ParserState();
+    yyscan_t scanner;
+    int error = yylex_init_extra(state, &scanner);
+
+    if (error) {
+        return ParseResult(error, nullptr);
+    }
+
+    YY_BUFFER_STATE buf = yy_scan_string(code, scanner);
+
+    error = yyparse(scanner, state);
+
+    if (error) {
+        return ParseResult(error, state);
+    }
+
+    yy_delete_buffer(buf, scanner);
+
+    error = yylex_destroy(scanner);
+
+    return ParseResult(error, state);
+}

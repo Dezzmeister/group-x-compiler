@@ -4,15 +4,11 @@
 
 typedef int (*test_func)(void);
 
-extern int stub_test();
-
-extern int hello_world_test();
-
 extern int test_parse_tree();
 
 // Tests to be run are declared 'extern' and stored in this vector
 std::vector<test_func> TESTS = {
-    stub_test, hello_world_test, test_parse_tree
+    test_parse_tree
 };
 
 int main() {

@@ -91,6 +91,22 @@ static bool cmp_vectors(const std::vector<T*> &v1, const std::vector<T*> &v2) {
   return true;
 }
 
+ASTNode * ASTNode::find(FindFunc cond) {
+  if (cond(this)) {
+    return this;
+  }
+
+  for (auto &child : children()) {
+    ASTNode * result = child->find(cond);
+
+    if (result != nullptr) {
+      return result;
+    }
+  }
+
+  return nullptr;
+}
+
 IntLiteral::IntLiteral(const char *int_str) : value(atoi(int_str)) {}
 
 IntLiteral::IntLiteral(const int value) : value(value) {}

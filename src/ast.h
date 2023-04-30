@@ -53,6 +53,9 @@
   }
 
 class ProgramSource;
+class ASTNode;
+
+typedef bool (*FindFunc)(const ASTNode*);
 
 namespace x {
 extern std::vector<std::string> kind_map;
@@ -69,6 +72,7 @@ class ASTNode {
   virtual void print() const = 0;
   virtual std::vector<ASTNode *> children() = 0;
   virtual void gen() {}
+  virtual ASTNode * find(FindFunc cond);
 
   virtual bool operator==(const ASTNode &node) const = 0;
   virtual bool operator!=(const ASTNode &node) const = 0;

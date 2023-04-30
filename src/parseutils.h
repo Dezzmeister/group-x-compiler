@@ -20,6 +20,8 @@ namespace x {
     ParseResult parse_file(const char * const path);
 
     ParseResult parse_stdin();
+
+    ParseResult parse_str(const char * code);
 }
 
 
