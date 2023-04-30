@@ -1,28 +1,82 @@
+#include <pthread.h>
+#include <queue>
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
 
-typedef int (*test_func)(void);
+#include "tests.h"
+#include "utils.h"
 
-extern int test_parse_tree();
-
-// Tests to be run are declared 'extern' and stored in this vector
-std::vector<test_func> TESTS = {
-    test_parse_tree
+struct NamedTest {
+    const char * name;
+    TestFunc func;
 };
 
-int main() {
-    // Loop through the test vector and run each test. 'auto' is a C++ keyword
-    // that provides some type inference, and C++ has foreach loops
-    for (const auto test : TESTS) {
-        // A test is successful if it returns EXIT_SUCCESS
-        const int retval = test();
-        if (retval != EXIT_SUCCESS) {
-            fprintf(stderr, "Test failed with code %d. Exiting...\n", retval);
-            return EXIT_FAILURE;
+struct ThreadArg {
+    std::queue<NamedTest> queue;
+    int successes;
+};
+
+std::unordered_map<const char *, TestFunc> xtest::tests = std::unordered_map<const char *, TestFunc>();
+
+void * thread_main(void * thread_arg) {
+    struct ThreadArg * arg = (struct ThreadArg *) thread_arg;
+    int successes = 0;
+
+    while (!arg->queue.empty()) {
+        NamedTest test = arg->queue.front();
+        arg->queue.pop();
+        printf("Running \"%s\"...\n", test.name);
+        fflush(stdout);
+        int retval = test.func();
+
+        if (retval == TEST_SUCCESS) {
+            successes++;
         }
     }
 
-    printf("All tests passed\n");
+    arg->successes = successes;
+
+    return NULL;
+}
+
+void run_tests() {
+    struct ThreadArg args[NUM_THREADS];
+    pthread_t threads[NUM_THREADS];
+    int i = 0;
+
+    for (auto &item : xtest::tests) {
+        NamedTest test = {
+            .name = item.first,
+            .func = item.second
+        };
+        args[i].queue.push(test);
+        i = (i + 1) % NUM_THREADS;
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++) {
+        int error = pthread_create(threads + i, NULL, thread_main, args + i);
+
+        if (error) {
+            perror("Error: ");
+            exit(1);
+        }
+    }
+
+    int total_tests = xtest::tests.size();
+    int successes = 0;
+
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_join(threads[i], NULL);
+        successes += args[i].successes;
+    }
+
+    printf("%d/%d tests passed\n", successes, total_tests);
+}
+
+int main() {
+    setup_tests();
+    run_tests();
+
     return EXIT_SUCCESS;
 }

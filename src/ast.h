@@ -645,13 +645,32 @@ class TypeAlias : public TypeDecl {
   KIND_CLASS()
 };
 
+class StructTypename : public Typename {
+  public:
+    const VarDeclList *members;
+    const SymbolTable *scope;
+
+    StructTypename(const VarDeclList *members, const SymbolTable *scope);
+
+    virtual ~StructTypename();
+
+    virtual void print() const;
+    virtual std::vector<ASTNode *> children();
+
+    virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+
+    virtual bool operator==(const ASTNode &node) const;
+    NEQ_OPERATOR()
+
+    KIND_CLASS()
+};
+
 class StructDecl : public TypeDecl {
  public:
   const Ident *name;
-  const VarDeclList *members;
-  const SymbolTable *scope;
+  const StructTypename *defn;
 
-  StructDecl(const Ident *name, const VarDeclList *members, const SymbolTable *scope);
+  StructDecl(const Ident *name, const StructTypename *defn);
 
   virtual ~StructDecl();
 

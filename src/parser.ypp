@@ -52,6 +52,7 @@ int yylex(YYSTYPE * yylvalp, yyscan_t scanner);
     FuncTypename * func_type_name;
     StaticArrayTypename * static_arr_type_name;
     TypeAlias * type_alias;
+    StructTypename * struct_typename;
     TypeDecl * type_decl;
     StructDecl * struct_decl;
     VarDecl * var_decl;
@@ -129,6 +130,7 @@ int yylex(YYSTYPE * yylvalp, yyscan_t scanner);
 %type <var_decl_list> var_decl_list
 %type <struct_decl> struct_decl
 %type <type_alias> type_alias
+%type <struct_typename> struct_typename
 %type <type_decl> type_decl
 %type <var_decl> var_decl
 %type <var_decl_init> var_decl_init
@@ -297,18 +299,22 @@ var_decl_list : var_decl ';' {$$ = new VarDeclList({$1});}
               | var_decl_list var_decl ';' {$1->push_decl($2); $$ = $1;}
               ;
 
-struct_decl : STRUCT_KW IDENT '{' {
+struct_decl : STRUCT_KW IDENT {
                     state->symtable->put($2->id, new Symbol(Type, { .typ=nullptr }));
-                    x::create_scope(&state->symtable);
-                } var_decl_list '}' {
-                    SymbolTable * table = x::pop_scope(&state->symtable);
-                    $$ = new StructDecl($2, $5, table);
-                    // We have to get the symbol we made in the first action and
-                    // add the full type declaration
+                } struct_typename {
+                    $$ = new StructDecl($2, $4);
                     Symbol * sym = state->symtable->get($2->id);
                     sym->decl = (Decl) { .typ=$$ };
                 }
             ;
+
+struct_typename : '{' {
+                        x::create_scope(&state->symtable);
+                    } var_decl_list '}' {
+                        SymbolTable * table = x::pop_scope(&state->symtable);
+                        $$ = new StructTypename($3, table);
+                    }
+                ;
 
 args_list : args_list ',' expr {$1->push_expr($3); $$ = $1;}
           | expr {$$ = new ExprList({$1});}

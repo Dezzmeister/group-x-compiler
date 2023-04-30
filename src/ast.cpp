@@ -35,6 +35,7 @@ const int TupleTypename::kind = x::next_kind("tuple_typename");
 const int FuncTypename::kind = x::next_kind("func_typename");
 const int StaticArrayTypename::kind = x::next_kind("static_array_typename");
 const int TypeAlias::kind = x::next_kind("type_alias");
+const int StructTypename::kind = x::next_kind("struct_typename");
 const int StructDecl::kind = x::next_kind("struct_decl");
 const int VarDecl::kind = x::next_kind("var_decl");
 const int VarDeclInit::kind = x::next_kind("var_decl_init");
@@ -683,25 +684,51 @@ bool TypeAlias::operator==(const ASTNode &node) const {
   return (*name == *(n.name) && *type_expr == *(n.type_expr));
 }
 
-StructDecl::StructDecl(const Ident *name, const VarDeclList *members, const SymbolTable *scope)
-    : name(name), members(members), scope(scope) {}
+StructTypename::StructTypename(const VarDeclList *members, const SymbolTable *scope)
+    : members(members), scope(scope) {}
+
+StructTypename::~StructTypename() {
+  delete members;
+  delete scope;
+}
+
+void StructTypename::print() const {
+  printf("{\n");
+  members->print();
+  printf("};\n");
+}
+
+std::vector<ASTNode *> StructTypename::children() {
+  return {(ASTNode *)members};
+}
+
+bool StructTypename::operator==(const ASTNode &node) const {
+  if (node.get_kind() != StructTypename::kind) {
+    return false;
+  }
+
+  const StructTypename& n = (StructTypename&) node;
+
+  return (*members == *(n.members));
+}
+
+StructDecl::StructDecl(const Ident *name, const StructTypename *defn)
+    : name(name), defn(defn) {}
 
 StructDecl::~StructDecl() {
   delete name;
-  delete members;
-  delete scope;
+  delete defn;
 }
 
 void StructDecl::print() const {
   printf("struct ");
   name->print();
-  printf(" {\n");
-  members->print();
-  printf("};\n");
+  putchar(' ');
+  defn->print();
 }
 
 std::vector<ASTNode *> StructDecl::children() {
-  return {(Expr *)name, (ASTNode *)members};
+  return {(Expr *)name, (ASTNode *)defn};
 }
 
 bool StructDecl::operator==(const ASTNode &node) const {
@@ -711,7 +738,7 @@ bool StructDecl::operator==(const ASTNode &node) const {
 
   const StructDecl& n = (StructDecl&) node;
 
-  return (*name == *(n.name) && *members == *(n.members));
+  return (*name == *(n.name) && *defn == *(n.defn));
 }
 
 VarDecl::VarDecl(const Typename *type_name, const Ident *var_name)

@@ -1,7 +1,8 @@
 CC = g++
-COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native
+COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native -pthread
 DBG_FLAGS = ${COMMON_FLAGS} -Og
 RELEASE_FLAGS = ${COMMON_FLAGS} -O3
+LD_FLAGS = -pthread
 
 SRC_DIR := src
 GENERATED_FILES := ${addprefix ${SRC_DIR}/, scanner.cpp parser.cpp }
