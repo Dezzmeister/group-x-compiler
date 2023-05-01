@@ -52,8 +52,25 @@
     return !(*this == node);  \
   }
 
+struct YYLTYPE;
+
+struct Location {
+  int first_line;
+  int first_col;
+  int last_line;
+  int last_col;
+
+  Location(int first_line, int first_col, int last_line, int last_col);
+  Location(YYLTYPE &start, YYLTYPE &end);
+
+  void set_end(YYLTYPE &end);
+};
+
+typedef struct Location Location;
+
 class ProgramSource;
 class ASTNode;
+class Typename;
 
 typedef bool (*FindFunc)(const ASTNode*);
 
@@ -67,6 +84,8 @@ void tree_dotfile(std::ostream &out, ProgramSource *prog);
 
 class ASTNode {
  public:
+  Location loc;
+
   virtual int get_kind() const = 0;
 
   virtual void print() const = 0;
@@ -80,14 +99,15 @@ class ASTNode {
   virtual ~ASTNode() {}
 
  protected:
-  ASTNode() {}
+  ASTNode(const Location loc) : loc(loc) {}
 };
 
 class ProgramSource : public ASTNode {
  public:
+  std::string name;
   std::vector<ASTNode *> nodes;
 
-  ProgramSource(std::vector<ASTNode *> nodes);
+  ProgramSource(const Location loc, std::string name, std::vector<ASTNode *> nodes);
 
   virtual ~ProgramSource();
 
@@ -107,14 +127,14 @@ class Expr : public ASTNode {
   virtual ~Expr() {}
 
  protected:
-  Expr() {}
+  Expr(const Location loc) : ASTNode(loc) {}
 };
 
 class ExprList : public ASTNode {
  public:
   std::vector<Expr *> exprs;
 
-  ExprList(std::vector<Expr *> exprs);
+  ExprList(const Location loc, std::vector<Expr *> exprs);
 
   virtual ~ExprList();
 
@@ -134,7 +154,7 @@ class CallingExpr : public Expr {
   virtual ~CallingExpr() {}
 
  protected:
-  CallingExpr() {}
+  CallingExpr(const Location loc) : Expr(loc) {}
 };
 
 class Statement : public ASTNode {
@@ -142,14 +162,14 @@ class Statement : public ASTNode {
   virtual ~Statement() {}
 
  protected:
-  Statement() {}
+  Statement(const Location loc) : ASTNode(loc) {}
 };
 
 class StatementList : public ASTNode {
  public:
   std::vector<Statement *> statements;
 
-  StatementList(std::vector<Statement *> statements);
+  StatementList(const Location loc, std::vector<Statement *> statements);
 
   virtual ~StatementList();
 
@@ -168,7 +188,7 @@ class ParensExpr : public CallingExpr {
  public:
   const Expr *expr;
 
-  ParensExpr(const Expr *expr);
+  ParensExpr(const Location loc, const Expr *expr);
 
   virtual ~ParensExpr();
 
@@ -186,7 +206,7 @@ class TypeDecl : public Statement {
   virtual ~TypeDecl() {}
 
  protected:
-  TypeDecl() {}
+  TypeDecl(const Location loc) : Statement(loc) {}
 };
 
 class Typename : public ASTNode {
@@ -196,14 +216,14 @@ class Typename : public ASTNode {
   virtual bool type_equals(const Typename * t, SymbolTable * symtable) const = 0;
 
  protected:
-  Typename() {}
+  Typename(const Location loc) : ASTNode(loc) {}
 };
 
 class ParensTypename : public Typename {
  public:
   const Typename *name;
 
-  ParensTypename(const Typename *name);
+  ParensTypename(const Location loc, const Typename *name);
 
   virtual ~ParensTypename();
 
@@ -223,16 +243,16 @@ class NumLiteral : public Expr {
   virtual ~NumLiteral() {}
 
  protected:
-  NumLiteral() {}
+  NumLiteral(const Location loc) : Expr(loc) {}
 };
 
 class IntLiteral : public NumLiteral {
  public:
   const int value;
 
-  IntLiteral(const char *int_str);
+  IntLiteral(const Location loc, const char *int_str);
 
-  IntLiteral(const int value);
+  IntLiteral(const Location loc, const int value);
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
@@ -247,8 +267,8 @@ class FloatLiteral : public NumLiteral {
  public:
   const double value;
 
-  FloatLiteral(const char *float_str);
-  FloatLiteral(const float value);
+  FloatLiteral(const Location loc, const char *float_str);
+  FloatLiteral(const Location loc, const float value);
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
@@ -265,7 +285,7 @@ class TernaryExpr : public Expr {
   const Expr *tru;
   const Expr *fals;
 
-  TernaryExpr(const Expr *cond, const Expr *tru, const Expr *fals);
+  TernaryExpr(const Location loc, const Expr *cond, const Expr *tru, const Expr *fals);
 
   virtual ~TernaryExpr();
 
@@ -282,7 +302,7 @@ class BoolLiteral : public Expr {
  public:
   const bool value;
 
-  BoolLiteral(const bool value);
+  BoolLiteral(const Location loc, const bool value);
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
@@ -297,7 +317,7 @@ class CharLiteral : public Expr {
  public:
   const char value;
 
-  CharLiteral(const char value);
+  CharLiteral(const Location loc, const char value);
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
@@ -312,7 +332,7 @@ class StringLiteral : public Expr {
  public:
   const std::string value;
 
-  StringLiteral(const char *const value);
+  StringLiteral(const Location loc, const char *const value);
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
@@ -327,7 +347,7 @@ class TypeIdent : public Typename {
  public:
   const std::string id;
 
-  TypeIdent(const char *const _id);
+  TypeIdent(const Location loc, const char *const _id);
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
@@ -344,7 +364,7 @@ class Ident : public CallingExpr {
  public:
   const std::string id;
 
-  Ident(const char *const _id);
+  Ident(const Location loc, const char *const _id);
 
   virtual void print() const;
   virtual std::vector<ASTNode *> children();
@@ -361,7 +381,7 @@ class MathExpr : public Expr {
   const Expr *left;
   const Expr *right;
 
-  MathExpr(const char op, const Expr *left, const Expr *right);
+  MathExpr(const Location loc, const char op, const Expr *left, const Expr *right);
 
   virtual ~MathExpr();
 
@@ -380,7 +400,7 @@ class BoolExpr : public Expr {
   const Expr *left;
   const Expr *right;
 
-  BoolExpr(const char *const op, const Expr *left, const Expr *right);
+  BoolExpr(const Location loc, const char *const op, const Expr *left, const Expr *right);
 
   virtual ~BoolExpr();
 
@@ -397,7 +417,7 @@ class PtrTypename : public Typename {
  public:
   const Typename *name;
 
-  PtrTypename(const Typename *name);
+  PtrTypename(const Location loc, const Typename *name);
 
   virtual ~PtrTypename();
 
@@ -416,7 +436,7 @@ class MutTypename : public Typename {
  public:
   const Typename *name;
 
-  MutTypename(const Typename *name);
+  MutTypename(const Location loc, const Typename *name);
 
   virtual ~MutTypename();
 
@@ -435,7 +455,7 @@ class TypenameList : public ASTNode {
  public:
   std::vector<Typename *> types;
 
-  TypenameList(std::vector<Typename *> types);
+  TypenameList(const Location loc, std::vector<Typename *> types);
 
   virtual ~TypenameList();
 
@@ -456,7 +476,7 @@ class VarDecl : public Statement {
   const Typename *type_name;
   const Ident *var_name;
 
-  VarDecl(const Typename *type_name, const Ident *var_name);
+  VarDecl(const Location loc, const Typename *type_name, const Ident *var_name);
 
   virtual ~VarDecl();
 
@@ -475,7 +495,7 @@ class ParamsList : public ASTNode {
  public:
   std::vector<VarDecl *> params;
 
-  ParamsList(std::vector<VarDecl *> params);
+  ParamsList(const Location loc, std::vector<VarDecl *> params);
 
   virtual ~ParamsList();
 
@@ -492,12 +512,13 @@ class ParamsList : public ASTNode {
   KIND_CLASS()
 };
 
+// TODO: Inherit from CallingExpr instead
 class FunctionCallExpr : public Expr {
  public:
   const CallingExpr *func;
   const ExprList *args;
 
-  FunctionCallExpr(const CallingExpr *func, const ExprList *args);
+  FunctionCallExpr(const Location loc, const CallingExpr *func, const ExprList *args);
 
   virtual ~FunctionCallExpr();
 
@@ -518,7 +539,7 @@ class FunctionCallStmt : public Statement {
   const CallingExpr *func;
   const ExprList *args;
 
-  FunctionCallStmt(const CallingExpr *func, const ExprList *args);
+  FunctionCallStmt(const Location loc, const CallingExpr *func, const ExprList *args);
 
   virtual ~FunctionCallStmt();
 
@@ -535,7 +556,7 @@ class VarDeclList : public ASTNode {
  public:
   std::vector<VarDecl *> decls;
 
-  VarDeclList(std::vector<VarDecl *> decls);
+  VarDeclList(const Location loc, std::vector<VarDecl *> decls);
 
   virtual ~VarDeclList();
 
@@ -555,7 +576,7 @@ class TupleTypename : public Typename {
  public:
   const TypenameList *type_list;
 
-  TupleTypename(const TypenameList *type_list);
+  TupleTypename(const Location loc, const TypenameList *type_list);
 
   virtual ~TupleTypename();
 
@@ -574,7 +595,7 @@ class TupleExpr : public Expr {
  public:
   const ExprList *expr_list;
 
-  TupleExpr(const ExprList *expr_list);
+  TupleExpr(const Location loc, const ExprList *expr_list);
 
   virtual ~TupleExpr();
 
@@ -592,7 +613,7 @@ class FuncTypename : public Typename {
   const TypenameList *params;
   const Typename *ret_type;
 
-  FuncTypename(const TypenameList *params, const Typename *ret_type);
+  FuncTypename(const Location loc, const TypenameList *params, const Typename *ret_type);
 
   virtual ~FuncTypename();
 
@@ -612,7 +633,7 @@ class StaticArrayTypename : public Typename {
   const Typename *element_type;
   const IntLiteral *size;
 
-  StaticArrayTypename(const Typename *element_type, const IntLiteral *size);
+  StaticArrayTypename(const Location loc, const Typename *element_type, const IntLiteral *size);
 
   virtual ~StaticArrayTypename();
 
@@ -632,7 +653,7 @@ class TypeAlias : public TypeDecl {
   const Ident *name;
   const Typename *type_expr;
 
-  TypeAlias(const Ident *name, const Typename *type_expr);
+  TypeAlias(const Location loc, const Ident *name, const Typename *type_expr);
 
   virtual ~TypeAlias();
 
@@ -658,7 +679,7 @@ class StructTypename : public Typename {
     const VarDeclList *members;
     const SymbolTable *scope;
 
-    StructTypename(const VarDeclList *members, const SymbolTable *scope);
+    StructTypename(const Location loc, const VarDeclList *members, const SymbolTable *scope);
 
     virtual ~StructTypename();
 
@@ -678,7 +699,7 @@ class StructDecl : public TypeDecl {
   const Ident *name;
   const StructTypename *defn;
 
-  StructDecl(const Ident *name, const StructTypename *defn);
+  StructDecl(const Location loc, const Ident *name, const StructTypename *defn);
 
   virtual ~StructDecl();
 
@@ -697,7 +718,7 @@ class VarDeclInit : public Statement {
   const Expr *init;
   int type;
 
-  VarDeclInit(const VarDecl *decl, const Expr *init);
+  VarDeclInit(const Location loc, const VarDecl *decl, const Expr *init);
 
   virtual ~VarDeclInit();
 
@@ -714,7 +735,7 @@ class ArrayLiteral : public Expr {
  public:
   const ExprList *items;
 
-  ArrayLiteral(const ExprList *items);
+  ArrayLiteral(const Location loc, const ExprList *items);
 
   virtual ~ArrayLiteral();
 
@@ -733,7 +754,7 @@ class IfStmt : public Statement {
   const StatementList *then;
   const SymbolTable *scope;
 
-  IfStmt(const Expr *cond, const StatementList *then, const SymbolTable *scope);
+  IfStmt(const Location loc, const Expr *cond, const StatementList *then, const SymbolTable *scope);
 
   virtual ~IfStmt();
 
@@ -752,7 +773,7 @@ class IfElseStmt : public Statement {
   const StatementList *els;
   const SymbolTable *scope;
 
-  IfElseStmt(const IfStmt *if_stmt, const StatementList *els, const SymbolTable *scope);
+  IfElseStmt(const Location loc, const IfStmt *if_stmt, const StatementList *els, const SymbolTable *scope);
 
   virtual ~IfElseStmt();
 
@@ -771,7 +792,7 @@ class WhileStmt : public Statement {
   const StatementList *body;
   const SymbolTable *scope;
 
-  WhileStmt(const Expr *cond, const StatementList *body, const SymbolTable *scope);
+  WhileStmt(const Location loc, const Expr *cond, const StatementList *body, const SymbolTable *scope);
 
   virtual ~WhileStmt();
 
@@ -792,7 +813,7 @@ class ForStmt : public Statement {
   const StatementList *body;
   const SymbolTable *scope;
 
-  ForStmt(const Statement *init, const Expr *condition, const Statement *update,
+  ForStmt(const Location loc, const Statement *init, const Expr *condition, const Statement *update,
           const StatementList *body, const SymbolTable *scope);
 
   virtual ~ForStmt();
@@ -810,7 +831,7 @@ class AddrOf : public Expr {
  public:
   const Expr *expr;
 
-  AddrOf(const Expr *expr);
+  AddrOf(const Location loc, const Expr *expr);
 
   virtual ~AddrOf();
 
@@ -827,7 +848,7 @@ class Deref : public Expr {
  public:
   const Expr *expr;
 
-  Deref(const Expr *expr);
+  Deref(const Location loc, const Expr *expr);
 
   virtual ~Deref();
 
@@ -845,7 +866,7 @@ class CastExpr : public Expr {
   const Typename *dest_type;
   const Expr *expr;
 
-  CastExpr(const Typename *dest_type, const Expr *expr);
+  CastExpr(const Location loc, const Typename *dest_type, const Expr *expr);
 
   virtual ~CastExpr();
 
@@ -864,7 +885,7 @@ class LogicalExpr : public Expr {
   const Expr *left;
   const Expr *right;
 
-  LogicalExpr(const char *const op, const Expr *l, const Expr *r);
+  LogicalExpr(const Location loc, const char *const op, const Expr *l, const Expr *r);
 
   virtual ~LogicalExpr();
 
@@ -885,7 +906,7 @@ class FuncDecl : public ASTNode {
   const StatementList *body;
   const SymbolTable *scope;
 
-  FuncDecl(const Ident *name, const ParamsList *params,
+  FuncDecl(const Location loc, const Ident *name, const ParamsList *params,
            const Typename *ret_body, const StatementList *body, const SymbolTable *scope);
 
   virtual ~FuncDecl();
@@ -903,7 +924,7 @@ class ReturnStatement : public Statement {
  public:
   const Expr *val;
 
-  ReturnStatement(const Expr *val);
+  ReturnStatement(const Location loc, const Expr *val);
 
   virtual ~ReturnStatement();
 
@@ -922,7 +943,7 @@ class Assignment : public Statement {
   const Expr *lhs;
   const Expr *rhs;
 
-  Assignment(const Expr *lhs, const Expr *rhs);
+  Assignment(const Location loc, const Expr *lhs, const Expr *rhs);
 
   virtual ~Assignment();
 
@@ -939,7 +960,7 @@ class BangExpr : public Expr {
  public:
   const Expr *expr;
 
-  BangExpr(const Expr *expr);
+  BangExpr(const Location loc, const Expr *expr);
 
   virtual ~BangExpr();
 
@@ -956,7 +977,7 @@ class NotExpr : public Expr {
  public:
   const Expr *expr;
 
-  NotExpr(const Expr *expr);
+  NotExpr(const Location loc, const Expr *expr);
 
   virtual ~NotExpr();
 
@@ -974,7 +995,7 @@ class PreExpr : public Expr {
   const std::string op;
   const Expr *expr;
 
-  PreExpr(const char *const op, const Expr *expr);
+  PreExpr(const Location loc, const char *const op, const Expr *expr);
 
   virtual ~PreExpr();
 

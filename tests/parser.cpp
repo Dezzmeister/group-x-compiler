@@ -19,15 +19,16 @@ void parser_tests() {
 
         // This symbol table is not accurate; we are only testing syntax here though
         SymbolTable * test_symtable = x::default_symtable();
-        Ident * Point = new Ident("Point");
-        VarDecl * x = new VarDecl(new TypeIdent("int"), new Ident("x"));
-        VarDecl * y = new VarDecl(new TypeIdent("int"), new Ident("y"));
+        Location loc(0, 0, 0, 0);
+        Ident * Point = new Ident(loc, "Point");
+        VarDecl * x = new VarDecl(loc, new TypeIdent(loc, "int"), new Ident(loc, "x"));
+        VarDecl * y = new VarDecl(loc, new TypeIdent(loc, "int"), new Ident(loc, "y"));
         std::vector<VarDecl *> decls = {
             x, y
         };
-        VarDeclList * varss = new VarDeclList(decls);
-        StructTypename * struct_type = new StructTypename(varss, test_symtable);
-        StructDecl * strukt = new StructDecl(Point, struct_type);
+        VarDeclList * varss = new VarDeclList(loc, decls);
+        StructTypename * struct_type = new StructTypename(loc, varss, test_symtable);
+        StructDecl * strukt = new StructDecl(loc, Point, struct_type);
         StructDecl * parsed_strukt = (StructDecl *) output->find([](const ASTNode * node) {
             return node->get_kind() == StructDecl::kind;
         });

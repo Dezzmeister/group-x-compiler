@@ -1,4 +1,4 @@
-%option reentrant bison-bridge warn noyywrap
+%option reentrant bison-bridge bison-locations warn noyywrap
 
 %{
 #include <stdarg.h>
@@ -9,6 +9,22 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
+
+// Update the location object for each token
+static void yy_user_action(YYLTYPE * loc, char * txt) {
+    loc->first_line = loc->last_line;
+    loc->first_column = loc->last_column;
+    for (int i = 0; txt[i] != '\0'; i++) {
+        if (txt[i] == '\n') {
+            loc->last_line++;
+            loc->last_column = 0;
+        } else {
+            loc->last_column++;
+        }
+    }
+}
+
+#define YY_USER_ACTION yy_user_action(yylloc, yytext);
 %}
 
 %option extra-type="ParserState*"
@@ -32,17 +48,17 @@ comment     \/\/.*\n
                     int len = strlen(str);
                     // Remove quotes
                     str[len - 1] = '\0';
-                    yylval->str_literal = new StringLiteral(str + 1);
+                    yylval->str_literal = new StringLiteral(Location(*yylloc, *yylloc), str + 1);
                     free(str);
                     return STR;
                 }
 {ws}        {}
-{comment}   {yyextra->lineno++;}
-\n          {yyextra->lineno++;}
-{int}       {yylval->int_literal = new IntLiteral(yytext); return INT;}
-{float}     {yylval->float_literal = new FloatLiteral(yytext); return FLOAT;}
-true        {yylval->bool_literal = new BoolLiteral(true); return BOOL;}
-false       {yylval->bool_literal = new BoolLiteral(false); return BOOL;}
+{comment}   {}
+\n          {}
+{int}       {yylval->int_literal = new IntLiteral(Location(*yylloc, *yylloc), yytext); return INT;}
+{float}     {yylval->float_literal = new FloatLiteral(Location(*yylloc, *yylloc), yytext); return FLOAT;}
+true        {yylval->bool_literal = new BoolLiteral(Location(*yylloc, *yylloc), true); return BOOL;}
+false       {yylval->bool_literal = new BoolLiteral(Location(*yylloc, *yylloc), false); return BOOL;}
 
 type        {return TYPE_ALIAS_KW;}
 struct      {return STRUCT_KW;}
@@ -61,7 +77,7 @@ and         {return AND_KW;}
 or          {return OR_KW;}
 
 {ident}     {
-                yylval->ident = new Ident(yytext); 
+                yylval->ident = new Ident(Location(*yylloc, *yylloc), yytext); 
                 // Our grammar is not context free because of this: the lexer returns
                 // a different token depending on whether the identifier has been declared
                 // as a type, variable, or function, or if it's undeclared. This is great because
@@ -73,7 +89,7 @@ or          {return OR_KW;}
                         return DECLARED_VAR;
                     } else if (sym->kind == Type) {
                         delete yylval->ident;
-                        yylval->type_ident = new TypeIdent(yytext);
+                        yylval->type_ident = new TypeIdent(Location(*yylloc, *yylloc), yytext);
                         return DECLARED_TYPE;
                     }
 
@@ -115,17 +131,19 @@ or          {return OR_KW;}
 %           {return '%';}
 !           {return '!';}
 
-\'\\n\'     {yylval->char_literal = new CharLiteral('\n'); return CHAR;}
-\'\\t\'     {yylval->char_literal = new CharLiteral('\t'); return CHAR;}
-\'\\0\'     {yylval->char_literal = new CharLiteral('\0'); return CHAR;}
-\'\\e\'     {yylval->char_literal = new CharLiteral('\e'); return CHAR;}
-\'\\r\'     {yylval->char_literal = new CharLiteral('\r'); return CHAR;}
-\'.\'       {yylval->char_literal = new CharLiteral(yytext[1]); return CHAR;}
+\'\\n\'     {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), '\n'); return CHAR;}
+\'\\t\'     {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), '\t'); return CHAR;}
+\'\\0\'     {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), '\0'); return CHAR;}
+\'\\e\'     {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), '\e'); return CHAR;}
+\'\\r\'     {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), '\r'); return CHAR;}
+\'.\'       {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), yytext[1]); return CHAR;}
+
+<<EOF>>     {return END;}
 
 %%
 
-void yyerror(yyscan_t scanner, ParserState * state, char const *format, ...) {
-    fprintf(stderr, "line: %lu\n", state->lineno);
+void yyerror(YYLTYPE * loc, yyscan_t scanner, ParserState * state, char const *format, ...) {
+    fprintf(stderr, "line: %d\n", loc->first_line);
     va_list args;
     va_start (args, format);
     vfprintf (stderr, format, args);

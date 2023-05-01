@@ -92,6 +92,17 @@ static bool cmp_vectors(const std::vector<T*> &v1, const std::vector<T*> &v2) {
   return true;
 }
 
+Location::Location(int first_line, int first_col, int last_line, int last_col) :
+  first_line(first_line), first_col(first_col), last_line(last_line), last_col(last_col) {};
+
+Location::Location(YYLTYPE &start, YYLTYPE &end) :
+  first_line(start.first_line), first_col(start.first_column), last_line(end.last_line), last_col(end.last_column) {}
+
+void Location::set_end(YYLTYPE &end) {
+  last_line = end.last_line;
+  last_col = end.last_column;
+}
+
 ASTNode * ASTNode::find(FindFunc cond) {
   if (cond(this)) {
     return this;
@@ -108,9 +119,11 @@ ASTNode * ASTNode::find(FindFunc cond) {
   return nullptr;
 }
 
-IntLiteral::IntLiteral(const char *int_str) : value(atoi(int_str)) {}
+IntLiteral::IntLiteral(const Location loc, const char *int_str) : 
+  NumLiteral(loc), value(atoi(int_str)) {}
 
-IntLiteral::IntLiteral(const int value) : value(value) {}
+IntLiteral::IntLiteral(const Location loc, const int value) : 
+  NumLiteral(loc), value(value) {}
 
 void IntLiteral::print() const { printf("%d", value); }
 
@@ -124,9 +137,11 @@ bool IntLiteral::operator==(const ASTNode &node) const {
   return value == ((IntLiteral&) node).value;
 }
 
-FloatLiteral::FloatLiteral(const char *float_str) : value(atof(float_str)) {}
+FloatLiteral::FloatLiteral(const Location loc, const char *float_str) : 
+  NumLiteral(loc), value(atof(float_str)) {}
 
-FloatLiteral::FloatLiteral(const float value) : value(value) {}
+FloatLiteral::FloatLiteral(const Location loc, const float value) : 
+  NumLiteral(loc), value(value) {}
 
 void FloatLiteral::print() const { printf("%f", value); }
 
@@ -140,7 +155,7 @@ bool FloatLiteral::operator==(const ASTNode &node) const {
   return value == ((FloatLiteral&) node).value;
 }
 
-BoolLiteral::BoolLiteral(const bool value) : value(value) {}
+BoolLiteral::BoolLiteral(const Location loc, const bool value) : Expr(loc), value(value) {}
 
 void BoolLiteral::print() const {
   if (value) {
@@ -160,7 +175,7 @@ bool BoolLiteral::operator==(const ASTNode &node) const {
   return value == ((BoolLiteral&) node).value;
 }
 
-CharLiteral::CharLiteral(const char value) : value(value) {}
+CharLiteral::CharLiteral(const Location loc, const char value) : Expr(loc), value(value) {}
 
 void CharLiteral::print() const {
   switch (value) {
@@ -194,8 +209,8 @@ bool CharLiteral::operator==(const ASTNode &node) const {
   return value == ((CharLiteral&) node).value;
 }
 
-StringLiteral::StringLiteral(const char *const value)
-    : value(std::string(value)) {}
+StringLiteral::StringLiteral(const Location loc, const char *const value)
+    : Expr(loc), value(std::string(value)) {}
 
 void StringLiteral::print() const {
   putchar('"');
@@ -213,8 +228,8 @@ bool StringLiteral::operator==(const ASTNode &node) const {
   return value == ((StringLiteral&) node).value;
 }
 
-TernaryExpr::TernaryExpr(const Expr *cond, const Expr *tru, const Expr *fals)
-    : cond(cond), tru(tru), fals(fals) {}
+TernaryExpr::TernaryExpr(const Location loc, const Expr *cond, const Expr *tru, const Expr *fals)
+    : Expr(loc), cond(cond), tru(tru), fals(fals) {}
 
 TernaryExpr::~TernaryExpr() {
   delete cond;
@@ -244,7 +259,8 @@ bool TernaryExpr::operator==(const ASTNode &node) const {
   return (*cond == *(n.cond) && *tru == *(n.tru) && *fals == *(n.fals));
 }
 
-TypeIdent::TypeIdent(const char *const _id) : id(std::string(_id)) {}
+TypeIdent::TypeIdent(const Location loc, const char *const _id) : 
+  Typename(loc), id(std::string(_id)) {}
 
 void TypeIdent::print() const { std::cout << id; }
 
@@ -260,7 +276,8 @@ bool TypeIdent::operator==(const ASTNode &node) const {
   return (id == n.id);
 }
 
-Ident::Ident(const char *const _id) : id(std::string(_id)) {}
+Ident::Ident(const Location loc, const char *const _id) : 
+  CallingExpr(loc), id(std::string(_id)) {}
 
 void Ident::print() const { std::cout << id; }
 
@@ -276,8 +293,8 @@ bool Ident::operator==(const ASTNode &node) const {
   return (id == n.id);
 }
 
-MathExpr::MathExpr(const char op, const Expr *left, const Expr *right)
-    : op(op), left(left), right(right) {}
+MathExpr::MathExpr(const Location loc, const char op, const Expr *left, const Expr *right)
+    : Expr(loc), op(op), left(left), right(right) {}
 
 MathExpr::~MathExpr() {
   delete left;
@@ -304,8 +321,8 @@ bool MathExpr::operator==(const ASTNode &node) const {
   return (op == n.op && *left == *(n.left) && *right == *(n.right));
 }
 
-BoolExpr::BoolExpr(const char *const op, const Expr *left, const Expr *right)
-    : op(std::string(op)), left(left), right(right) {}
+BoolExpr::BoolExpr(const Location loc, const char *const op, const Expr *left, const Expr *right)
+    : Expr(loc), op(std::string(op)), left(left), right(right) {}
 
 BoolExpr::~BoolExpr() {
   delete left;
@@ -332,7 +349,8 @@ bool BoolExpr::operator==(const ASTNode &node) const {
   return (op == n.op && *left == *(n.left) && *right == *(n.right));
 }
 
-ParensExpr::ParensExpr(const Expr *expr) : expr(expr) {}
+ParensExpr::ParensExpr(const Location loc, const Expr *expr) : 
+  CallingExpr(loc), expr(expr) {}
 
 ParensExpr::~ParensExpr() { delete expr; }
 
@@ -354,7 +372,8 @@ bool ParensExpr::operator==(const ASTNode &node) const {
   return (*expr == *(n.expr));
 }
 
-ParensTypename::ParensTypename(const Typename *name) : name(name) {}
+ParensTypename::ParensTypename(const Location loc, const Typename *name) : 
+  Typename(loc), name(name) {}
 
 ParensTypename::~ParensTypename() { delete name; }
 
@@ -376,7 +395,8 @@ bool ParensTypename::operator==(const ASTNode &node) const {
   return (*name == *(n.name));
 }
 
-PtrTypename::PtrTypename(const Typename *name) : name(name) {}
+PtrTypename::PtrTypename(const Location loc, const Typename *name) : 
+  Typename(loc), name(name) {}
 
 PtrTypename::~PtrTypename() { delete name; }
 
@@ -397,7 +417,8 @@ bool PtrTypename::operator==(const ASTNode &node) const {
   return (*name == *(n.name));
 }
 
-MutTypename::MutTypename(const Typename *name) : name(name) {}
+MutTypename::MutTypename(const Location loc, const Typename *name) : 
+  Typename(loc), name(name) {}
 
 MutTypename::~MutTypename() { delete name; }
 
@@ -418,7 +439,8 @@ bool MutTypename::operator==(const ASTNode &node) const {
   return (*name == *(n.name));
 }
 
-TypenameList::TypenameList(std::vector<Typename *> types) : types(types) {}
+TypenameList::TypenameList(const Location loc, std::vector<Typename *> types) : 
+  ASTNode(loc), types(types) {}
 
 TypenameList::~TypenameList() {
   for (auto &type_name : types) {
@@ -455,7 +477,8 @@ bool TypenameList::operator==(const ASTNode &node) const {
   return cmp_vectors(types, n.types);
 }
 
-VarDeclList::VarDeclList(std::vector<VarDecl *> decls) : decls(decls) {}
+VarDeclList::VarDeclList(const Location loc, std::vector<VarDecl *> decls) : 
+  ASTNode(loc), decls(decls) {}
 
 VarDeclList::~VarDeclList() {
   for (auto &decl : decls) {
@@ -484,7 +507,8 @@ bool VarDeclList::operator==(const ASTNode &node) const {
   return cmp_vectors(decls, n.decls);
 }
 
-ExprList::ExprList(std::vector<Expr *> exprs) : exprs(exprs) {}
+ExprList::ExprList(const Location loc, std::vector<Expr *> exprs) : 
+  ASTNode(loc), exprs(exprs) {}
 
 ExprList::~ExprList() { exprs.clear(); }
 
@@ -515,8 +539,8 @@ bool ExprList::operator==(const ASTNode &node) const {
   return cmp_vectors(exprs, n.exprs);
 }
 
-StatementList::StatementList(std::vector<Statement *> statements)
-    : statements(statements) {}
+StatementList::StatementList(const Location loc, std::vector<Statement *> statements)
+    : ASTNode(loc), statements(statements) {}
 
 StatementList::~StatementList() {
   for (auto &statement : statements) {
@@ -549,8 +573,8 @@ bool StatementList::operator==(const ASTNode &node) const {
   return cmp_vectors(statements, n.statements);
 }
 
-TupleTypename::TupleTypename(const TypenameList *type_list)
-    : type_list(type_list) {}
+TupleTypename::TupleTypename(const Location loc, const TypenameList *type_list)
+    : Typename(loc), type_list(type_list) {}
 
 TupleTypename::~TupleTypename() { delete type_list; }
 
@@ -574,7 +598,8 @@ bool TupleTypename::operator==(const ASTNode &node) const {
   return (*type_list == *(n.type_list));
 }
 
-TupleExpr::TupleExpr(const ExprList *expr_list) : expr_list(expr_list) {}
+TupleExpr::TupleExpr(const Location loc, const ExprList *expr_list) : 
+  Expr(loc), expr_list(expr_list) {}
 
 TupleExpr::~TupleExpr() { delete expr_list; }
 
@@ -596,8 +621,8 @@ bool TupleExpr::operator==(const ASTNode &node) const {
   return (*expr_list == *(n.expr_list));
 }
 
-FuncTypename::FuncTypename(const TypenameList *params, const Typename *ret_type)
-    : params(params), ret_type(ret_type) {}
+FuncTypename::FuncTypename(const Location loc, const TypenameList *params, const Typename *ret_type)
+    : Typename(loc), params(params), ret_type(ret_type) {}
 
 FuncTypename::~FuncTypename() {
   delete params;
@@ -625,9 +650,9 @@ bool FuncTypename::operator==(const ASTNode &node) const {
   return (*params == *(n.params) && *ret_type == *(n.ret_type));
 }
 
-StaticArrayTypename::StaticArrayTypename(const Typename *element_type,
+StaticArrayTypename::StaticArrayTypename(const Location loc, const Typename *element_type,
                                          const IntLiteral *size)
-    : element_type(element_type), size(size) {}
+    : Typename(loc), element_type(element_type), size(size) {}
 
 StaticArrayTypename::~StaticArrayTypename() {
   delete element_type;
@@ -655,8 +680,8 @@ bool StaticArrayTypename::operator==(const ASTNode &node) const {
   return (*element_type == *(n.element_type) && *size == *(n.size));
 }
 
-TypeAlias::TypeAlias(const Ident *name, const Typename *type_expr)
-    : name(name), type_expr(type_expr) {}
+TypeAlias::TypeAlias(const Location loc, const Ident *name, const Typename *type_expr)
+    : TypeDecl(loc), name(name), type_expr(type_expr) {}
 
 TypeAlias::~TypeAlias() {
   delete name;
@@ -684,8 +709,8 @@ bool TypeAlias::operator==(const ASTNode &node) const {
   return (*name == *(n.name) && *type_expr == *(n.type_expr));
 }
 
-StructTypename::StructTypename(const VarDeclList *members, const SymbolTable *scope)
-    : members(members), scope(scope) {}
+StructTypename::StructTypename(const Location loc, const VarDeclList *members, const SymbolTable *scope)
+    : Typename(loc), members(members), scope(scope) {}
 
 StructTypename::~StructTypename() {
   delete members;
@@ -712,8 +737,8 @@ bool StructTypename::operator==(const ASTNode &node) const {
   return (*members == *(n.members));
 }
 
-StructDecl::StructDecl(const Ident *name, const StructTypename *defn)
-    : name(name), defn(defn) {}
+StructDecl::StructDecl(const Location loc, const Ident *name, const StructTypename *defn)
+    : TypeDecl(loc), name(name), defn(defn) {}
 
 StructDecl::~StructDecl() {
   delete name;
@@ -741,8 +766,8 @@ bool StructDecl::operator==(const ASTNode &node) const {
   return (*name == *(n.name) && *defn == *(n.defn));
 }
 
-VarDecl::VarDecl(const Typename *type_name, const Ident *var_name)
-    : type_name(type_name), var_name(var_name) {}
+VarDecl::VarDecl(const Location loc, const Typename *type_name, const Ident *var_name)
+    : Statement(loc), type_name(type_name), var_name(var_name) {}
 
 VarDecl::~VarDecl() {
   delete type_name;
@@ -773,8 +798,8 @@ bool VarDecl::operator==(const ASTNode &node) const {
   return (*type_name == *(n.type_name) && *var_name == *(n.var_name));
 }
 
-VarDeclInit::VarDeclInit(const VarDecl *decl, const Expr *init)
-    : decl(decl), init(init) {}
+VarDeclInit::VarDeclInit(const Location loc, const VarDecl *decl, const Expr *init)
+    : Statement(loc), decl(decl), init(init) {}
 
 VarDeclInit::~VarDeclInit() {
   delete decl;
@@ -801,7 +826,8 @@ bool VarDeclInit::operator==(const ASTNode &node) const {
   return (*decl == *(n.decl) && *init == *(n.init));
 }
 
-ArrayLiteral::ArrayLiteral(const ExprList *items) : items(items) {}
+ArrayLiteral::ArrayLiteral(const Location loc, const ExprList *items) : 
+  Expr(loc), items(items) {}
 
 ArrayLiteral::~ArrayLiteral() { delete items; }
 
@@ -823,8 +849,8 @@ bool ArrayLiteral::operator==(const ASTNode &node) const {
   return (*items == *(n.items));
 }
 
-IfStmt::IfStmt(const Expr *cond, const StatementList *then, const SymbolTable *scope)
-    : cond(cond), then(then), scope(scope) {}
+IfStmt::IfStmt(const Location loc, const Expr *cond, const StatementList *then, const SymbolTable *scope)
+    : Statement(loc), cond(cond), then(then), scope(scope) {}
 
 IfStmt::~IfStmt() {
   delete cond;
@@ -854,8 +880,8 @@ bool IfStmt::operator==(const ASTNode &node) const {
   return (*cond == *(n.cond) && *then == *(n.then));
 }
 
-IfElseStmt::IfElseStmt(const IfStmt *if_stmt, const StatementList *els, const SymbolTable *scope)
-    : if_stmt(if_stmt), els(els), scope(scope) {}
+IfElseStmt::IfElseStmt(const Location loc, const IfStmt *if_stmt, const StatementList *els, const SymbolTable *scope)
+    : Statement(loc), if_stmt(if_stmt), els(els), scope(scope) {}
 
 IfElseStmt::~IfElseStmt() {
   delete if_stmt;
@@ -884,8 +910,8 @@ bool IfElseStmt::operator==(const ASTNode &node) const {
   return (*if_stmt == *(n.if_stmt) && *els == *(n.els));
 }
 
-WhileStmt::WhileStmt(const Expr *cond, const StatementList *body, const SymbolTable *scope)
-    : cond(cond), body(body), scope(scope) {}
+WhileStmt::WhileStmt(const Location loc, const Expr *cond, const StatementList *body, const SymbolTable *scope)
+    : Statement(loc), cond(cond), body(body), scope(scope) {}
 
 WhileStmt::~WhileStmt() {
   delete cond;
@@ -915,9 +941,9 @@ bool WhileStmt::operator==(const ASTNode &node) const {
   return (*cond == *(n.cond) && *body == *(n.body));
 }
 
-ForStmt::ForStmt(const Statement *init, const Expr *cond,
+ForStmt::ForStmt(const Location loc, const Statement *init, const Expr *cond,
                  const Statement *update, const StatementList *body, const SymbolTable *scope)
-    : init(init), condition(cond), update(update), body(body), scope(scope) {}
+    : Statement(loc), init(init), condition(cond), update(update), body(body), scope(scope) {}
 
 ForStmt::~ForStmt() {
   delete init;
@@ -954,7 +980,8 @@ bool ForStmt::operator==(const ASTNode &node) const {
   return (*init == *(n.init) && *condition == *(n.condition) && *update == *(n.update) && *body == *(n.body));
 }
 
-AddrOf::AddrOf(const Expr *expr) : expr(expr) {}
+AddrOf::AddrOf(const Location loc, const Expr *expr) : 
+  Expr(loc), expr(expr) {}
 
 AddrOf::~AddrOf() { delete expr; }
 
@@ -975,7 +1002,8 @@ bool AddrOf::operator==(const ASTNode &node) const {
   return (*expr == *(n.expr));
 }
 
-Deref::Deref(const Expr *expr) : expr(expr) {}
+Deref::Deref(const Location loc, const Expr *expr) : 
+  Expr(loc), expr(expr) {}
 
 Deref::~Deref() { delete expr; }
 
@@ -996,8 +1024,8 @@ bool Deref::operator==(const ASTNode &node) const {
   return (*expr == *(n.expr));
 }
 
-CastExpr::CastExpr(const Typename *dest_type, const Expr *expr)
-    : dest_type(dest_type), expr(expr) {}
+CastExpr::CastExpr(const Location loc, const Typename *dest_type, const Expr *expr)
+    : Expr(loc), dest_type(dest_type), expr(expr) {}
 
 CastExpr::~CastExpr() {
   delete dest_type;
@@ -1024,8 +1052,8 @@ bool CastExpr::operator==(const ASTNode &node) const {
   return (*dest_type == *(n.dest_type) && *expr == *(n.expr));
 }
 
-LogicalExpr::LogicalExpr(const char *const op, const Expr *l, const Expr *r)
-    : op(std::string(op)), left(l), right(r) {}
+LogicalExpr::LogicalExpr(const Location loc, const char *const op, const Expr *l, const Expr *r)
+    : Expr(loc), op(std::string(op)), left(l), right(r) {}
 
 LogicalExpr::~LogicalExpr() {
   delete left;
@@ -1052,8 +1080,8 @@ bool LogicalExpr::operator==(const ASTNode &node) const {
   return (op == n.op && *left == *(n.left) && *right == *(n.right));
 }
 
-FunctionCallExpr::FunctionCallExpr(const CallingExpr *func, const ExprList *args)
-    : func(func), args(args) {}
+FunctionCallExpr::FunctionCallExpr(const Location loc, const CallingExpr *func, const ExprList *args)
+    : Expr(loc), func(func), args(args) {}
 
 FunctionCallExpr::~FunctionCallExpr() {
   delete func;
@@ -1081,8 +1109,8 @@ bool FunctionCallExpr::operator==(const ASTNode &node) const {
   return (*func == *(n.func) && *args == *(n.args));
 }
 
-FunctionCallStmt::FunctionCallStmt(const CallingExpr *func, const ExprList *args)
-    : func(func), args(args) {}
+FunctionCallStmt::FunctionCallStmt(const Location loc, const CallingExpr *func, const ExprList *args)
+    : Statement(loc), func(func), args(args) {}
 
 FunctionCallStmt::~FunctionCallStmt() {
   delete func;
@@ -1110,7 +1138,8 @@ bool FunctionCallStmt::operator==(const ASTNode &node) const {
   return (*func == *(n.func) && *args == *(n.args));
 }
 
-ParamsList::ParamsList(std::vector<VarDecl *> params) : params(params) {}
+ParamsList::ParamsList(const Location loc, std::vector<VarDecl *> params) : 
+  ASTNode(loc), params(params) {}
 
 ParamsList::~ParamsList() { params.clear(); }
 
@@ -1147,9 +1176,9 @@ bool ParamsList::operator==(const ASTNode &node) const {
   return cmp_vectors(params, n.params);
 }
 
-FuncDecl::FuncDecl(const Ident *name, const ParamsList *params,
+FuncDecl::FuncDecl(const Location loc, const Ident *name, const ParamsList *params,
                    const Typename *ret_type, const StatementList *body, const SymbolTable *scope)
-    : name(name), params(params), ret_type(ret_type), body(body), scope(scope) {}
+    : ASTNode(loc), name(name), params(params), ret_type(ret_type), body(body), scope(scope) {}
 
 FuncDecl::~FuncDecl() {
   delete name;
@@ -1185,7 +1214,8 @@ bool FuncDecl::operator==(const ASTNode &node) const {
   return (*name == *(n.name) && *params == *(n.params) && *ret_type == *(n.ret_type) && *body == *(n.body));
 }
 
-ProgramSource::ProgramSource(std::vector<ASTNode *> nodes) : nodes(nodes) {}
+ProgramSource::ProgramSource(const Location loc, std::string name, std::vector<ASTNode *> nodes) : 
+  ASTNode(loc), name(name), nodes(nodes) {}
 
 ProgramSource::~ProgramSource() { nodes.clear(); }
 
@@ -1210,7 +1240,8 @@ bool ProgramSource::operator==(const ASTNode &node) const {
   return cmp_vectors(nodes, n.nodes);
 }
 
-ReturnStatement::ReturnStatement(const Expr *val) : val(val) {}
+ReturnStatement::ReturnStatement(const Location loc, const Expr *val) : 
+  Statement(loc), val(val) {}
 
 ReturnStatement::~ReturnStatement() { delete val; }
 
@@ -1231,7 +1262,8 @@ bool ReturnStatement::operator==(const ASTNode &node) const {
   return (*val == *(n.val));
 }
 
-Assignment::Assignment(const Expr *lhs, const Expr *rhs) : lhs(lhs), rhs(rhs) {}
+Assignment::Assignment(const Location loc, const Expr *lhs, const Expr *rhs) : 
+  Statement(loc), lhs(lhs), rhs(rhs) {}
 
 Assignment::~Assignment() {
   delete lhs;
@@ -1258,7 +1290,8 @@ bool Assignment::operator==(const ASTNode &node) const {
   return (*lhs == *(n.lhs) && *rhs == *(n.rhs));
 }
 
-BangExpr::BangExpr(const Expr *expr) : expr(expr) {}
+BangExpr::BangExpr(const Location loc, const Expr *expr) : 
+  Expr(loc), expr(expr) {}
 
 BangExpr::~BangExpr() { delete expr; }
 
@@ -1279,7 +1312,8 @@ bool BangExpr::operator==(const ASTNode &node) const {
   return (*expr == *(n.expr));
 }
 
-NotExpr::NotExpr(const Expr *expr) : expr(expr) {}
+NotExpr::NotExpr(const Location loc, const Expr *expr) : 
+  Expr(loc), expr(expr) {}
 
 NotExpr::~NotExpr() { delete expr; }
 
@@ -1300,8 +1334,8 @@ bool NotExpr::operator==(const ASTNode &node) const {
   return (*expr == *(n.expr));
 }
 
-PreExpr::PreExpr(const char *const op, const Expr *expr)
-    : op(std::string(op)), expr(expr) {}
+PreExpr::PreExpr(const Location loc, const char *const op, const Expr *expr)
+    : Expr(loc), op(std::string(op)), expr(expr) {}
 
 PreExpr::~PreExpr() { delete expr; }
 

@@ -15,7 +15,7 @@ ParseResult x::parse_file(const char * const path) {
         return ParseResult(errno, nullptr);
     }
 
-    ParserState * state = new ParserState();
+    ParserState * state = new ParserState(std::string(path));
     yyscan_t scanner;
     int error = yylex_init_extra(state, &scanner);
 
@@ -43,7 +43,7 @@ ParseResult x::parse_file(const char * const path) {
 }
 
 ParseResult x::parse_stdin() {
-    ParserState * state = new ParserState();
+    ParserState * state = new ParserState(std::string("<stdin>"));
     yyscan_t scanner;
     int error = yylex_init_extra(state, &scanner);
 
@@ -63,7 +63,7 @@ ParseResult x::parse_stdin() {
 }
 
 ParseResult x::parse_str(const char * code) {
-    ParserState * state = new ParserState();
+    ParserState * state = new ParserState(std::string("<str>"));
     yyscan_t scanner;
     int error = yylex_init_extra(state, &scanner);
 

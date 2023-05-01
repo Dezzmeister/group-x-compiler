@@ -1,4 +1,5 @@
 %define api.pure full
+%locations
 
 %code requires {
 #include <stdio.h>
@@ -18,7 +19,7 @@ extern void yyerror (yyscan_t scanner, ParserState * state, char const *format, 
 }
 
 %code {
-int yylex(YYSTYPE * yylvalp, yyscan_t scanner);
+int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 }
 
 %union {
@@ -76,6 +77,7 @@ int yylex(YYSTYPE * yylvalp, yyscan_t scanner);
     PreExpr * pre_expr;
 }
 
+%token END
 %token FUNC_TYPE_OP
 
 %right '='
@@ -153,14 +155,18 @@ int yylex(YYSTYPE * yylvalp, yyscan_t scanner);
 
 %%
 
-top_level : program {state->top = $1; YYACCEPT;}
+top_level : program END {
+                state->top = $1;
+                state->errors.sources[state->top] = state->current_errors;
+                YYACCEPT;
+            }
           ;
 
 program : program type_decl ';' {$1->add_node($2); $$ = $1;}
         | program var_decl_init ';' {$1->add_node($2); $$ = $1;}
         | program var_decl ';' {$1->add_node($2); $$ = $1;}
         | program func_decl ';' {$1->add_node($2); $$ = $1;}
-        | /* empty */ {$$ = new ProgramSource({});}
+        | /* empty */ {$$ = new ProgramSource(Location(0, 0, 0, 0), state->current_source, {});}
         ;
 
 statement : type_decl {$$ = $1;}
@@ -175,11 +181,15 @@ statement : type_decl {$$ = $1;}
           | assignment {$$ = $1;}
           ;
 
-statement_list : statement ';' {$$ = new StatementList({$1});}
-               | statement_list statement ';' {$1->push_statement($2); $$ = $1;}
+statement_list : statement ';' {$$ = new StatementList(Location(@1, @2), {$1});}
+               | statement_list statement ';' {
+                    $1->push_statement($2);
+                    $1->loc.set_end(@3);
+                    $$ = $1;
+                }
                ;
 
-expr : '(' expr ')' {$$ = new ParensExpr($2);}
+expr : '(' expr ')' {$$ = new ParensExpr(Location(@1, @3), $2);}
      | math_expr {$$ = $1;}
      | bool_expr {$$ = $1;}
      | logical_expr {$$ = $1;}
@@ -189,8 +199,8 @@ expr : '(' expr ')' {$$ = new ParensExpr($2);}
      | tuple_expr {$$ = $1;}
      | array_literal {$$ = $1;}
      | function_call_expr %prec CALL_PREC {$$ = (Expr *) $1;}
-     | '!' expr {$$ = new BangExpr($2);}
-     | NOT_KW expr {$$ = new NotExpr($2);}
+     | '!' expr {$$ = new BangExpr(Location(@1, @2), $2);}
+     | NOT_KW expr {$$ = new NotExpr(Location(@1, @2), $2);}
      | pre_expr {$$ = $1;}
      | STR {$$ = $1;}
      | BOOL {$$ = $1;}
@@ -199,69 +209,73 @@ expr : '(' expr ')' {$$ = new ParensExpr($2);}
      | DECLARED_VAR {$$ = $1;}
      ;
 
-expr_list : expr {$$ = new ExprList({$1});}
-          | expr_list ',' expr {$1->push_expr($3); $$ = $1;}
+expr_list : expr {$$ = new ExprList(Location(@1, @1), {$1});}
+          | expr_list ',' expr {
+                $1->push_expr($3);
+                $1->loc.set_end(@3);
+                $$ = $1;
+            }
           ;
 
-math_expr : expr '+' expr {$$ = new MathExpr('+', $1, $3);}
-          | expr '-' expr {$$ = new MathExpr('-', $1, $3);}
-          | expr '*' expr %prec MUL_OP {$$ = new MathExpr('*', $1, $3);}
-          | expr '%' expr %prec MUL_OP {$$ = new MathExpr('%', $1, $3);}
-          | expr '/' expr %prec MUL_OP {$$ = new MathExpr('/', $1, $3);}
+math_expr : expr '+' expr {$$ = new MathExpr(Location(@1, @3), '+', $1, $3);}
+          | expr '-' expr {$$ = new MathExpr(Location(@1, @3), '-', $1, $3);}
+          | expr '*' expr %prec MUL_OP {$$ = new MathExpr(Location(@1, @3), '*', $1, $3);}
+          | expr '%' expr %prec MUL_OP {$$ = new MathExpr(Location(@1, @3), '%', $1, $3);}
+          | expr '/' expr %prec MUL_OP {$$ = new MathExpr(Location(@1, @3), '/', $1, $3);}
           ;
 
-bool_expr : expr BOOL_AND expr {$$ = new BoolExpr("&&", $1, $3);}
-          | expr BOOL_OR expr {$$ = new BoolExpr("||", $1, $3);}
-          | expr AND_KW expr {$$ = new BoolExpr("and", $1, $3);}
-          | expr OR_KW expr {$$ = new BoolExpr("or", $1, $3);}
+bool_expr : expr BOOL_AND expr {$$ = new BoolExpr(Location(@1, @3), "&&", $1, $3);}
+          | expr BOOL_OR expr {$$ = new BoolExpr(Location(@1, @3), "||", $1, $3);}
+          | expr AND_KW expr {$$ = new BoolExpr(Location(@1, @3), "and", $1, $3);}
+          | expr OR_KW expr {$$ = new BoolExpr(Location(@1, @3), "or", $1, $3);}
           ;
 
-logical_expr : expr EQU expr {$$ = new LogicalExpr("==", $1, $3);}
-             | expr NEQ expr {$$ = new LogicalExpr("!=", $1, $3);}
-             | expr GTR expr {$$ = new LogicalExpr(">", $1, $3);}
-             | expr LES expr {$$ = new LogicalExpr("<", $1, $3);}
-             | expr GEQ expr {$$ = new LogicalExpr(">=", $1, $3);}
-             | expr LEQ expr {$$ = new LogicalExpr("<=", $1, $3);}
-             | expr IN_KW expr {$$ = new LogicalExpr("in", $1, $3);}
-             | expr NOT_IN_KW expr {$$ = new LogicalExpr("not in", $1, $3);}
+logical_expr : expr EQU expr {$$ = new LogicalExpr(Location(@1, @3), "==", $1, $3);}
+             | expr NEQ expr {$$ = new LogicalExpr(Location(@1, @3), "!=", $1, $3);}
+             | expr GTR expr {$$ = new LogicalExpr(Location(@1, @3), ">", $1, $3);}
+             | expr LES expr {$$ = new LogicalExpr(Location(@1, @3), "<", $1, $3);}
+             | expr GEQ expr {$$ = new LogicalExpr(Location(@1, @3), ">=", $1, $3);}
+             | expr LEQ expr {$$ = new LogicalExpr(Location(@1, @3), "<=", $1, $3);}
+             | expr IN_KW expr {$$ = new LogicalExpr(Location(@1, @3), "in", $1, $3);}
+             | expr NOT_IN_KW expr {$$ = new LogicalExpr(Location(@1, @3), "not in", $1, $3);}
              ;
 
-addr_of_expr : '&' expr %prec '&' {$$ = new AddrOf($2);}
+addr_of_expr : '&' expr %prec '&' {$$ = new AddrOf(Location(@1, @2), $2);}
              ;
 
-deref_expr : '*' expr %prec '*' {$$ = new Deref($2);}
+deref_expr : '*' expr %prec '*' {$$ = new Deref(Location(@1, @2), $2);}
            ;
 
-cast_expr : expr CAST_KW type_name {$$ = new CastExpr($3, $1);}
+cast_expr : expr CAST_KW type_name {$$ = new CastExpr(Location(@1, @3), $3, $1);}
           ;
 
-tuple_expr : '[' expr_list ']' {$$ = new TupleExpr($2);}
+tuple_expr : '[' expr_list ']' {$$ = new TupleExpr(Location(@1, @3), $2);}
            ;
 
-pre_expr : INC expr {$$ = new PreExpr("++", $2);}
-         | DEC expr {$$ = new PreExpr("--", $2);}
+pre_expr : INC expr {$$ = new PreExpr(Location(@1, @2), "++", $2);}
+         | DEC expr {$$ = new PreExpr(Location(@1, @2), "--", $2);}
          ;
 
-function_call_expr : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCallExpr($1, $3);}
-              | '(' expr ')' '(' args_list ')' {$$ = new FunctionCallExpr(new ParensExpr($2), $5);}
+function_call_expr : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @4), $1, $3);}
+              | '(' expr ')' '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @6), new ParensExpr(Location(@1, @3), $2), $5);}
               ;
 
-function_call_stmt : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCallStmt($1, $3);}
-              | '(' expr ')' '(' args_list ')' {$$ = new FunctionCallStmt(new ParensExpr($2), $5);}
+function_call_stmt : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCallStmt(Location(@1, @4), $1, $3);}
+              | '(' expr ')' '(' args_list ')' {$$ = new FunctionCallStmt(Location(@1, @6), new ParensExpr(Location(@1, @3), $2), $5);}
               ;
 
 type_decl : type_alias {$$ = $1;}
           | struct_decl {$$ = $1;}
           ;
 
-var_decl_init : var_decl '=' expr {$$ = new VarDeclInit($1, $3);}
+var_decl_init : var_decl '=' expr {$$ = new VarDeclInit(Location(@1, @3), $1, $3);}
               ;
 
-array_literal : '{' expr_list '}' {$$ = new ArrayLiteral($2);}
+array_literal : '{' expr_list '}' {$$ = new ArrayLiteral(Location(@1, @3), $2);}
               ;
 
 var_decl : type_name IDENT {
-                $$ = new VarDecl($1, $2);
+                $$ = new VarDecl(Location(@1, @2), $1, $2);
                 state->symtable->put($2->id, new Symbol(Var, { .var=$$ }));
             }
          ;
@@ -269,40 +283,44 @@ var_decl : type_name IDENT {
 if_statement : IF_KW '(' expr ')' '{'
                 {x::create_scope(&state->symtable);} statement_list '}' %prec IF_KW {
                     SymbolTable * table = x::pop_scope(&state->symtable);
-                    $$ = new IfStmt($3, $7, table);
+                    $$ = new IfStmt(Location(@1, @7), $3, $7, table);
                 }
              ;
 
 if_else_statement : if_statement ELSE_KW '{' {x::create_scope(&state->symtable);} statement_list '}' {
                         SymbolTable * table = x::pop_scope(&state->symtable);
-                        $$ = new IfElseStmt($1, $5, table);
+                        $$ = new IfElseStmt(Location(@1, @5), $1, $5, table);
                     }
                   ;
 
 while_statement : WHILE_KW '(' expr ')' '{'
                     {x::create_scope(&state->symtable);} statement_list '}' %prec WHILE_KW {
                         SymbolTable * table = x::pop_scope(&state->symtable);
-                        $$ = new WhileStmt($3, $7, table);
+                        $$ = new WhileStmt(Location(@1, @7), $3, $7, table);
                     }
                 ;
 
 for_statement : FOR_KW '(' statement ';' {x::create_scope(&state->symtable);} expr ';' statement ')' '{' statement_list '}' {
                     SymbolTable * table = x::pop_scope(&state->symtable);
-                    $$ = new ForStmt($3, $6, $8, $11, table);
+                    $$ = new ForStmt(Location(@1, @11), $3, $6, $8, $11, table);
                 }
               ;
 
-assignment : expr '=' expr {$$ = new Assignment($1, $3);}
+assignment : expr '=' expr {$$ = new Assignment(Location(@1, @3), $1, $3);}
            ;
 
-var_decl_list : var_decl ';' {$$ = new VarDeclList({$1});}
-              | var_decl_list var_decl ';' {$1->push_decl($2); $$ = $1;}
+var_decl_list : var_decl ';' {$$ = new VarDeclList(Location(@1, @2), {$1});}
+              | var_decl_list var_decl ';' {
+                    $1->push_decl($2);
+                    $1->loc.set_end(@3);
+                    $$ = $1;
+                }
               ;
 
 struct_decl : STRUCT_KW IDENT {
                     state->symtable->put($2->id, new Symbol(Type, { .typ=nullptr }));
                 } struct_typename {
-                    $$ = new StructDecl($2, $4);
+                    $$ = new StructDecl(Location(@1, @3), $2, $4);
                     Symbol * sym = state->symtable->get($2->id);
                     sym->decl = (Decl) { .typ=$$ };
                 }
@@ -312,18 +330,26 @@ struct_typename : '{' {
                         x::create_scope(&state->symtable);
                     } var_decl_list '}' {
                         SymbolTable * table = x::pop_scope(&state->symtable);
-                        $$ = new StructTypename($3, table);
+                        $$ = new StructTypename(Location(@1, @3), $3, table);
                     }
                 ;
 
-args_list : args_list ',' expr {$1->push_expr($3); $$ = $1;}
-          | expr {$$ = new ExprList({$1});}
-          | /* empty */ {$$ = new ExprList({});}
+args_list : args_list ',' expr {
+                $1->push_expr($3);
+                $1->loc.set_end(@3);
+                $$ = $1;
+            }
+          | expr {$$ = new ExprList(Location(@1, @1), {$1});}
+          | /* empty */ {$$ = new ExprList(Location(0, 0, 0, 0), {});}
           ;
 
-params_list : params_list ',' var_decl {$1->push_param($3); $$ = $1;}
-            | var_decl {$$ = new ParamsList({$1});}
-            | /* empty */ {$$ = new ParamsList({});}
+params_list : params_list ',' var_decl {
+                $1->push_param($3);
+                $1->loc.set_end(@3);
+                $$ = $1;
+            }
+            | var_decl {$$ = new ParamsList(Location(@1, @1), {$1});}
+            | /* empty */ {$$ = new ParamsList(Location(0, 0, 0, 0), {});}
             ;
 
 func_decl : type_name IDENT '(' params_list ')' '{' {
@@ -332,13 +358,13 @@ func_decl : type_name IDENT '(' params_list ')' '{' {
                 $4->add_to_scope(state->symtable);
             } statement_list '}' {
                 SymbolTable * table = x::pop_scope(&state->symtable);
-                $$ = new FuncDecl($2, $4, $1, $8, table);
+                $$ = new FuncDecl(Location(@1, @8), $2, $4, $1, $8, table);
                 Symbol * sym = state->symtable->get($2->id);
                 sym->decl = (Decl) { .func=$$ };
             }
           ;
 
-return_statement : RETURN_KW expr {$$ = new ReturnStatement($2);}
+return_statement : RETURN_KW expr {$$ = new ReturnStatement(Location(@1, @2), $2);}
                  ;
 
 type_name : simple_type_name {$$ = $1;}
@@ -350,34 +376,38 @@ type_name : simple_type_name {$$ = $1;}
           | parens_type_name {$$ = $1;}
           ;
 
-func_type_name : '[' ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename(new TypenameList({}), $4);}
-               | '[' type_list ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename($2, $5);}
+func_type_name : '[' ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename(Location(@1, @4), new TypenameList(Location(0, 0, 0, 0), {}), $4);}
+               | '[' type_list ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTypename(Location(@1, @5), $2, $5);}
                ;
 
-static_arr_type_name : type_name '[' INT ']' {$$ = new StaticArrayTypename($1, $3);}
+static_arr_type_name : type_name '[' INT ']' {$$ = new StaticArrayTypename(Location(@1, @4), $1, $3);}
                      ;
 
-parens_type_name : '(' type_name ')' {$$ = new ParensTypename($2);}
+parens_type_name : '(' type_name ')' {$$ = new ParensTypename(Location(@1, @3), $2);}
                  ;
 
 simple_type_name : DECLARED_TYPE {$$ = $1;}
                  ;
 
-ptr_type_name : type_name '*' {$$ = new PtrTypename($1);}
+ptr_type_name : type_name '*' {$$ = new PtrTypename(Location(@1, @2), $1);}
               ;
 
-mut_type_name : MUT type_name {$$ = new MutTypename($2);}
+mut_type_name : MUT type_name {$$ = new MutTypename(Location(@1, @2), $2);}
               ;
 
-tuple_type_name : '[' type_list ']' {$$ = new TupleTypename($2);}
+tuple_type_name : '[' type_list ']' {$$ = new TupleTypename(Location(@1, @3), $2);}
                 ;
 
-type_list : type_name {$$ = new TypenameList({$1});}
-          | type_list ',' type_name {$1->push_type($3); $$ = $1;}
+type_list : type_name {$$ = new TypenameList(Location(@1, @1), {$1});}
+          | type_list ',' type_name {
+                $1->push_type($3);
+                $1->loc.set_end(@3);
+                $$ = $1;
+            }
           ;
 
 type_alias : TYPE_ALIAS_KW IDENT '=' type_name {
-                $$ = new TypeAlias($2, $4);
+                $$ = new TypeAlias(Location(@1, @3), $2, $4);
                 state->symtable->put($2->id, new Symbol(Type, (Decl) { .typ=$$ }));
             }
            ;
@@ -385,11 +415,11 @@ type_alias : TYPE_ALIAS_KW IDENT '=' type_name {
 num : INT {$$ = $1;}
     | FLOAT {$$ = $1;}
     | '-' INT {
-            $$ = new IntLiteral(-$2->value);
+            $$ = new IntLiteral(Location(@1, @2), -$2->value);
             delete $2;
         }
     | '-' FLOAT {
-            $$ = new FloatLiteral(-$2->value);
+            $$ = new FloatLiteral(Location(@1, @2), -$2->value);
             delete $2;
         }
     ;

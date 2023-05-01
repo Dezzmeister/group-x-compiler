@@ -52,7 +52,7 @@ clean:
 	rm -f debug_bin release_bin ${GENERATED_FILES} src/parser.dot src/parser.output parser.png prog.dot
 
 todo:
-	grep -R TODO
+	grep -Rn TODO
 
 parser:
 	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp

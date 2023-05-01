@@ -15,11 +15,12 @@ void typechecker_tests() {
 
         ParseResult result = x::parse_str(code);
         SymbolTable * symtable = result.parser_state->symtable;
+        Location loc(0, 0, 0, 0);
 
-        TypeIdent x("X");
-        TypeIdent y("Y");
-        TypeIdent z("Z");
-        TypeIdent w("W");
+        TypeIdent x(loc, "X");
+        TypeIdent y(loc, "Y");
+        TypeIdent z(loc, "Z");
+        TypeIdent w(loc, "W");
 
         expect(x.type_equals(&y, symtable));
         expect(y.type_equals(&x, symtable));
@@ -51,13 +52,14 @@ void typechecker_tests() {
 
         ParseResult result = x::parse_str(code);
         SymbolTable * symtable = result.parser_state->symtable;
+        Location loc(0, 0, 0, 0);
 
-        TypeIdent arr1("Arr1");
-        TypeIdent arr2("Arr2");
-        TypeIdent arr3("Arr3");
-        TypeIdent func1("Func1");
-        TypeIdent func2("Func2");
-        TypeIdent func3("Func3");
+        TypeIdent arr1(loc, "Arr1");
+        TypeIdent arr2(loc, "Arr2");
+        TypeIdent arr3(loc, "Arr3");
+        TypeIdent func1(loc, "Func1");
+        TypeIdent func2(loc, "Func2");
+        TypeIdent func3(loc, "Func3");
 
         expect(arr1.type_equals(&arr3, symtable));
         expect(!arr1.type_equals(&arr2, symtable));
@@ -95,11 +97,12 @@ void typechecker_tests() {
 
         ParseResult result = x::parse_str(code);
         SymbolTable * symtable = result.parser_state->symtable;
+        Location loc(0, 0, 0, 0);
 
-        TypeIdent strukt1("Strukt1");
-        TypeIdent strukt2("Strukt2");
-        TypeIdent strukt3("Strukt3");
-        TypeIdent strukt4("Strukt4");
+        TypeIdent strukt1(loc, "Strukt1");
+        TypeIdent strukt2(loc, "Strukt2");
+        TypeIdent strukt3(loc, "Strukt3");
+        TypeIdent strukt4(loc, "Strukt4");
 
         expect(strukt1.type_equals(&strukt3, symtable));
         expect(!strukt1.type_equals(&strukt2, symtable));
@@ -116,12 +119,13 @@ void typechecker_tests() {
 
         ParseResult result = x::parse_str(code);
         SymbolTable * symtable = result.parser_state->symtable;
+        Location loc(0, 0, 0, 0);
 
-        PtrTypename * x = new PtrTypename(new MutTypename(new TypeIdent("int")));
-        MutTypename * y = new MutTypename(new PtrTypename(new TypeIdent("int")));
+        PtrTypename * x = new PtrTypename(loc, new MutTypename(loc, new TypeIdent(loc, "int")));
+        MutTypename * y = new MutTypename(loc, new PtrTypename(loc, new TypeIdent(loc, "int")));
 
-        TypeIdent x_alias("X");
-        TypeIdent y_alias("Y");
+        TypeIdent x_alias(loc, "X");
+        TypeIdent y_alias(loc, "Y");
 
         expect(x->type_equals(&x_alias, symtable));
         expect(!x->type_equals(&y_alias, symtable));
