@@ -55,15 +55,15 @@
 struct YYLTYPE;
 
 struct Location {
-  int first_line;
-  int first_col;
-  int last_line;
-  int last_col;
+    int first_line;
+    int first_col;
+    int last_line;
+    int last_col;
 
-  Location(int first_line, int first_col, int last_line, int last_col);
-  Location(YYLTYPE &start, YYLTYPE &end);
+    Location(int first_line, int first_col, int last_line, int last_col);
+    Location(YYLTYPE &start, YYLTYPE &end);
 
-  void set_end(YYLTYPE &end);
+    void set_end(YYLTYPE &end);
 };
 
 typedef struct Location Location;
@@ -72,598 +72,598 @@ class ProgramSource;
 class ASTNode;
 class Typename;
 
-typedef bool (*FindFunc)(const ASTNode*);
+typedef bool (*FindFunc)(const ASTNode *);
 
 namespace x {
-extern std::vector<std::string> kind_map;
+    extern std::vector<std::string> kind_map;
 
-int next_kind(const char *const name);
+    int next_kind(const char * const name);
 
-void tree_dotfile(std::ostream &out, ProgramSource *prog);
+    void tree_dotfile(std::ostream &out, ProgramSource * prog);
 }  // namespace x
 
 class ASTNode {
- public:
-  Location loc;
+    public:
+        Location loc;
 
-  virtual int get_kind() const = 0;
+        virtual int get_kind() const = 0;
 
-  virtual void print() const = 0;
-  virtual std::vector<ASTNode *> children() = 0;
-  virtual void gen() {}
-  virtual ASTNode * find(FindFunc cond);
+        virtual void print() const = 0;
+        virtual std::vector<ASTNode *> children() = 0;
+        virtual void gen() {}
+        virtual ASTNode * find(FindFunc cond);
 
-  virtual bool operator==(const ASTNode &node) const = 0;
-  virtual bool operator!=(const ASTNode &node) const = 0;
+        virtual bool operator==(const ASTNode &node) const = 0;
+        virtual bool operator!=(const ASTNode &node) const = 0;
 
-  virtual ~ASTNode() {}
+        virtual ~ASTNode() {}
 
- protected:
-  ASTNode(const Location loc) : loc(loc) {}
+    protected:
+        ASTNode(const Location loc) : loc(loc) {}
 };
 
 class ProgramSource : public ASTNode {
- public:
-  std::string name;
-  std::vector<ASTNode *> nodes;
+    public:
+        std::string name;
+        std::vector<ASTNode *> nodes;
 
-  ProgramSource(const Location loc, std::string name, std::vector<ASTNode *> nodes);
+        ProgramSource(const Location loc, std::string name, std::vector<ASTNode *> nodes);
 
-  virtual ~ProgramSource();
+        virtual ~ProgramSource();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  void add_node(ASTNode *node);
+        void add_node(ASTNode * node);
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class Expr : public ASTNode {
- public:
-  virtual ~Expr() {}
+    public:
+        virtual ~Expr() {}
 
- protected:
-  Expr(const Location loc) : ASTNode(loc) {}
+    protected:
+        Expr(const Location loc) : ASTNode(loc) {}
 };
 
 class ExprList : public ASTNode {
- public:
-  std::vector<Expr *> exprs;
+    public:
+        std::vector<Expr *> exprs;
 
-  ExprList(const Location loc, std::vector<Expr *> exprs);
+        ExprList(const Location loc, std::vector<Expr *> exprs);
 
-  virtual ~ExprList();
+        virtual ~ExprList();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  void push_expr(Expr *expr);
+        void push_expr(Expr * expr);
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class CallingExpr : public Expr {
- public:
-  virtual ~CallingExpr() {}
+    public:
+        virtual ~CallingExpr() {}
 
- protected:
-  CallingExpr(const Location loc) : Expr(loc) {}
+    protected:
+        CallingExpr(const Location loc) : Expr(loc) {}
 };
 
 class Statement : public ASTNode {
- public:
-  virtual ~Statement() {}
+    public:
+        virtual ~Statement() {}
 
- protected:
-  Statement(const Location loc) : ASTNode(loc) {}
+    protected:
+        Statement(const Location loc) : ASTNode(loc) {}
 };
 
 class StatementList : public ASTNode {
- public:
-  std::vector<Statement *> statements;
+    public:
+        std::vector<Statement *> statements;
 
-  StatementList(const Location loc, std::vector<Statement *> statements);
+        StatementList(const Location loc, std::vector<Statement *> statements);
 
-  virtual ~StatementList();
+        virtual ~StatementList();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  void push_statement(Statement *statement);
+        void push_statement(Statement * statement);
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class ParensExpr : public CallingExpr {
- public:
-  const Expr *expr;
+    public:
+        const Expr * expr;
 
-  ParensExpr(const Location loc, const Expr *expr);
+        ParensExpr(const Location loc, const Expr * expr);
 
-  virtual ~ParensExpr();
+        virtual ~ParensExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class TypeDecl : public Statement {
- public:
-  virtual ~TypeDecl() {}
+    public:
+        virtual ~TypeDecl() {}
 
- protected:
-  TypeDecl(const Location loc) : Statement(loc) {}
+    protected:
+        TypeDecl(const Location loc) : Statement(loc) {}
 };
 
 class Typename : public ASTNode {
- public:
-  virtual ~Typename() {}
+    public:
+        virtual ~Typename() {}
 
-  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const = 0;
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const = 0;
 
- protected:
-  Typename(const Location loc) : ASTNode(loc) {}
+    protected:
+        Typename(const Location loc) : ASTNode(loc) {}
 };
 
 class ParensTypename : public Typename {
- public:
-  const Typename *name;
+    public:
+        const Typename * name;
 
-  ParensTypename(const Location loc, const Typename *name);
+        ParensTypename(const Location loc, const Typename * name);
 
-  virtual ~ParensTypename();
+        virtual ~ParensTypename();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class NumLiteral : public Expr {
- public:
-  virtual ~NumLiteral() {}
+    public:
+        virtual ~NumLiteral() {}
 
- protected:
-  NumLiteral(const Location loc) : Expr(loc) {}
+    protected:
+        NumLiteral(const Location loc) : Expr(loc) {}
 };
 
 class IntLiteral : public NumLiteral {
- public:
-  const int value;
+    public:
+        const int value;
 
-  IntLiteral(const Location loc, const char *int_str);
+        IntLiteral(const Location loc, const char * int_str);
 
-  IntLiteral(const Location loc, const int value);
+        IntLiteral(const Location loc, const int value);
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class FloatLiteral : public NumLiteral {
- public:
-  const double value;
+    public:
+        const double value;
 
-  FloatLiteral(const Location loc, const char *float_str);
-  FloatLiteral(const Location loc, const float value);
+        FloatLiteral(const Location loc, const char * float_str);
+        FloatLiteral(const Location loc, const float value);
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class TernaryExpr : public Expr {
- public:
-  const Expr *cond;
-  const Expr *tru;
-  const Expr *fals;
+    public:
+        const Expr * cond;
+        const Expr * tru;
+        const Expr * fals;
 
-  TernaryExpr(const Location loc, const Expr *cond, const Expr *tru, const Expr *fals);
+        TernaryExpr(const Location loc, const Expr * cond, const Expr * tru, const Expr * fals);
 
-  virtual ~TernaryExpr();
+        virtual ~TernaryExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class BoolLiteral : public Expr {
- public:
-  const bool value;
+    public:
+        const bool value;
 
-  BoolLiteral(const Location loc, const bool value);
+        BoolLiteral(const Location loc, const bool value);
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class CharLiteral : public Expr {
- public:
-  const char value;
+    public:
+        const char value;
 
-  CharLiteral(const Location loc, const char value);
+        CharLiteral(const Location loc, const char value);
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class StringLiteral : public Expr {
- public:
-  const std::string value;
+    public:
+        const std::string value;
 
-  StringLiteral(const Location loc, const char *const value);
+        StringLiteral(const Location loc, const char * const value);
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class TypeIdent : public Typename {
- public:
-  const std::string id;
+    public:
+        const std::string id;
 
-  TypeIdent(const Location loc, const char *const _id);
+        TypeIdent(const Location loc, const char * const _id);
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class Ident : public CallingExpr {
- public:
-  const std::string id;
+    public:
+        const std::string id;
 
-  Ident(const Location loc, const char *const _id);
+        Ident(const Location loc, const char * const _id);
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class MathExpr : public Expr {
- public:
-  const char op;
-  const Expr *left;
-  const Expr *right;
+    public:
+        const char op;
+        const Expr * left;
+        const Expr * right;
 
-  MathExpr(const Location loc, const char op, const Expr *left, const Expr *right);
+        MathExpr(const Location loc, const char op, const Expr * left, const Expr * right);
 
-  virtual ~MathExpr();
+        virtual ~MathExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class BoolExpr : public Expr {
- public:
-  const std::string op;
-  const Expr *left;
-  const Expr *right;
+    public:
+        const std::string op;
+        const Expr * left;
+        const Expr * right;
 
-  BoolExpr(const Location loc, const char *const op, const Expr *left, const Expr *right);
+        BoolExpr(const Location loc, const char * const op, const Expr * left, const Expr * right);
 
-  virtual ~BoolExpr();
+        virtual ~BoolExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class PtrTypename : public Typename {
- public:
-  const Typename *name;
+    public:
+        const Typename * name;
 
-  PtrTypename(const Location loc, const Typename *name);
+        PtrTypename(const Location loc, const Typename * name);
 
-  virtual ~PtrTypename();
+        virtual ~PtrTypename();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class MutTypename : public Typename {
- public:
-  const Typename *name;
+    public:
+        const Typename * name;
 
-  MutTypename(const Location loc, const Typename *name);
+        MutTypename(const Location loc, const Typename * name);
 
-  virtual ~MutTypename();
+        virtual ~MutTypename();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class TypenameList : public ASTNode {
- public:
-  std::vector<Typename *> types;
+    public:
+        std::vector<Typename *> types;
 
-  TypenameList(const Location loc, std::vector<Typename *> types);
+        TypenameList(const Location loc, std::vector<Typename *> types);
 
-  virtual ~TypenameList();
+        virtual ~TypenameList();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  // Pushes the typename onto the back of the type list
-  void push_type(Typename *type_name);
+        // Pushes the typename onto the back of the type list
+        void push_type(Typename * type_name);
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class VarDecl : public Statement {
- public:
-  const Typename *type_name;
-  const Ident *var_name;
+    public:
+        const Typename * type_name;
+        const Ident * var_name;
 
-  VarDecl(const Location loc, const Typename *type_name, const Ident *var_name);
+        VarDecl(const Location loc, const Typename * type_name, const Ident * var_name);
 
-  virtual ~VarDecl();
+        virtual ~VarDecl();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  void add_to_scope(SymbolTable *symtable);
+        void add_to_scope(SymbolTable * symtable);
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class ParamsList : public ASTNode {
- public:
-  std::vector<VarDecl *> params;
+    public:
+        std::vector<VarDecl *> params;
 
-  ParamsList(const Location loc, std::vector<VarDecl *> params);
+        ParamsList(const Location loc, std::vector<VarDecl *> params);
 
-  virtual ~ParamsList();
+        virtual ~ParamsList();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  void push_param(VarDecl *param);
+        void push_param(VarDecl * param);
 
-  void add_to_scope(SymbolTable *symtable);
+        void add_to_scope(SymbolTable * symtable);
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 // TODO: Inherit from CallingExpr instead
 class FunctionCallExpr : public Expr {
- public:
-  const CallingExpr *func;
-  const ExprList *args;
+    public:
+        const CallingExpr * func;
+        const ExprList * args;
 
-  FunctionCallExpr(const Location loc, const CallingExpr *func, const ExprList *args);
+        FunctionCallExpr(const Location loc, const CallingExpr * func, const ExprList * args);
 
-  virtual ~FunctionCallExpr();
+        virtual ~FunctionCallExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 // Identical to FunctionCallExpr, except it inherits from Stmt instead. This is
 // to avoid diamond inheritance which causes major problems especially when
 // downcasting. Having two nearly identical classes is a lesser evil
 class FunctionCallStmt : public Statement {
- public:
-  const CallingExpr *func;
-  const ExprList *args;
+    public:
+        const CallingExpr * func;
+        const ExprList * args;
 
-  FunctionCallStmt(const Location loc, const CallingExpr *func, const ExprList *args);
+        FunctionCallStmt(const Location loc, const CallingExpr * func, const ExprList * args);
 
-  virtual ~FunctionCallStmt();
+        virtual ~FunctionCallStmt();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class VarDeclList : public ASTNode {
- public:
-  std::vector<VarDecl *> decls;
+    public:
+        std::vector<VarDecl *> decls;
 
-  VarDeclList(const Location loc, std::vector<VarDecl *> decls);
+        VarDeclList(const Location loc, std::vector<VarDecl *> decls);
 
-  virtual ~VarDeclList();
+        virtual ~VarDeclList();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  // Pushes the var decl onto the back of the type list
-  void push_decl(VarDecl *decl);
+        // Pushes the var decl onto the back of the type list
+        void push_decl(VarDecl * decl);
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class TupleTypename : public Typename {
- public:
-  const TypenameList *type_list;
+    public:
+        const TypenameList * type_list;
 
-  TupleTypename(const Location loc, const TypenameList *type_list);
+        TupleTypename(const Location loc, const TypenameList * type_list);
 
-  virtual ~TupleTypename();
+        virtual ~TupleTypename();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class TupleExpr : public Expr {
- public:
-  const ExprList *expr_list;
+    public:
+        const ExprList * expr_list;
 
-  TupleExpr(const Location loc, const ExprList *expr_list);
+        TupleExpr(const Location loc, const ExprList * expr_list);
 
-  virtual ~TupleExpr();
+        virtual ~TupleExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class FuncTypename : public Typename {
- public:
-  const TypenameList *params;
-  const Typename *ret_type;
+    public:
+        const TypenameList * params;
+        const Typename * ret_type;
 
-  FuncTypename(const Location loc, const TypenameList *params, const Typename *ret_type);
+        FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type);
 
-  virtual ~FuncTypename();
+        virtual ~FuncTypename();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class StaticArrayTypename : public Typename {
- public:
-  const Typename *element_type;
-  const IntLiteral *size;
+    public:
+        const Typename * element_type;
+        const IntLiteral * size;
 
-  StaticArrayTypename(const Location loc, const Typename *element_type, const IntLiteral *size);
+        StaticArrayTypename(const Location loc, const Typename * element_type, const IntLiteral * size);
 
-  virtual ~StaticArrayTypename();
+        virtual ~StaticArrayTypename();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class TypeAlias : public TypeDecl {
- public:
-  const Ident *name;
-  const Typename *type_expr;
+    public:
+        const Ident * name;
+        const Typename * type_expr;
 
-  TypeAlias(const Location loc, const Ident *name, const Typename *type_expr);
+        TypeAlias(const Location loc, const Ident * name, const Typename * type_expr);
 
-  virtual ~TypeAlias();
+        virtual ~TypeAlias();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 /**
@@ -675,337 +675,337 @@ class TypeAlias : public TypeDecl {
  * this, it could be interesting)
  */
 class StructTypename : public Typename {
-  public:
-    const VarDeclList *members;
-    const SymbolTable *scope;
+    public:
+        const VarDeclList * members;
+        const SymbolTable * scope;
 
-    StructTypename(const Location loc, const VarDeclList *members, const SymbolTable *scope);
+        StructTypename(const Location loc, const VarDeclList * members, const SymbolTable * scope);
 
-    virtual ~StructTypename();
+        virtual ~StructTypename();
 
-    virtual void print() const;
-    virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-    virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
 
-    virtual bool operator==(const ASTNode &node) const;
-    NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-    KIND_CLASS()
+        KIND_CLASS()
 };
 
 class StructDecl : public TypeDecl {
- public:
-  const Ident *name;
-  const StructTypename *defn;
+    public:
+        const Ident * name;
+        const StructTypename * defn;
 
-  StructDecl(const Location loc, const Ident *name, const StructTypename *defn);
+        StructDecl(const Location loc, const Ident * name, const StructTypename * defn);
 
-  virtual ~StructDecl();
+        virtual ~StructDecl();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class VarDeclInit : public Statement {
- public:
-  const VarDecl *decl;
-  const Expr *init;
-  int type;
+    public:
+        const VarDecl * decl;
+        const Expr * init;
+        int type;
 
-  VarDeclInit(const Location loc, const VarDecl *decl, const Expr *init);
+        VarDeclInit(const Location loc, const VarDecl * decl, const Expr * init);
 
-  virtual ~VarDeclInit();
+        virtual ~VarDeclInit();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class ArrayLiteral : public Expr {
- public:
-  const ExprList *items;
+    public:
+        const ExprList * items;
 
-  ArrayLiteral(const Location loc, const ExprList *items);
+        ArrayLiteral(const Location loc, const ExprList * items);
 
-  virtual ~ArrayLiteral();
+        virtual ~ArrayLiteral();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class IfStmt : public Statement {
- public:
-  const Expr *cond;
-  const StatementList *then;
-  const SymbolTable *scope;
+    public:
+        const Expr * cond;
+        const StatementList * then;
+        const SymbolTable * scope;
 
-  IfStmt(const Location loc, const Expr *cond, const StatementList *then, const SymbolTable *scope);
+        IfStmt(const Location loc, const Expr * cond, const StatementList * then, const SymbolTable * scope);
 
-  virtual ~IfStmt();
+        virtual ~IfStmt();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class IfElseStmt : public Statement {
- public:
-  const IfStmt *if_stmt;
-  const StatementList *els;
-  const SymbolTable *scope;
+    public:
+        const IfStmt * if_stmt;
+        const StatementList * els;
+        const SymbolTable * scope;
 
-  IfElseStmt(const Location loc, const IfStmt *if_stmt, const StatementList *els, const SymbolTable *scope);
+        IfElseStmt(const Location loc, const IfStmt * if_stmt, const StatementList * els, const SymbolTable * scope);
 
-  virtual ~IfElseStmt();
+        virtual ~IfElseStmt();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class WhileStmt : public Statement {
- public:
-  const Expr *cond;
-  const StatementList *body;
-  const SymbolTable *scope;
+    public:
+        const Expr * cond;
+        const StatementList * body;
+        const SymbolTable * scope;
 
-  WhileStmt(const Location loc, const Expr *cond, const StatementList *body, const SymbolTable *scope);
+        WhileStmt(const Location loc, const Expr * cond, const StatementList * body, const SymbolTable * scope);
 
-  virtual ~WhileStmt();
+        virtual ~WhileStmt();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class ForStmt : public Statement {
- public:
-  const Statement *init;
-  const Expr *condition;
-  const Statement *update;
-  const StatementList *body;
-  const SymbolTable *scope;
+    public:
+        const Statement * init;
+        const Expr * condition;
+        const Statement * update;
+        const StatementList * body;
+        const SymbolTable * scope;
 
-  ForStmt(const Location loc, const Statement *init, const Expr *condition, const Statement *update,
-          const StatementList *body, const SymbolTable *scope);
+        ForStmt(const Location loc, const Statement * init, const Expr * condition, const Statement * update,
+                const StatementList * body, const SymbolTable * scope);
 
-  virtual ~ForStmt();
+        virtual ~ForStmt();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class AddrOf : public Expr {
- public:
-  const Expr *expr;
+    public:
+        const Expr * expr;
 
-  AddrOf(const Location loc, const Expr *expr);
+        AddrOf(const Location loc, const Expr * expr);
 
-  virtual ~AddrOf();
+        virtual ~AddrOf();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class Deref : public Expr {
- public:
-  const Expr *expr;
+    public:
+        const Expr * expr;
 
-  Deref(const Location loc, const Expr *expr);
+        Deref(const Location loc, const Expr * expr);
 
-  virtual ~Deref();
+        virtual ~Deref();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class CastExpr : public Expr {
- public:
-  const Typename *dest_type;
-  const Expr *expr;
+    public:
+        const Typename * dest_type;
+        const Expr * expr;
 
-  CastExpr(const Location loc, const Typename *dest_type, const Expr *expr);
+        CastExpr(const Location loc, const Typename * dest_type, const Expr * expr);
 
-  virtual ~CastExpr();
+        virtual ~CastExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class LogicalExpr : public Expr {
- public:
-  const std::string op;
-  const Expr *left;
-  const Expr *right;
+    public:
+        const std::string op;
+        const Expr * left;
+        const Expr * right;
 
-  LogicalExpr(const Location loc, const char *const op, const Expr *l, const Expr *r);
+        LogicalExpr(const Location loc, const char * const op, const Expr * l, const Expr * r);
 
-  virtual ~LogicalExpr();
+        virtual ~LogicalExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class FuncDecl : public ASTNode {
- public:
-  const Ident *name;
-  const ParamsList *params;
-  const Typename *ret_type;
-  const StatementList *body;
-  const SymbolTable *scope;
+    public:
+        const Ident * name;
+        const ParamsList * params;
+        const Typename * ret_type;
+        const StatementList * body;
+        const SymbolTable * scope;
 
-  FuncDecl(const Location loc, const Ident *name, const ParamsList *params,
-           const Typename *ret_body, const StatementList *body, const SymbolTable *scope);
+        FuncDecl(const Location loc, const Ident * name, const ParamsList * params,
+                 const Typename * ret_body, const StatementList * body, const SymbolTable * scope);
 
-  virtual ~FuncDecl();
+        virtual ~FuncDecl();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class ReturnStatement : public Statement {
- public:
-  const Expr *val;
+    public:
+        const Expr * val;
 
-  ReturnStatement(const Location loc, const Expr *val);
+        ReturnStatement(const Location loc, const Expr * val);
 
-  virtual ~ReturnStatement();
+        virtual ~ReturnStatement();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class Assignment : public Statement {
- public:
-  // TODO (maybe): Distinguish between lvalue and rvalue at parser level?
-  const Expr *lhs;
-  const Expr *rhs;
+    public:
+        // TODO (maybe): Distinguish between lvalue and rvalue at parser level?
+        const Expr * lhs;
+        const Expr * rhs;
 
-  Assignment(const Location loc, const Expr *lhs, const Expr *rhs);
+        Assignment(const Location loc, const Expr * lhs, const Expr * rhs);
 
-  virtual ~Assignment();
+        virtual ~Assignment();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class BangExpr : public Expr {
- public:
-  const Expr *expr;
+    public:
+        const Expr * expr;
 
-  BangExpr(const Location loc, const Expr *expr);
+        BangExpr(const Location loc, const Expr * expr);
 
-  virtual ~BangExpr();
+        virtual ~BangExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class NotExpr : public Expr {
- public:
-  const Expr *expr;
+    public:
+        const Expr * expr;
 
-  NotExpr(const Location loc, const Expr *expr);
+        NotExpr(const Location loc, const Expr * expr);
 
-  virtual ~NotExpr();
+        virtual ~NotExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 class PreExpr : public Expr {
- public:
-  const std::string op;
-  const Expr *expr;
+    public:
+        const std::string op;
+        const Expr * expr;
 
-  PreExpr(const Location loc, const char *const op, const Expr *expr);
+        PreExpr(const Location loc, const char * const op, const Expr * expr);
 
-  virtual ~PreExpr();
+        virtual ~PreExpr();
 
-  virtual void print() const;
-  virtual std::vector<ASTNode *> children();
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
 
-  virtual bool operator==(const ASTNode &node) const;
-  NEQ_OPERATOR()
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
-  KIND_CLASS()
+        KIND_CLASS()
 };
 
 #endif

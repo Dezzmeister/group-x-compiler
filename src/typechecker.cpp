@@ -4,7 +4,7 @@
 #include "symtable.h"
 
 /**
- * Returns a type which is semantically equivalent to typ, but is not an alias or a 
+ * Returns a type which is semantically equivalent to typ, but is not an alias or a
  * typename in parens.
  */
 static const Typename * unaliased(const Typename * typ, SymbolTable * symtable) {
@@ -21,6 +21,7 @@ static const Typename * unaliased(const Typename * typ, SymbolTable * symtable) 
     const TypeIdent * ident = (TypeIdent *) typ;
 
     const Symbol * symbol = symtable->get(ident->id);
+
     if (!symbol) {
         fprintf(stderr, "Undeclared type: %s\n", ident->id.c_str());
         // TODO: Don't exit

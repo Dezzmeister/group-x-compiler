@@ -9,7 +9,7 @@
 
 struct yy_buffer_state;
 typedef struct yy_buffer_state * YY_BUFFER_STATE;
-typedef void* yyscan_t;
+typedef void * yyscan_t;
 
 struct ParserState {
     // Top level node of AST

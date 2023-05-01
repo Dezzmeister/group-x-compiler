@@ -6,8 +6,9 @@ LD_FLAGS = -pthread
 
 SRC_DIR := src
 GENERATED_FILES := ${addprefix ${SRC_DIR}/, scanner.cpp parser.cpp }
+SRC_FILES := ${wildcard ${SRC_DIR}/*.cpp}
 
-DEPS = ${GENERATED_FILES}  ${wildcard ${SRC_DIR}/*.cpp}
+DEPS = ${GENERATED_FILES} ${SRC_FILES}
 
 TEST_DIR := tests
 
@@ -60,6 +61,9 @@ parser:
 lexer: 
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
 
-fmt: ${DEPS} ${SRC_DIR}/*.h ${TEST_DIR}/*.cpp,*.h
-	../tools/astyle --project=.astylerc --recursive $^
+# Formats source files in a consistent way using astyle. To install astyle, go to
+# https://astyle.sourceforge.net/. I put it in ../tools/ relative to this directory.
+# Formatting rules are in .astylerc
+fmt: ${SRC_FILES} ${SRC_DIR}/*.h ${TEST_DIR}/*.cpp ${TEST_DIR}/*.h
+	../tools/astyle --project=.astylerc $^
 

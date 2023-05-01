@@ -130,7 +130,7 @@ void typechecker_tests() {
         expect(x->type_equals(&x_alias, symtable));
         expect(!x->type_equals(&y_alias, symtable));
         expect(!x->type_equals(y, symtable));
-        
+
         expect(y->type_equals(&y_alias, symtable));
         expect(!y->type_equals(&x_alias, symtable));
 

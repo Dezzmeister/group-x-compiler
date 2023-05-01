@@ -2,6 +2,8 @@
 
 #include "parser.h"
 
-CodeGenerator::CodeGenerator(const BasicBlock* b) : blocks(b) {}
+CodeGenerator::CodeGenerator(const BasicBlock * b) : blocks(b) {}
 
-CodeGenerator::~CodeGenerator() { delete blocks; }
+CodeGenerator::~CodeGenerator() {
+    delete blocks;
+}
