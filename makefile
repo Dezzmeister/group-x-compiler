@@ -59,3 +59,7 @@ parser:
 
 lexer: 
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
+
+fmt: ${DEPS} ${SRC_DIR}/*.h ${TEST_DIR}/*.cpp,*.h
+	../tools/astyle --project=.astylerc --recursive $^
+
