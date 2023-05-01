@@ -2,6 +2,7 @@
 #define SRC_ERRORS_H
 
 #include <map>
+#include <stdio.h>
 #include <string>
 #include <vector>
 
@@ -18,6 +19,8 @@ struct CompilerError {
     ErrorLevel level;
 
     CompilerError(Location loc, std::string message, ErrorLevel level);
+
+    void print(FILE * output);
 };
 
 typedef struct CompilerError CompilerError;

@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "ast.h"
+#include "errors.h"
 #include "symtable.h"
 
 /**
@@ -23,15 +24,11 @@ static const Typename * unaliased(const Typename * typ, SymbolTable * symtable) 
     const Symbol * symbol = symtable->get(ident->id);
 
     if (!symbol) {
-        fprintf(stderr, "Undeclared type: %s\n", ident->id.c_str());
-        // TODO: Don't exit
-        exit(1);
+        throw CompilerError(typ->loc, "Undeclared type", Error);
     }
 
     if (symbol->kind != Type) {
-        fprintf(stderr, "Symbol is not a type: %s\n", ident->id.c_str());
-        // TODO: Don't exit
-        exit(1);
+        throw CompilerError(typ->loc, "Symbol is not a type", Error);
     }
 
     if (symbol->decl.typ == nullptr) {

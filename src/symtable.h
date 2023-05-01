@@ -65,16 +65,16 @@ class SymbolTable {
 };
 
 namespace x {
-// Creates a new scope and returns the corresponding symtable
+    // Creates a new scope and returns the corresponding symtable
     void create_scope(SymbolTable ** table);
 
-// Pops the current scope and returns it. It is the caller's responsibility to
-// free this memory
+    // Pops the current scope and returns it. It is the caller's responsibility to
+    // free this memory
     SymbolTable * pop_scope(SymbolTable ** table);
 
-// Creates the default top-level symbol table with symbols for primitive types and
-// built in functions. It is the caller's responsibility to free this memory
+    // Creates the default top-level symbol table with symbols for primitive types and
+    // built in functions. It is the caller's responsibility to free this memory
     SymbolTable * default_symtable();
-}  // namespace x
+}   // namespace x
 
 #endif

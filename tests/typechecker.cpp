@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../src/ast.h"
+#include "../src/errors.h"
 #include "../src/parseutils.h"
 #include "../src/symtable.h"
 
@@ -22,17 +23,22 @@ void typechecker_tests() {
         TypeIdent z(loc, "Z");
         TypeIdent w(loc, "W");
 
-        expect(x.type_equals(&y, symtable));
-        expect(y.type_equals(&x, symtable));
+        try {
+            expect(x.type_equals(&y, symtable));
+            expect(y.type_equals(&x, symtable));
 
-        expect(y.type_equals(&z, symtable));
-        expect(z.type_equals(&y, symtable));
+            expect(y.type_equals(&z, symtable));
+            expect(z.type_equals(&y, symtable));
 
-        expect(z.type_equals(&x, symtable));
-        expect(x.type_equals(&z, symtable));
+            expect(z.type_equals(&x, symtable));
+            expect(x.type_equals(&z, symtable));
 
-        expect(!w.type_equals(&y, symtable));
-        expect(!y.type_equals(&w, symtable));
+            expect(!w.type_equals(&y, symtable));
+            expect(!y.type_equals(&w, symtable));
+        } catch (CompilerError error) {
+            error.print(stderr);
+            fail_test();
+        }
 
         return TEST_SUCCESS;
     };
@@ -61,10 +67,15 @@ void typechecker_tests() {
         TypeIdent func2(loc, "Func2");
         TypeIdent func3(loc, "Func3");
 
-        expect(arr1.type_equals(&arr3, symtable));
-        expect(!arr1.type_equals(&arr2, symtable));
-        expect(func1.type_equals(&func3, symtable));
-        expect(!func1.type_equals(&func2, symtable));
+        try {
+            expect(arr1.type_equals(&arr3, symtable));
+            expect(!arr1.type_equals(&arr2, symtable));
+            expect(func1.type_equals(&func3, symtable));
+            expect(!func1.type_equals(&func2, symtable));
+        } catch (CompilerError error) {
+            error.print(stderr);
+            fail_test();
+        }
 
         return TEST_SUCCESS;
     };
@@ -104,9 +115,14 @@ void typechecker_tests() {
         TypeIdent strukt3(loc, "Strukt3");
         TypeIdent strukt4(loc, "Strukt4");
 
-        expect(strukt1.type_equals(&strukt3, symtable));
-        expect(!strukt1.type_equals(&strukt2, symtable));
-        expect(!strukt1.type_equals(&strukt4, symtable));
+        try {
+            expect(strukt1.type_equals(&strukt3, symtable));
+            expect(!strukt1.type_equals(&strukt2, symtable));
+            expect(!strukt1.type_equals(&strukt4, symtable));
+        } catch (CompilerError error) {
+            error.print(stderr);
+            fail_test();
+        }
 
         return TEST_SUCCESS;
     };
@@ -127,12 +143,17 @@ void typechecker_tests() {
         TypeIdent x_alias(loc, "X");
         TypeIdent y_alias(loc, "Y");
 
-        expect(x->type_equals(&x_alias, symtable));
-        expect(!x->type_equals(&y_alias, symtable));
-        expect(!x->type_equals(y, symtable));
+        try {
+            expect(x->type_equals(&x_alias, symtable));
+            expect(!x->type_equals(&y_alias, symtable));
+            expect(!x->type_equals(y, symtable));
 
-        expect(y->type_equals(&y_alias, symtable));
-        expect(!y->type_equals(&x_alias, symtable));
+            expect(y->type_equals(&y_alias, symtable));
+            expect(!y->type_equals(&x_alias, symtable));
+        } catch (CompilerError error) {
+            error.print(stderr);
+            fail_test();
+        }
 
         delete x;
         delete y;

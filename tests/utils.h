@@ -13,6 +13,10 @@
         return TEST_FAILURE;   \
     }
 
+#define fail_test() \
+    fprintf(stderr, "%s: failed at line %d\n", __FILE__, __LINE__); \
+    return TEST_FAILURE;
+
 typedef int (*TestFunc)(void);
 
 namespace xtest {
