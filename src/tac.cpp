@@ -1,8 +1,18 @@
 #include "tac.h"
 
-BasicBlock * x::block = new BasicBlock(std::vector<Quad>());
+BasicBlock * x::bblock = new BasicBlock(); 
 
-int BasicBlock::add_instr(Quad trip) {
-    x::block->trips.push_back(trip);
-    return x::block->n_instr++;
+void BasicBlock::add_block(std::string name) {
 }
+
+void BasicBlock::print() const {
+    std::cout << name << ":" << '\n';
+    for (auto trip : trips) {
+        trip->print();
+    }
+    std::cout << "ret" << '\n';
+    if (this->prev) {
+        this->prev->print();
+    }
+}
+
