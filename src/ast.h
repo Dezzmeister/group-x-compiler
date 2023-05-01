@@ -645,6 +645,14 @@ class TypeAlias : public TypeDecl {
   KIND_CLASS()
 };
 
+/**
+ * A struct typename is a valid type expression, but it does not appear in the grammar
+ * as one of the productions of a type expression. This is because it is only used
+ * in struct declarations, and struct names are allowed to appear in type expressions.
+ * Typescript and other languages let you specify struct/object types inline without
+ * declaring them, but our language doesn't. (@komi it's up to you if you want to change
+ * this, it could be interesting)
+ */
 class StructTypename : public Typename {
   public:
     const VarDeclList *members;
