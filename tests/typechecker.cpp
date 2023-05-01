@@ -107,4 +107,32 @@ void typechecker_tests() {
 
         return TEST_SUCCESS;
     };
+
+    xtest::tests["qualified type equality"] = []() {
+        const char * code = R"(
+            type X = (mut int)*;
+            type Y = mut int*;
+        )";
+
+        ParseResult result = x::parse_str(code);
+        SymbolTable * symtable = result.parser_state->symtable;
+
+        PtrTypename * x = new PtrTypename(new MutTypename(new TypeIdent("int")));
+        MutTypename * y = new MutTypename(new PtrTypename(new TypeIdent("int")));
+
+        TypeIdent x_alias("X");
+        TypeIdent y_alias("Y");
+
+        expect(x->type_equals(&x_alias, symtable));
+        expect(!x->type_equals(&y_alias, symtable));
+        expect(!x->type_equals(y, symtable));
+        
+        expect(y->type_equals(&y_alias, symtable));
+        expect(!y->type_equals(&x_alias, symtable));
+
+        delete x;
+        delete y;
+
+        return TEST_SUCCESS;
+    };
 }

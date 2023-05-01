@@ -24,7 +24,7 @@ static const Typename * unaliased(const Typename * typ, SymbolTable * symtable) 
     if (!symbol) {
         fprintf(stderr, "Undeclared type: %s\n", ident->id.c_str());
         // TODO: Don't exit
-        return typ;
+        exit(1);
     }
 
     if (symbol->kind != Type) {
@@ -74,7 +74,9 @@ bool PtrTypename::type_equals(const Typename * t, SymbolTable * symtable) const 
         return false;
     }
 
-    return name->type_equals(t_unalias, symtable);
+    const PtrTypename * t_ptr = (PtrTypename *) t_unalias;
+
+    return name->type_equals(t_ptr->name, symtable);
 }
 
 bool MutTypename::type_equals(const Typename * t, SymbolTable * symtable) const {
@@ -84,7 +86,9 @@ bool MutTypename::type_equals(const Typename * t, SymbolTable * symtable) const 
         return false;
     }
 
-    return name->type_equals(t_unalias, symtable);
+    const MutTypename * t_mut = (MutTypename *) t_unalias;
+
+    return name->type_equals(t_mut->name, symtable);
 }
 
 bool TupleTypename::type_equals(const Typename * t, SymbolTable * symtable) const {
