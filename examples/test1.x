@@ -41,14 +41,14 @@ int fac(int n) {
 int cool_func_1(int a, int b) {
     mut int sum = a + b;
     (mut int)* epic_ptr = &sum;
-    CoolStruct* cool_struct_ptr = 0;
+    CoolStruct* cool_struct_ptr = 0 as CoolStruct*;
 
     if (true) {
         int z = fac(10);
     }; // TODO: Remove trailing comma from grammar for if/while/for/etc.
 
     for (mut int i = 0; i <= 100; i = i + 1) {
-        print(i);
+        print(i_to_str(i));
     };
 
     bool b0 = true && false;
@@ -60,5 +60,5 @@ int cool_func_1(int a, int b) {
     bool b6 = !b5;
     bool b7 = !!!true;
 
-    return epic_ptr;
+    return epic_ptr as int;
 };

@@ -22,6 +22,10 @@ namespace x {
     ParseResult parse_stdin();
 
     ParseResult parse_str(const char * code);
+
+    SymbolTable * default_symtable();
+
+    void setup_symtable();
 }
 
 

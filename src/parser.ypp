@@ -373,13 +373,13 @@ params_list : params_list ',' var_decl {
             | /* empty */ {$$ = new ParamsList(Location(0, 0, 0, 0), {});}
             ;
 
-func_decl : type_name IDENT '(' params_list ')' '{' {
+func_decl : type_name IDENT '(' {
                 state->symtable->put($2->id, new Symbol(Func, { .func=nullptr }));
                 x::create_scope(&state->symtable);
-                $4->add_to_scope(state->symtable);
+            } params_list ')' '{' {
             } statement_list '}' {
                 SymbolTable * table = x::pop_scope(&state->symtable);
-                $$ = new FuncDecl(Location(@1, @8), $2, $4, $1, $8, table);
+                $$ = new FuncDecl(Location(@1, @8), $2, $5, $1, $9, table);
                 table->set_node($$);
                 Symbol * sym = state->symtable->get($2->id);
                 sym->decl = (Decl) { .func=$$ };

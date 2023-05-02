@@ -33,6 +33,7 @@
 
 #include "tests.h"
 #include "utils.h"
+#include "../src/parseutils.h"
 
 struct NamedTest {
     const char * name;
@@ -102,6 +103,7 @@ void run_tests() {
 }
 
 int main() {
+    x::setup_symtable();
     setup_tests();
     run_tests();
 

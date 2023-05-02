@@ -529,7 +529,7 @@ class VarDecl : public Statement {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
-        
+
         virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;

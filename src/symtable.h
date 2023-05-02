@@ -26,6 +26,9 @@ class Symbol {
         Decl decl;
         Symbol * next;
         Symbol(SymbolKind kind, Decl decl) : kind(kind), decl(decl) {}
+
+        Symbol * clone() const;
+
         ~Symbol() {}
 };
 
@@ -39,6 +42,8 @@ class SymbolTable {
         // SymbolTable does not take ownership of `enclosing` and enclosing table
         // should not be destroyed when this table is destroyed
         SymbolTable(SymbolTable * enclosing) : enclosing(enclosing), node(nullptr) {}
+
+        SymbolTable * clone() const;
 
         ~SymbolTable() {
             for (std::pair<const std::string, Symbol *> &item : table) {
@@ -69,6 +74,8 @@ class SymbolTable {
         void set_node(ASTNode * node) {
             this->node = node;
         }
+
+        void print();
 };
 
 namespace x {
@@ -79,9 +86,9 @@ namespace x {
     // free this memory
     SymbolTable * pop_scope(SymbolTable ** table);
 
-    // Creates the default top-level symbol table with symbols for primitive types and
-    // built in functions. It is the caller's responsibility to free this memory
-    SymbolTable * default_symtable();
+    // Creates a bare top-level symbol table with symbols for primitive types only.
+    // No built-in functions
+    SymbolTable * bare_symtable();
 }   // namespace x
 
 #endif

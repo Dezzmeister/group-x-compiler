@@ -2,6 +2,15 @@
 
 #include "parsedecls.h"
 
+static SymbolTable * the_default_symtable = nullptr;
+
+const char * BUILTIN_DECLS = R"(
+    // These functions need stub definitions because a statement list cannot
+    // be empty
+    void print(char* str) { int _x; };
+    char* i_to_str(int i) { int _x; };
+)";
+
 ParseResult::ParseResult(int error, ParserState * parser_state) : error(error), parser_state(parser_state) {}
 
 ParseResult::~ParseResult() {
@@ -84,4 +93,18 @@ ParseResult x::parse_str(const char * code) {
     error = yylex_destroy(scanner);
 
     return ParseResult(error, state);
+}
+
+SymbolTable * x::default_symtable() {
+    if (the_default_symtable == nullptr) {
+        the_default_symtable = x::bare_symtable();
+        return the_default_symtable;
+    }
+
+    return the_default_symtable->clone();
+}
+
+void x::setup_symtable() {
+    ParseResult result = x::parse_str(BUILTIN_DECLS);
+    the_default_symtable = result.parser_state->symtable->clone();
 }

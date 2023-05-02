@@ -311,7 +311,7 @@ void typechecker_tests() {
 
             fail_test();
         } catch (CompilerError error) {
-            
+
         }
 
         try {

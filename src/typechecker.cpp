@@ -466,8 +466,9 @@ Typename * FunctionCallExpr::type_of(SymbolTable * symtable) const {
     for (size_t i = 0; i < args->exprs.size(); i++) {
         const std::unique_ptr<Typename> actual_type(args->exprs[i]->type_of(symtable));
         const Typename * expected_type = caller_func->params->types[i];
+        const Typename * actual_base = base_type(actual_type.get(), symtable);
 
-        if (!actual_type->type_equals(expected_type, symtable)) {
+        if (!actual_base->type_equals(expected_type, symtable)) {
             throw CompilerError(args->exprs[i]->loc, "Type mismatch", Error);
         }
     }
@@ -669,15 +670,17 @@ void FunctionCallStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) c
 
     if (args->exprs.size() != caller_func->params->types.size()) {
         std::ostringstream stream;
-        stream << "Expected " << caller_func->params->types.size() << " args, got " << args->exprs.size();
+        stream << "Expected " << caller_func->params->types.size() << " arg(s), got " << args->exprs.size();
         throw CompilerError(args->loc, stream.str(), Error);
     }
 
     for (size_t i = 0; i < args->exprs.size(); i++) {
         const std::unique_ptr<Typename> actual_type(args->exprs[i]->type_of(symtable));
+        const Typename * actual_base = base_type(actual_type.get(), symtable);
         const Typename * expected_type = caller_func->params->types[i];
 
-        if (!actual_type->type_equals(expected_type, symtable)) {
+        // You can pass a mut x where a regular x is expected
+        if (!actual_base->type_equals(expected_type, symtable)) {
             throw CompilerError(args->exprs[i]->loc, "Type mismatch", Error);
         }
     }

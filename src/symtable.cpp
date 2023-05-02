@@ -1,11 +1,34 @@
 #include "symtable.h"
 
-SymbolTable * x::default_symtable() {
+Symbol * Symbol::clone() const {
+    Symbol * out = new Symbol(kind, decl);
+    out->next = next;
+    out->name = name;
+
+    return out;
+}
+
+SymbolTable * SymbolTable::clone() const {
+    SymbolTable * out = new SymbolTable(enclosing == nullptr ? nullptr : enclosing->clone());
+    out->node = node;
+
+    for (auto &item : table) {
+        out->table[item.first] = item.second->clone();
+    }
+
+    return out;
+}
+
+void SymbolTable::print() {
+    for (auto &item : table) {
+        printf("[%s -> %d]\n", item.first.c_str(), item.second->kind);
+    }
+}
+
+SymbolTable * x::bare_symtable() {
     SymbolTable * out = new SymbolTable(nullptr);
 
-    // These are the same in memory, they only exist to make the meaning clear
     Decl base_type = { .typ = nullptr };
-    Decl base_func = { .func = nullptr };
 
     // Built-in types
     out->put(std::string("int"), new Symbol(Type, base_type));
@@ -13,9 +36,6 @@ SymbolTable * x::default_symtable() {
     out->put(std::string("bool"), new Symbol(Type, base_type));
     out->put(std::string("char"), new Symbol(Type, base_type));
     out->put(std::string("void"), new Symbol(Type, base_type));
-
-    // Built-in functions
-    out->put(std::string("print"), new Symbol(Func, base_func));
 
     return out;
 }

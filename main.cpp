@@ -39,6 +39,7 @@ bool option_exists(char** begin, char** end, const std::string& option) {
 extern SymbolTable* symtable;
 
 int main(int argc, char** argv) {
+  x::setup_symtable();
   if (YYDEBUG) {
     yydebug = 1;
   } /* Enable tracing */
