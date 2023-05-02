@@ -11,6 +11,23 @@ struct CoolStruct {
     int a;
     float b;
     X epic_func;
+    struct {
+        int x;
+        int y;
+    } pt1;
+    struct {
+        int u;
+        int v;
+        [int, int] -> void int_eater;
+        struct {
+            float z;
+        } strukt2;
+    } strukt1;
+};
+
+type EpicStruct = struct {
+    int x;
+    int y;
 };
 
 int fac(int n) {

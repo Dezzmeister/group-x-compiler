@@ -20,6 +20,10 @@
  *  - random test order to catch heisenbugs related to mutation of state
  *  - tests run faster
  * The number of threads to use is in tests.h (NUM_THREADS).
+ *
+ * In tests only, an '@' symbol followed by an integer can come after a statement + semicolon,
+ * and it will be accepted by the grammar. The integer is an index, indexing the statement so
+ * that it can be looked up in the test. See typechecker.cpp for an example of this.
  */
 #include <pthread.h>
 #include <queue>
