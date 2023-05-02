@@ -100,6 +100,9 @@ Location::Location(int first_line, int first_col, int last_line, int last_col) :
 Location::Location(YYLTYPE &start, YYLTYPE &end) :
     first_line(start.first_line), first_col(start.first_column), last_line(end.last_line), last_col(end.last_column) {}
 
+Location::Location(const Location &start, const Location &end) :
+    first_line(start.first_line), first_col(start.first_col), last_line(end.last_line), last_col(end.last_col) {}
+
 void Location::set_end(YYLTYPE &end) {
     last_line = end.last_line;
     last_col = end.last_column;
@@ -283,6 +286,10 @@ bool TernaryExpr::operator==(const ASTNode &node) const {
 TypeIdent::TypeIdent(const Location loc, const char * const _id) :
     Typename(loc), id(std::string(_id)) {}
 
+Typename * TypeIdent::clone() const {
+    return new TypeIdent(loc, id.c_str());
+}
+
 void TypeIdent::print() const {
     std::cout << id;
 }
@@ -408,6 +415,10 @@ bool ParensExpr::operator==(const ASTNode &node) const {
 ParensTypename::ParensTypename(const Location loc, const Typename * name) :
     Typename(loc), name(name) {}
 
+Typename * ParensTypename::clone() const {
+    return new ParensTypename(loc, name->clone());
+}
+
 ParensTypename::~ParensTypename() {
     delete name;
 }
@@ -435,6 +446,10 @@ bool ParensTypename::operator==(const ASTNode &node) const {
 PtrTypename::PtrTypename(const Location loc, const Typename * name) :
     Typename(loc), name(name) {}
 
+Typename * PtrTypename::clone() const {
+    return new PtrTypename(loc, name->clone());
+}
+
 PtrTypename::~PtrTypename() {
     delete name;
 }
@@ -460,6 +475,10 @@ bool PtrTypename::operator==(const ASTNode &node) const {
 
 MutTypename::MutTypename(const Location loc, const Typename * name) :
     Typename(loc), name(name) {}
+
+Typename * MutTypename::clone() const {
+    return new MutTypename(loc, name->clone());
+}
 
 MutTypename::~MutTypename() {
     delete name;
@@ -633,6 +652,16 @@ bool StatementList::operator==(const ASTNode &node) const {
 TupleTypename::TupleTypename(const Location loc, const TypenameList * type_list)
     : Typename(loc), type_list(type_list) {}
 
+Typename * TupleTypename::clone() const {
+    std::vector<Typename *> types = {};
+
+    for (auto &type_name : type_list->types) {
+        types.push_back(type_name->clone());
+    }
+
+    return new TupleTypename(loc, new TypenameList(x::NULL_LOC, types));
+}
+
 TupleTypename::~TupleTypename() {
     delete type_list;
 }
@@ -687,6 +716,17 @@ bool TupleExpr::operator==(const ASTNode &node) const {
 FuncTypename::FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type)
     : Typename(loc), params(params), ret_type(ret_type) {}
 
+Typename * FuncTypename::clone() const {
+    const Typename * ret_clone = ret_type->clone();
+    std::vector<Typename *> params_clone = {};
+
+    for (auto &type_name : params->types) {
+        params_clone.push_back(type_name->clone());
+    }
+
+    return new FuncTypename(loc, new TypenameList(x::NULL_LOC, params_clone), ret_clone);
+}
+
 FuncTypename::~FuncTypename() {
     delete params;
     delete ret_type;
@@ -716,6 +756,10 @@ bool FuncTypename::operator==(const ASTNode &node) const {
 StaticArrayTypename::StaticArrayTypename(const Location loc, const Typename * element_type,
         const IntLiteral * size)
     : Typename(loc), element_type(element_type), size(size) {}
+
+Typename * StaticArrayTypename::clone() const {
+    return new StaticArrayTypename(loc, element_type->clone(), new IntLiteral(size->loc, size->value));
+}
 
 StaticArrayTypename::~StaticArrayTypename() {
     delete element_type;
@@ -774,6 +818,19 @@ bool TypeAlias::operator==(const ASTNode &node) const {
 
 StructTypename::StructTypename(const Location loc, const VarDeclList * members, const SymbolTable * scope)
     : Typename(loc), members(members), scope(scope) {}
+
+Typename * StructTypename::clone() const {
+    std::vector<VarDecl *> members_clone = {};
+
+    for (auto &member : members->decls) {
+        Typename * type_name_clone = member->type_name->clone();
+        Ident * var_name_clone = new Ident(member->var_name->loc, member->var_name->id.c_str());
+
+        members_clone.push_back(new VarDecl(member->loc, type_name_clone, var_name_clone));
+    }
+
+    return new StructTypename(loc, new VarDeclList(members->loc, members_clone), scope);
+}
 
 StructTypename::~StructTypename() {
     delete members;

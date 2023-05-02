@@ -18,6 +18,7 @@ struct CompilerError {
     std::string message;
     ErrorLevel level;
 
+    CompilerError(Location loc, const char * const message, ErrorLevel level);
     CompilerError(Location loc, std::string message, ErrorLevel level);
 
     void print(FILE * output);

@@ -53,6 +53,7 @@
   }
 
 struct YYLTYPE;
+struct SourceErrors;
 
 struct Location {
     int first_line;
@@ -62,6 +63,7 @@ struct Location {
 
     Location(int first_line, int first_col, int last_line, int last_col);
     Location(YYLTYPE &start, YYLTYPE &end);
+    Location(const Location &start, const Location &end);
 
     void set_end(YYLTYPE &end);
 };
@@ -75,6 +77,8 @@ class Typename;
 typedef bool (*FindFunc)(const ASTNode *);
 
 namespace x {
+    const Location NULL_LOC = Location(0, 0, 0, 0);
+
     extern std::vector<std::string> kind_map;
 
     int next_kind(const char * const name);
@@ -125,6 +129,8 @@ class ProgramSource : public ASTNode {
 class Expr : public ASTNode {
     public:
         virtual ~Expr() {}
+
+        virtual Typename * type_of(SymbolTable * symtable) const = 0;
 
     protected:
         Expr(const Location loc) : ASTNode(loc) {}
@@ -195,6 +201,8 @@ class ParensExpr : public CallingExpr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -213,7 +221,10 @@ class Typename : public ASTNode {
     public:
         virtual ~Typename() {}
 
+        virtual Typename * clone() const = 0;
+
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const = 0;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const = 0;
 
     protected:
         Typename(const Location loc) : ASTNode(loc) {}
@@ -225,12 +236,15 @@ class ParensTypename : public Typename {
 
         ParensTypename(const Location loc, const Typename * name);
 
+        virtual Typename * clone() const;
+
         virtual ~ParensTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -257,6 +271,8 @@ class IntLiteral : public NumLiteral {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -272,6 +288,8 @@ class FloatLiteral : public NumLiteral {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -292,6 +310,8 @@ class TernaryExpr : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -306,6 +326,8 @@ class BoolLiteral : public Expr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -322,6 +344,8 @@ class CharLiteral : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -337,6 +361,8 @@ class StringLiteral : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -349,10 +375,13 @@ class TypeIdent : public Typename {
 
         TypeIdent(const Location loc, const char * const _id);
 
+        virtual Typename * clone() const;
+
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -368,6 +397,8 @@ class Ident : public CallingExpr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -388,6 +419,8 @@ class MathExpr : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -407,6 +440,8 @@ class BoolExpr : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -419,12 +454,15 @@ class PtrTypename : public Typename {
 
         PtrTypename(const Location loc, const Typename * name);
 
+        virtual Typename * clone() const;
+
         virtual ~PtrTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -438,12 +476,15 @@ class MutTypename : public Typename {
 
         MutTypename(const Location loc, const Typename * name);
 
+        virtual Typename * clone() const;
+
         virtual ~MutTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -525,6 +566,8 @@ class FunctionCallExpr : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -578,12 +621,15 @@ class TupleTypename : public Typename {
 
         TupleTypename(const Location loc, const TypenameList * type_list);
 
+        virtual Typename * clone() const;
+
         virtual ~TupleTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -602,6 +648,8 @@ class TupleExpr : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -615,12 +663,15 @@ class FuncTypename : public Typename {
 
         FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type);
 
+        virtual Typename * clone() const;
+
         virtual ~FuncTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -635,12 +686,15 @@ class StaticArrayTypename : public Typename {
 
         StaticArrayTypename(const Location loc, const Typename * element_type, const IntLiteral * size);
 
+        virtual Typename * clone() const;
+
         virtual ~StaticArrayTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -673,6 +727,9 @@ class TypeAlias : public TypeDecl {
  * Typescript and other languages let you specify struct/object types inline without
  * declaring them, but our language doesn't. (@komi it's up to you if you want to change
  * this, it could be interesting)
+ *
+ * NB: The struct typename does not own the symbol table and will not delete it upon
+ * destruction.
  */
 class StructTypename : public Typename {
     public:
@@ -681,12 +738,15 @@ class StructTypename : public Typename {
 
         StructTypename(const Location loc, const VarDeclList * members, const SymbolTable * scope);
 
+        virtual Typename * clone() const;
+
         virtual ~StructTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -741,6 +801,8 @@ class ArrayLiteral : public Expr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -838,6 +900,8 @@ class AddrOf : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -854,6 +918,8 @@ class Deref : public Expr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -873,6 +939,8 @@ class CastExpr : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -891,6 +959,8 @@ class LogicalExpr : public Expr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -967,6 +1037,8 @@ class BangExpr : public Expr {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -983,6 +1055,8 @@ class NotExpr : public Expr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -1001,6 +1075,8 @@ class PreExpr : public Expr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()

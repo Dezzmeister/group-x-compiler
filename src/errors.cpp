@@ -1,5 +1,8 @@
 #include "errors.h"
 
+CompilerError::CompilerError(Location loc, const char * const message, ErrorLevel level)
+    : loc(loc), message(std::string(message)), level(level) {}
+
 CompilerError::CompilerError(Location loc, std::string message, ErrorLevel level)
     : loc(loc), message(message), level(level) {}
 

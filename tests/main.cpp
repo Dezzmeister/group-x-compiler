@@ -1,3 +1,26 @@
+/**
+ * ================================= Test Setup =================================
+ * Test suites are in separate .cpp files. Each one exports a function whose
+ * prototype is in tests.h. The functions insert key/value pairs into xtest::tests,
+ * which is a map from strings to functions. The string key is the name of the test
+ * case, and the function is a void -> int that runs the test case. To add a test
+ * case, insert a new KV pair into xtest::tests with the name of the test case and the
+ * test code. typechecker.cpp and parser.cpp have examples of this. To add a test suite,
+ * create a file for it and a void -> void in which you add the test cases to the
+ * map. Put a function declaration for the test suite function in tests.h and call it
+ * in setup_tests().
+ *
+ * Each test case function returns an error code (TEST_SUCCESS or TEST_FAILURE). The
+ * 'expect()' macro works like assert, except instead of terminating the program on failure
+ * it prints the file, line no, and failing expression, and returns TEST_FAILURE from the
+ * test case. 'fail_test()' just returns TEST_FAILURE unconditionally. The tests should
+ * not terminate the program; the error codes are used to count the number of successful
+ * tests and print it at the end. The tests are run by several pthreads working in parallel
+ * which has a couple of advantages:
+ *  - random test order to catch heisenbugs related to mutation of state
+ *  - tests run faster
+ * The number of threads to use is in tests.h (NUM_THREADS).
+ */
 #include <pthread.h>
 #include <queue>
 #include <stdio.h>
