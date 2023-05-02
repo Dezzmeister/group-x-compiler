@@ -31,6 +31,8 @@ struct SourceErrors {
     std::vector<CompilerError> type_errors;
 
     SourceErrors();
+
+    bool has_errors() const;
 };
 
 typedef struct SourceErrors SourceErrors;
@@ -39,6 +41,8 @@ struct ErrorReport {
     std::map<ProgramSource *, SourceErrors> sources;
 
     ErrorReport();
+
+    void print(FILE * output);
 };
 
 typedef struct ErrorReport ErrorReport;

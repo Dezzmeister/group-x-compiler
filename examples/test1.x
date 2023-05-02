@@ -31,7 +31,7 @@ type EpicStruct = struct {
 };
 
 int fac(int n) {
-    if (n) {
+    if (n > 0) {
         return n * fac(n - 1);
     };
 

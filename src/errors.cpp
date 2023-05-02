@@ -14,4 +14,26 @@ void CompilerError::print(FILE * output) {
 
 SourceErrors::SourceErrors() : parse_errors({}), type_errors({}) {}
 
+bool SourceErrors::has_errors() const {
+    return (parse_errors.size() > 0 || type_errors.size() > 0);
+}
+
 ErrorReport::ErrorReport() : sources(std::map<ProgramSource *, SourceErrors>()) {}
+
+void ErrorReport::print(FILE * output) {
+    for (auto &item : sources) {
+        if (item.second.has_errors()) {
+            fprintf(output, "%s:\n", item.first->name.c_str());
+        }
+
+        for (auto &error : item.second.parse_errors) {
+            fprintf(output, "\t");
+            error.print(output);
+        }
+
+        for (auto &error : item.second.type_errors) {
+            fprintf(output, "\t");
+            error.print(output);
+        }
+    }
+}

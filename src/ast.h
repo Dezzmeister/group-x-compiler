@@ -118,6 +118,8 @@ class ProgramSource : public ASTNode {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 

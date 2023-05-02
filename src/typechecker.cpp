@@ -52,6 +52,16 @@ static const Typename * unaliased(const Typename * typ, SymbolTable * symtable) 
     return typ;
 }
 
+static const Typename * base_type(const Typename * typ, SymbolTable * symtable) {
+    if (typ->get_kind() == MutTypename::kind) {
+        const MutTypename * t_mut = (MutTypename *) typ;
+
+        return unaliased(t_mut->name, symtable);
+    }
+
+    return typ;
+}
+
 bool ParensTypename::type_equals(const Typename * t, SymbolTable * symtable) const {
     const Typename * name_unalias = unaliased(name, symtable);
 
@@ -386,12 +396,15 @@ Typename * MathExpr::type_of(SymbolTable * symtable) const {
     const TypeIdent int_type(x::NULL_LOC, "int");
     const TypeIdent float_type(x::NULL_LOC, "float");
 
+    const Typename * lhs_base = base_type(lhs_type.get(), symtable);
+    const Typename * rhs_base = base_type(rhs_type.get(), symtable);
+
     // TODO: Use '==' overload here, these can only be simple TypeIdents
     // TODO: More sophisticated typechecking here when we add different sizes of ints and floats
-    const bool l_is_int = lhs_type->type_equals(&int_type, symtable);
-    const bool l_is_float = lhs_type->type_equals(&float_type, symtable);
-    const bool r_is_int = rhs_type->type_equals(&int_type, symtable);
-    const bool r_is_float = rhs_type->type_equals(&float_type, symtable);
+    const bool l_is_int = lhs_base->type_equals(&int_type, symtable);
+    const bool l_is_float = lhs_base->type_equals(&float_type, symtable);
+    const bool r_is_int = rhs_base->type_equals(&int_type, symtable);
+    const bool r_is_float = rhs_base->type_equals(&float_type, symtable);
 
     if (!(l_is_int || l_is_float)) {
         throw CompilerError(left->loc, "Expected int or float", Error);
@@ -421,11 +434,14 @@ Typename * BoolExpr::type_of(SymbolTable * symtable) const {
 
     const TypeIdent bool_type(x::NULL_LOC, "bool");
 
-    if (!lhs_type->type_equals(&bool_type, symtable)) {
+    const Typename * lhs_base = base_type(lhs_type.get(), symtable);
+    const Typename * rhs_base = base_type(rhs_type.get(), symtable);
+
+    if (!lhs_base->type_equals(&bool_type, symtable)) {
         throw CompilerError(left->loc, "Expected bool", Error);
     }
 
-    if (!rhs_type->type_equals(&bool_type, symtable)) {
+    if (!rhs_base->type_equals(&bool_type, symtable)) {
         throw CompilerError(right->loc, "Expected bool", Error);
     }
 
@@ -528,8 +544,11 @@ Typename * LogicalExpr::type_of(SymbolTable * symtable) const {
     TypeIdent int_type(x::NULL_LOC, "int");
     TypeIdent float_type(x::NULL_LOC, "float");
 
+    const Typename * lhs_base = base_type(lhs_type.get(), symtable);
+    const Typename * rhs_base = base_type(rhs_type.get(), symtable);
+
     if (op == std::string("==") || op == std::string("!=")) {
-        if (!lhs_type->type_equals(rhs_type.get(), symtable)) {
+        if (!lhs_base->type_equals(rhs_base, symtable)) {
             throw CompilerError(loc, "Both sides of equality comparison must have the same type", Error);
         }
 
@@ -537,13 +556,13 @@ Typename * LogicalExpr::type_of(SymbolTable * symtable) const {
     }
 
     if (op == std::string("in") || op == std::string("not in")) {
-        if (rhs_type->get_kind() != StaticArrayTypename::kind) {
+        if (rhs_base->get_kind() != StaticArrayTypename::kind) {
             throw CompilerError(right->loc, "'in' and 'not in' can only be used to check for presence in an array", Error);
         }
 
         std::unique_ptr<StaticArrayTypename> rhs_array((StaticArrayTypename *) rhs_type.release());
 
-        if (!lhs_type->type_equals(rhs_array->element_type, symtable)) {
+        if (!lhs_base->type_equals(rhs_array->element_type, symtable)) {
             throw CompilerError(left->loc, "Type mismatch: left hand side is not an element of right hand side", Error);
         }
 
@@ -553,8 +572,8 @@ Typename * LogicalExpr::type_of(SymbolTable * symtable) const {
     // Now the operation can only be one of the relational numeric operators, so the operands
     // must be numeric
 
-    const bool lhs_is_num = lhs_type->type_equals(&int_type, symtable) || lhs_type->type_equals(&float_type, symtable);
-    const bool rhs_is_num = rhs_type->type_equals(&int_type, symtable) || rhs_type->type_equals(&float_type, symtable);
+    const bool lhs_is_num = lhs_base->type_equals(&int_type, symtable) || lhs_base->type_equals(&float_type, symtable);
+    const bool rhs_is_num = rhs_base->type_equals(&int_type, symtable) || rhs_base->type_equals(&float_type, symtable);
 
     if (!lhs_is_num) {
         throw CompilerError(left->loc, "Left hand side must be numeric type", Error);
@@ -601,6 +620,24 @@ Typename * PreExpr::type_of(SymbolTable * symtable) const {
     }
 
     return new TypeIdent(x::NULL_LOC, "int");
+}
+
+void ProgramSource::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    for (auto &node : nodes) {
+        if (node->get_kind() == VarDecl::kind) {
+            const VarDecl * decl = (VarDecl *) node;
+
+            decl->typecheck(symtable, errors);
+        } else if (node->get_kind() == VarDeclInit::kind) {
+            const VarDeclInit * decl = (VarDeclInit *) node;
+
+            decl->typecheck(symtable, errors);
+        } else if (node->get_kind() == FuncDecl::kind) {
+            const FuncDecl * decl = (FuncDecl *) node;
+
+            decl->typecheck(symtable, errors);
+        }
+    }
 }
 
 void StatementList::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
@@ -657,7 +694,10 @@ void StructDecl::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
 void VarDeclInit::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
     std::unique_ptr<Typename> init_type(init->type_of(symtable));
 
-    if (!init_type->type_equals(decl->type_name, symtable)) {
+    const Typename * init_base = base_type(init_type.get(), symtable);
+    const Typename * decl_base = base_type(decl->type_name, symtable);
+
+    if (!init_base->type_equals(decl_base, symtable)) {
         throw CompilerError(loc, "Type mismatch: left hand side type must match right hand side type", Error);
     }
 }

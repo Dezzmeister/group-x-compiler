@@ -53,13 +53,16 @@ int main(int argc, char** argv) {
   }
 
   ParseResult result = (argc == options + 1) ? x::parse_file(argv[options]) : x::parse_stdin();
+  SymbolTable * symtable = result.parser_state->symtable;
+  ProgramSource * top = result.parser_state->top;
 
   if (result.error) {
     perror("Error: ");
     return 1;
   }
 
-  result.parser_state->top->print();
+  top->typecheck(symtable, result.parser_state->errors.sources[top]);
+  result.parser_state->errors.print(stderr);
 
   if (graph) {
     std::ofstream dotfile;
