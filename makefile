@@ -31,12 +31,12 @@ compiler_release: ${DEPS} main.cpp
 	${CC} ${RELEASE_FLAGS} $^ -o release_bin ${LD_FLAGS}
 
 test_debug: ${DEPS} ${TEST_DIR}/*.cpp
-	${CC} ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
+	${CC} -DDEBUG_TOKENS ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
 	./$@
 	rm -f $@
 
 test_release: ${DEPS} ${TEST_DIR}/*.cpp
-	${CC} ${RELEASE_FLAGS} $^ -o $@ ${LD_FLAGS}
+	${CC} -DDEBUG_TOKENS ${RELEASE_FLAGS} $^ -o $@ ${LD_FLAGS}
 	./$@
 	rm -f $@
 

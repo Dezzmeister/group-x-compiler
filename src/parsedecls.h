@@ -1,6 +1,9 @@
 #ifndef SRC_PARSEDECLS_H
 #define SRC_PARSEDECLS_H
 
+#include <map>
+#include <string>
+
 #include "ast.h"
 #include "errors.h"
 #include "symtable.h"
@@ -25,6 +28,8 @@ struct ParserState {
 
     // Name of current source
     std::string current_source;
+
+    std::map<int, Statement *> debug_stmts;
 
     ParserState(std::string current_source);
 

@@ -138,6 +138,14 @@ or          {return OR_KW;}
 \'\\r\'     {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), '\r'); return CHAR;}
 \'.\'       {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), yytext[1]); return CHAR;}
 
+@           {
+                #ifndef DEBUG_TOKENS
+                    ECHO;
+                #else
+                    return DEBUG_TOKEN;
+                #endif
+            }
+
 <<EOF>>     {return END;}
 
 %%

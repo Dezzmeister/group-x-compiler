@@ -249,7 +249,9 @@ bool MutTypename::can_cast_to(const Typename * t, SymbolTable * symtable) const 
         return false;
     }
 
-    return name->can_cast_to(t_unalias, symtable);
+    const MutTypename * t_mut = (MutTypename *) t_unalias;
+
+    return name->can_cast_to(t_mut->name, symtable);
 }
 
 bool TupleTypename::can_cast_to(const Typename * t, SymbolTable * symtable) const {

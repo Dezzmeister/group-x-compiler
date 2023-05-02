@@ -7,7 +7,8 @@ ParserState::ParserState(std::string current_source)
         symtable(x::default_symtable()),
         errors(ErrorReport()),
         current_errors(SourceErrors()),
-        current_source(current_source)
+        current_source(current_source),
+        debug_stmts(std::map<int, Statement *>())
 {}
 
 ParserState::~ParserState() {
