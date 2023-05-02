@@ -54,7 +54,7 @@ void * thread_main(void * thread_arg) {
     while (!arg->queue.empty()) {
         NamedTest test = arg->queue.front();
         arg->queue.pop();
-        printf("Running \"%s\"...\n", test.name);
+        printf("Running \"%s\"\n", test.name);
         fflush(stdout);
         int retval = test.func();
 

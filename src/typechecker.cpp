@@ -625,18 +625,22 @@ Typename * PreExpr::type_of(SymbolTable * symtable) const {
 
 void ProgramSource::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
     for (auto &node : nodes) {
-        if (node->get_kind() == VarDecl::kind) {
-            const VarDecl * decl = (VarDecl *) node;
+        try {
+            if (node->get_kind() == VarDecl::kind) {
+                const VarDecl * decl = (VarDecl *) node;
 
-            decl->typecheck(symtable, errors);
-        } else if (node->get_kind() == VarDeclInit::kind) {
-            const VarDeclInit * decl = (VarDeclInit *) node;
+                decl->typecheck(symtable, errors);
+            } else if (node->get_kind() == VarDeclInit::kind) {
+                const VarDeclInit * decl = (VarDeclInit *) node;
 
-            decl->typecheck(symtable, errors);
-        } else if (node->get_kind() == FuncDecl::kind) {
-            const FuncDecl * decl = (FuncDecl *) node;
+                decl->typecheck(symtable, errors);
+            } else if (node->get_kind() == FuncDecl::kind) {
+                const FuncDecl * decl = (FuncDecl *) node;
 
-            decl->typecheck(symtable, errors);
+                decl->typecheck(symtable, errors);
+            }
+        } catch (CompilerError error) {
+            errors.type_errors.push_back(error);
         }
     }
 }
@@ -753,6 +757,14 @@ void ForStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
 }
 
 void FuncDecl::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    for (auto &decl : params->params) {
+        try {
+            decl->typecheck(scope, errors);
+        } catch (CompilerError error) {
+            errors.type_errors.push_back(error);
+        }
+    }
+
     body->typecheck(scope, errors);
 }
 

@@ -33,6 +33,7 @@ struct SourceErrors {
     SourceErrors();
 
     bool has_errors() const;
+    int error_count() const;
 };
 
 typedef struct SourceErrors SourceErrors;

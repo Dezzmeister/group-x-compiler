@@ -340,4 +340,57 @@ void typechecker_tests() {
 
         return TEST_SUCCESS;
     };
+
+    xtest::tests["full typechecking (accepted)"] = []() {
+        const char * code = R"(
+            type I = int;
+
+            mut I[3] eyes = {1, 2, 3};
+            [int, I, float] tup1 = [1, 2, -3.0];
+
+            float func1(I[3] is) {
+                print(i_to_str(3));
+                return 4.321f;
+            };
+
+            int main() {
+                [I[3]] -> float func2 = func1;
+                func2(eyes);
+
+                float f2 = func2(eyes) + func1(eyes);
+
+                return 0;
+            };
+        )";
+
+        ParseResult result = x::parse_str(code);
+        SymbolTable * symtable = result.parser_state->symtable;
+        ProgramSource * top = result.parser_state->top;
+        ErrorReport &report = result.parser_state->errors;
+        SourceErrors &errors = report.sources[top];
+
+        top->typecheck(symtable, errors);
+
+        expect(!errors.has_errors());
+
+        return TEST_SUCCESS;
+    };
+
+    xtest::tests["full typechecking (rejected)"] = []() {
+        const char * code = R"(
+            (mut int)[3] eyes = {1, 2, 3};
+        )";
+
+        ParseResult result = x::parse_str(code);
+        SymbolTable * symtable = result.parser_state->symtable;
+        ProgramSource * top = result.parser_state->top;
+        ErrorReport &report = result.parser_state->errors;
+        SourceErrors &errors = report.sources[top];
+
+        top->typecheck(symtable, errors);
+
+        expect(errors.error_count() == 1);
+
+        return TEST_SUCCESS;
+    };
 }

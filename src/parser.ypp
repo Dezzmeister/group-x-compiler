@@ -82,7 +82,6 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 %right TYPE_ALIAS_KW STRUCT_KW RETURN_KW
 %precedence FUNC_PREC
 %nonassoc '(' ')'
-%nonassoc '[' ']'
 %right BOOL_AND BOOL_OR AND_KW OR_KW
 %nonassoc EQU NEQ
 %nonassoc GTR LES GEQ LEQ
@@ -93,6 +92,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 %nonassoc CAST_KW
 %right MUT
 %left '*'
+%nonassoc '[' ']'
 %right '&'
 %right IF_KW WHILE_KW FOR_KW
 %right ELSE_KW
@@ -274,10 +274,12 @@ pre_expr : INC expr {$$ = new PreExpr(Location(@1, @2), "++", $2);}
 
 function_call_expr : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @4), $1, $3);}
               | '(' expr ')' '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @6), new ParensExpr(Location(@1, @3), $2), $5);}
+              | DECLARED_VAR '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @4), $1, $3);}
               ;
 
 function_call_stmt : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCallStmt(Location(@1, @4), $1, $3);}
               | '(' expr ')' '(' args_list ')' {$$ = new FunctionCallStmt(Location(@1, @6), new ParensExpr(Location(@1, @3), $2), $5);}
+              | DECLARED_VAR '(' args_list ')' {$$ = new FunctionCallStmt(Location(@1, @4), $1, $3);}
               ;
 
 type_decl : type_alias {$$ = $1;}

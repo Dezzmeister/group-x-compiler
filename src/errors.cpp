@@ -18,6 +18,10 @@ bool SourceErrors::has_errors() const {
     return (parse_errors.size() > 0 || type_errors.size() > 0);
 }
 
+int SourceErrors::error_count() const {
+    return parse_errors.size() + type_errors.size();
+}
+
 ErrorReport::ErrorReport() : sources(std::map<ProgramSource *, SourceErrors>()) {}
 
 void ErrorReport::print(FILE * output) {
