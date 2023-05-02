@@ -602,3 +602,173 @@ Typename * PreExpr::type_of(SymbolTable * symtable) const {
 
     return new TypeIdent(x::NULL_LOC, "int");
 }
+
+void StatementList::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    for (auto &stmt : statements) {
+        try {
+            stmt->typecheck(symtable, errors);
+        } catch (CompilerError error) {
+            errors.type_errors.push_back(error);
+        }
+    }
+}
+
+void VarDecl::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    std::unique_ptr<Typename> expr_type(var_name->type_of(symtable));
+
+    if (!expr_type->type_equals(type_name, symtable)) {
+        throw CompilerError(loc, "Type mismatch: left hand side type must match right hand side type", Error);
+    }
+}
+
+void FunctionCallStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    std::unique_ptr<Typename> caller_type(func->type_of(symtable));
+
+    if (caller_type->get_kind() != FuncTypename::kind) {
+        throw CompilerError(func->loc, "Expression is not callable", Error);
+    }
+
+    const FuncTypename * caller_func = (FuncTypename *) caller_type.get();
+
+    if (args->exprs.size() != caller_func->params->types.size()) {
+        std::ostringstream stream;
+        stream << "Expected " << caller_func->params->types.size() << " args, got " << args->exprs.size();
+        throw CompilerError(args->loc, stream.str(), Error);
+    }
+
+    for (size_t i = 0; i < args->exprs.size(); i++) {
+        const std::unique_ptr<Typename> actual_type(args->exprs[i]->type_of(symtable));
+        const Typename * expected_type = caller_func->params->types[i];
+
+        if (!actual_type->type_equals(expected_type, symtable)) {
+            throw CompilerError(args->exprs[i]->loc, "Type mismatch", Error);
+        }
+    }
+}
+
+void TypeAlias::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+
+}
+
+void StructDecl::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+
+}
+
+void VarDeclInit::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    std::unique_ptr<Typename> init_type(init->type_of(symtable));
+
+    if (!init_type->type_equals(decl->type_name, symtable)) {
+        throw CompilerError(loc, "Type mismatch: left hand side type must match right hand side type", Error);
+    }
+}
+
+void IfStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    std::unique_ptr<Typename> cond_type(cond->type_of(symtable));
+
+    TypeIdent bool_type(x::NULL_LOC, "bool");
+
+    if (!cond_type->type_equals(&bool_type, symtable)) {
+        CompilerError err(cond->loc, "Condition type must be bool", Error);
+        errors.type_errors.push_back(err);
+    }
+
+    then->typecheck(scope, errors);
+}
+
+void IfElseStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    if_stmt->typecheck(scope, errors);
+    els->typecheck(scope, errors);
+}
+
+void WhileStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    std::unique_ptr<Typename> cond_type(cond->type_of(symtable));
+
+    TypeIdent bool_type(x::NULL_LOC, "bool");
+
+    if (!cond_type->type_equals(&bool_type, symtable)) {
+        CompilerError err(cond->loc, "Condition type must be bool", Error);
+        errors.type_errors.push_back(err);
+    }
+
+    body->typecheck(scope, errors);
+}
+
+void ForStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    init->typecheck(scope, errors);
+
+    std::unique_ptr<Typename> cond_type(condition->type_of(symtable));
+
+    TypeIdent bool_type(x::NULL_LOC, "bool");
+
+    if (!cond_type->type_equals(&bool_type, symtable)) {
+        CompilerError err(condition->loc, "Condition type must be bool", Error);
+        errors.type_errors.push_back(err);
+    }
+
+    update->typecheck(scope, errors);
+    body->typecheck(scope, errors);
+}
+
+void FuncDecl::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    body->typecheck(scope, errors);
+}
+
+void ReturnStatement::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    FuncDecl * enclosing_func = nullptr;
+    SymbolTable * table = symtable;
+
+    while (table != nullptr) {
+        if (table->node->get_kind() == FuncDecl::kind) {
+            enclosing_func = (FuncDecl *) table->node;
+            break;
+        }
+
+        table = table->enclosing;
+    }
+
+    if (enclosing_func == nullptr) {
+        CompilerError err(loc, "Return statement must be in function", Error);
+        errors.type_errors.push_back(err);
+
+        try {
+            std::unique_ptr<Typename> val_type(val->type_of(symtable));
+        } catch (CompilerError error) {
+            errors.type_errors.push_back(error);
+        }
+
+        return;
+    }
+
+    try {
+        std::unique_ptr<Typename> val_type(val->type_of(symtable));
+        const Typename * ret_type = enclosing_func->ret_type;
+
+        if (!val_type->type_equals(ret_type, symtable)) {
+            CompilerError err(val->loc, "Return type does not match expression type", Error);
+            errors.type_errors.push_back(err);
+        }
+    } catch (CompilerError error) {
+        errors.type_errors.push_back(error);
+    }
+}
+
+void Assignment::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    std::unique_ptr<Typename> lhs_type(lhs->type_of(symtable));
+    std::unique_ptr<Typename> rhs_type(rhs->type_of(symtable));
+
+    if (lhs_type->get_kind() != MutTypename::kind) {
+        throw CompilerError(lhs->loc, "Cannot assign to mutable", Error);
+    }
+
+    if (rhs_type->get_kind() == MutTypename::kind) {
+        if (!lhs_type->type_equals(rhs_type.get(), symtable)) {
+            throw CompilerError(loc, "Left hand side and right hand side types must match", Error);
+        }
+    } else {
+        const MutTypename * lhs_mut = (MutTypename *) lhs_type.get();
+
+        if (!lhs_mut->name->type_equals(rhs_type.get(), symtable)) {
+            throw CompilerError(loc, "Left hand side and right hand side types must match", Error);
+        }
+    }
+}

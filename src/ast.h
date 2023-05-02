@@ -167,6 +167,8 @@ class Statement : public ASTNode {
     public:
         virtual ~Statement() {}
 
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const = 0;
+
     protected:
         Statement(const Location loc) : ASTNode(loc) {}
 };
@@ -181,6 +183,8 @@ class StatementList : public ASTNode {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -523,6 +527,8 @@ class VarDecl : public Statement {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+        
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -588,6 +594,8 @@ class FunctionCallStmt : public Statement {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -714,6 +722,8 @@ class TypeAlias : public TypeDecl {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -759,6 +769,8 @@ class StructDecl : public TypeDecl {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
 
@@ -777,6 +789,8 @@ class VarDeclInit : public Statement {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -807,14 +821,16 @@ class IfStmt : public Statement {
     public:
         const Expr * cond;
         const StatementList * then;
-        const SymbolTable * scope;
+        SymbolTable * scope;
 
-        IfStmt(const Location loc, const Expr * cond, const StatementList * then, const SymbolTable * scope);
+        IfStmt(const Location loc, const Expr * cond, const StatementList * then, SymbolTable * scope);
 
         virtual ~IfStmt();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -826,14 +842,16 @@ class IfElseStmt : public Statement {
     public:
         const IfStmt * if_stmt;
         const StatementList * els;
-        const SymbolTable * scope;
+        SymbolTable * scope;
 
-        IfElseStmt(const Location loc, const IfStmt * if_stmt, const StatementList * els, const SymbolTable * scope);
+        IfElseStmt(const Location loc, const IfStmt * if_stmt, const StatementList * els, SymbolTable * scope);
 
         virtual ~IfElseStmt();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -845,14 +863,16 @@ class WhileStmt : public Statement {
     public:
         const Expr * cond;
         const StatementList * body;
-        const SymbolTable * scope;
+        SymbolTable * scope;
 
-        WhileStmt(const Location loc, const Expr * cond, const StatementList * body, const SymbolTable * scope);
+        WhileStmt(const Location loc, const Expr * cond, const StatementList * body, SymbolTable * scope);
 
         virtual ~WhileStmt();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -866,15 +886,17 @@ class ForStmt : public Statement {
         const Expr * condition;
         const Statement * update;
         const StatementList * body;
-        const SymbolTable * scope;
+        SymbolTable * scope;
 
         ForStmt(const Location loc, const Statement * init, const Expr * condition, const Statement * update,
-                const StatementList * body, const SymbolTable * scope);
+                const StatementList * body, SymbolTable * scope);
 
         virtual ~ForStmt();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -967,15 +989,17 @@ class FuncDecl : public ASTNode {
         const ParamsList * params;
         const Typename * ret_type;
         const StatementList * body;
-        const SymbolTable * scope;
+        SymbolTable * scope;
 
         FuncDecl(const Location loc, const Ident * name, const ParamsList * params,
-                 const Typename * ret_body, const StatementList * body, const SymbolTable * scope);
+                 const Typename * ret_body, const StatementList * body, SymbolTable * scope);
 
         virtual ~FuncDecl();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -993,6 +1017,8 @@ class ReturnStatement : public Statement {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -1012,6 +1038,8 @@ class Assignment : public Statement {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()

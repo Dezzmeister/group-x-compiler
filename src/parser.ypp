@@ -300,12 +300,14 @@ if_statement : IF_KW '(' expr ')' '{'
                 {x::create_scope(&state->symtable);} statement_list '}' %prec IF_KW {
                     SymbolTable * table = x::pop_scope(&state->symtable);
                     $$ = new IfStmt(Location(@1, @7), $3, $7, table);
+                    table->set_node($$);
                 }
              ;
 
 if_else_statement : if_statement ELSE_KW '{' {x::create_scope(&state->symtable);} statement_list '}' {
                         SymbolTable * table = x::pop_scope(&state->symtable);
                         $$ = new IfElseStmt(Location(@1, @5), $1, $5, table);
+                        table->set_node($$);
                     }
                   ;
 
@@ -313,12 +315,14 @@ while_statement : WHILE_KW '(' expr ')' '{'
                     {x::create_scope(&state->symtable);} statement_list '}' %prec WHILE_KW {
                         SymbolTable * table = x::pop_scope(&state->symtable);
                         $$ = new WhileStmt(Location(@1, @7), $3, $7, table);
+                        table->set_node($$);
                     }
                 ;
 
 for_statement : FOR_KW '(' statement ';' {x::create_scope(&state->symtable);} expr ';' statement ')' '{' statement_list '}' {
                     SymbolTable * table = x::pop_scope(&state->symtable);
                     $$ = new ForStmt(Location(@1, @11), $3, $6, $8, $11, table);
+                    table->set_node($$);
                 }
               ;
 
@@ -347,6 +351,7 @@ struct_type_name : '{' {
                     } var_decl_list '}' {
                         SymbolTable * table = x::pop_scope(&state->symtable);
                         $$ = new StructTypename(Location(@1, @3), $3, table);
+                        table->set_node($$);
                     }
                 ;
 
@@ -375,6 +380,7 @@ func_decl : type_name IDENT '(' params_list ')' '{' {
             } statement_list '}' {
                 SymbolTable * table = x::pop_scope(&state->symtable);
                 $$ = new FuncDecl(Location(@1, @8), $2, $4, $1, $8, table);
+                table->set_node($$);
                 Symbol * sym = state->symtable->get($2->id);
                 sym->decl = (Decl) { .func=$$ };
             }

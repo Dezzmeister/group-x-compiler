@@ -8,6 +8,7 @@
 
 enum SymbolKind { Var, Type, Func };
 
+class ASTNode;
 class VarDecl;
 class FuncDecl;
 class TypeDecl;
@@ -32,10 +33,12 @@ class SymbolTable {
     public:
         std::unordered_map<std::string, Symbol *> table;
         SymbolTable * enclosing;
+        // AST node that has this scope. The symbol table does not own this node
+        ASTNode * node;
 
         // SymbolTable does not take ownership of `enclosing` and enclosing table
         // should not be destroyed when this table is destroyed
-        SymbolTable(SymbolTable * enclosing) : enclosing(enclosing) {}
+        SymbolTable(SymbolTable * enclosing) : enclosing(enclosing), node(nullptr) {}
 
         ~SymbolTable() {
             for (std::pair<const std::string, Symbol *> &item : table) {
@@ -61,6 +64,10 @@ class SymbolTable {
             }
 
             return nullptr;
+        }
+
+        void set_node(ASTNode * node) {
+            this->node = node;
         }
 };
 

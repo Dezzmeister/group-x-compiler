@@ -975,7 +975,7 @@ bool ArrayLiteral::operator==(const ASTNode &node) const {
     return (*items == *(n.items));
 }
 
-IfStmt::IfStmt(const Location loc, const Expr * cond, const StatementList * then, const SymbolTable * scope)
+IfStmt::IfStmt(const Location loc, const Expr * cond, const StatementList * then, SymbolTable * scope)
     : Statement(loc), cond(cond), then(then), scope(scope) {}
 
 IfStmt::~IfStmt() {
@@ -1006,7 +1006,7 @@ bool IfStmt::operator==(const ASTNode &node) const {
     return (*cond == *(n.cond) && *then == *(n.then));
 }
 
-IfElseStmt::IfElseStmt(const Location loc, const IfStmt * if_stmt, const StatementList * els, const SymbolTable * scope)
+IfElseStmt::IfElseStmt(const Location loc, const IfStmt * if_stmt, const StatementList * els, SymbolTable * scope)
     : Statement(loc), if_stmt(if_stmt), els(els), scope(scope) {}
 
 IfElseStmt::~IfElseStmt() {
@@ -1036,7 +1036,7 @@ bool IfElseStmt::operator==(const ASTNode &node) const {
     return (*if_stmt == *(n.if_stmt) && *els == *(n.els));
 }
 
-WhileStmt::WhileStmt(const Location loc, const Expr * cond, const StatementList * body, const SymbolTable * scope)
+WhileStmt::WhileStmt(const Location loc, const Expr * cond, const StatementList * body, SymbolTable * scope)
     : Statement(loc), cond(cond), body(body), scope(scope) {}
 
 WhileStmt::~WhileStmt() {
@@ -1068,7 +1068,7 @@ bool WhileStmt::operator==(const ASTNode &node) const {
 }
 
 ForStmt::ForStmt(const Location loc, const Statement * init, const Expr * cond,
-                 const Statement * update, const StatementList * body, const SymbolTable * scope)
+                 const Statement * update, const StatementList * body, SymbolTable * scope)
     : Statement(loc), init(init), condition(cond), update(update), body(body), scope(scope) {}
 
 ForStmt::~ForStmt() {
@@ -1317,7 +1317,7 @@ bool ParamsList::operator==(const ASTNode &node) const {
 }
 
 FuncDecl::FuncDecl(const Location loc, const Ident * name, const ParamsList * params,
-                   const Typename * ret_type, const StatementList * body, const SymbolTable * scope)
+                   const Typename * ret_type, const StatementList * body, SymbolTable * scope)
     : ASTNode(loc), name(name), params(params), ret_type(ret_type), body(body), scope(scope) {}
 
 FuncDecl::~FuncDecl() {
