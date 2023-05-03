@@ -25,7 +25,8 @@ class Symbol {
         char * name;
         Decl decl;
         Symbol * next;
-        Symbol(SymbolKind kind, Decl decl) : kind(kind), decl(decl) {}
+        bool initialized;
+        Symbol(SymbolKind kind, Decl decl) : kind(kind), decl(decl), initialized(false) {}
 
         Symbol * clone() const;
 
@@ -79,6 +80,8 @@ class SymbolTable {
 };
 
 namespace x {
+    const char * const symbol_kind_names[] = {"Var", "Type", "Func"};
+
     // Creates a new scope and returns the corresponding symtable
     void create_scope(SymbolTable ** table);
 

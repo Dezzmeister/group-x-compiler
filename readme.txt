@@ -43,16 +43,27 @@ This tells Vim to use yacc syntax highlighting for .ypp files.
 
 ==================================== TODOs ====================================
 
-1. We are still finishing the parser. We still need include/imports, boolean
-    expressions, and better error messages. We should also fix up the grammar so that 
-    it resembles our LRM more closely.
+1. We are missing a few AST nodes and corresponding grammar rules:
+    - struct member dereference expr (strukt.member)
+    - array index expr (arr[4])
+    - dynamic array typename (ints, float*s)
+    - void return statement (return;)
+    - import statements and export decls
+    - lambda functions?
+    - ternary expr has AST class but no production
 
-2. We may need a way to parse command line args and options. unistd.h has some 
-    utils for this but the C++ standard library might have better ones. We should
-    have a command line argument to specify an optional AST graph for now and binary
-    output later.
+2. We need better errors in the parser. There is a "SourceErrors" object that
+    gets passed to the parser, and it has vecs for type errors and parse errors.
+    The typechecker fills the type errors vec as it goes through the program,
+    but the parser quits and kills the entire program when it encounters an error.
+    Ideally the parser would put errors in the parse errors vec, but if that's too
+    much then the parser should just reject the input. If it quits the whole program,
+    then 1 parse error in a test will cause the entire test runner to exit, and this
+    isn't good.
 
-3. Typechecker - I will start work on this when the parser is mostly done
+3. Locations are janky - I enabled Bison locations for better error reporting,
+    and they work most of the time, but sometimes the line number is a 1 or more
+    lines off in the reported error
 
 4. Three address code
 

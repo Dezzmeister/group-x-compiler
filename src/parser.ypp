@@ -286,7 +286,11 @@ type_decl : type_alias {$$ = $1;}
           | struct_decl {$$ = $1;}
           ;
 
-var_decl_init : var_decl '=' expr {$$ = new VarDeclInit(Location(@1, @3), $1, $3);}
+var_decl_init : var_decl '=' expr {
+                    $$ = new VarDeclInit(Location(@1, @3), $1, $3);
+                    Symbol * sym = state->symtable->get($1->var_name->id);
+                    sym->initialized = true;
+                }
               ;
 
 array_literal : '{' expr_list '}' {$$ = new ArrayLiteral(Location(@1, @3), $2);}
@@ -328,7 +332,14 @@ for_statement : FOR_KW '(' statement ';' {x::create_scope(&state->symtable);} ex
                 }
               ;
 
-assignment : expr '=' expr {$$ = new Assignment(Location(@1, @3), $1, $3);}
+assignment : expr '=' expr {
+                $$ = new Assignment(Location(@1, @3), $1, $3);
+                if ($1->get_kind() == Ident::kind) {
+                    const Ident * var = (Ident *) $1;
+                    Symbol * sym = state->symtable->get(var->id);
+                    sym->initialized = true;
+                }
+            }
            ;
 
 var_decl_list : var_decl ';' {$$ = new VarDeclList(Location(@1, @2), {$1});}
@@ -379,11 +390,37 @@ func_decl : type_name IDENT '(' {
                 state->symtable->put($2->id, new Symbol(Func, { .func=nullptr }));
                 x::create_scope(&state->symtable);
             } params_list ')' '{' {
+                for (auto &param : $5->params) {
+                    Symbol * sym = state->symtable->get(param->var_name->id);
+                    sym->initialized = true;
+                }
             } statement_list '}' {
                 SymbolTable * table = x::pop_scope(&state->symtable);
                 $$ = new FuncDecl(Location(@1, @8), $2, $5, $1, $9, table);
                 table->set_node($$);
                 Symbol * sym = state->symtable->get($2->id);
+                sym->decl = (Decl) { .func=$$ };
+            }
+          | type_name DECLARED_VAR '(' {
+                Symbol * sym = state->symtable->get($2->id);
+                if (sym->initialized) {
+                    // TODO: Don't just exit here, create a parse error and keep parsing
+                    exit(-1);
+                }
+
+                x::create_scope(&state->symtable);
+            } params_list ')' '{' {
+                for (auto &param : $5->params) {
+                    Symbol * sym = state->symtable->get(param->var_name->id);
+                    sym->initialized = true;
+                }
+            } statement_list '}' {
+                SymbolTable * table = x::pop_scope(&state->symtable);
+                $$ = new FuncDecl(Location(@1, @8), $2, $5, $1, $9, table);
+                table->set_node($$);
+                Symbol * sym = state->symtable->get($2->id);
+                sym->initialized = true;
+                sym->kind = Func;
                 sym->decl = (Decl) { .func=$$ };
             }
           ;

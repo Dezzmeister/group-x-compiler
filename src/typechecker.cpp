@@ -766,6 +766,16 @@ void FuncDecl::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
     }
 
     body->typecheck(scope, errors);
+
+    TypeIdent void_type(x::NULL_LOC, "void");
+
+    const size_t num_stmts = body->statements.size();
+    const bool ends_with_ret = num_stmts > 0 && body->statements[num_stmts - 1]->get_kind() == ReturnStatement::kind;
+
+    if (!ret_type->type_equals(&void_type, symtable) && !ends_with_ret) {
+        CompilerError error(x::NULL_LOC, "Missing return statement at end of non-void function", Error);
+        errors.type_errors.push_back(error);
+    }
 }
 
 void ReturnStatement::typecheck(SymbolTable * symtable, SourceErrors &errors) const {

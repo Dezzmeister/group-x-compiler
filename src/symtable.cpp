@@ -21,7 +21,7 @@ SymbolTable * SymbolTable::clone() const {
 
 void SymbolTable::print() {
     for (auto &item : table) {
-        printf("[%s -> %d]\n", item.first.c_str(), item.second->kind);
+        printf("[%s -> %s]\n", item.first.c_str(), x::symbol_kind_names[item.second->kind]);
     }
 }
 

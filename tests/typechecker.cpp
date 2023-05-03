@@ -379,6 +379,10 @@ void typechecker_tests() {
     xtest::tests["full typechecking (rejected)"] = []() {
         const char * code = R"(
             (mut int)[3] eyes = {1, 2, 3};
+
+            int does_not_return() {
+                int x = 1;
+            };
         )";
 
         ParseResult result = x::parse_str(code);
@@ -389,7 +393,40 @@ void typechecker_tests() {
 
         top->typecheck(symtable, errors);
 
-        expect(errors.error_count() == 1);
+        expect(errors.error_count() == 2);
+
+        return TEST_SUCCESS;
+    };
+
+    xtest::tests["forward declarations"] = []() {
+        const char * code = R"(
+            // A forward declaration is done by declaring the function as a variable
+            // with a function type
+            [int, [int, int]] -> float func1;
+
+            int main() {
+                func1(1, [2, 3]);
+
+                return 0;
+            };
+
+            // When the function is redeclared as a function, the parser will modify
+            // its symbol accordingly. This is the only allowed case in which a symbol
+            // can be declared twice
+            float func1(int a, [int, int] t) {
+                return 1.0;
+            };
+        )";
+
+        ParseResult result = x::parse_str(code);
+        SymbolTable * symtable = result.parser_state->symtable;
+        ProgramSource * top = result.parser_state->top;
+        ErrorReport &report = result.parser_state->errors;
+        SourceErrors &errors = report.sources[top];
+
+        top->typecheck(symtable, errors);
+
+        expect(!errors.has_errors());
 
         return TEST_SUCCESS;
     };
