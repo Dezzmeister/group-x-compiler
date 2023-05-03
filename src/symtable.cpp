@@ -8,6 +8,21 @@ Symbol * Symbol::clone() const {
     return out;
 }
 
+ASTNode * Symbol::decl_upcast() {
+    switch (kind) {
+        case Var:
+            return (ASTNode *) decl.var;
+
+        case Type:
+            return (ASTNode *) decl.typ;
+
+        case Func:
+            return (ASTNode *) decl.func;
+    }
+
+    __builtin_unreachable();
+}
+
 SymbolTable * SymbolTable::clone() const {
     SymbolTable * out = new SymbolTable(enclosing == nullptr ? nullptr : enclosing->clone());
     out->node = node;

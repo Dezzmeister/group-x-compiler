@@ -653,6 +653,15 @@ void StatementList::typecheck(SymbolTable * symtable, SourceErrors &errors) cons
             errors.type_errors.push_back(error);
         }
     }
+
+    for (auto &item : symtable->table) {
+        Symbol * sym = item.second;
+
+        if (!sym->initialized) {
+            CompilerError error(sym->decl_upcast()->loc, "Symbol declared but never initialized", Warn);
+            errors.type_errors.push_back(error);
+        }
+    }
 }
 
 void VarDecl::typecheck(SymbolTable * symtable, SourceErrors &errors) const {

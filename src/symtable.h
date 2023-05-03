@@ -15,8 +15,8 @@ class TypeDecl;
 
 typedef union {
     VarDecl * var;
-    FuncDecl * func;
     TypeDecl * typ;
+    FuncDecl * func;
 } Decl;
 
 class Symbol {
@@ -29,6 +29,8 @@ class Symbol {
         Symbol(SymbolKind kind, Decl decl) : kind(kind), decl(decl), initialized(false) {}
 
         Symbol * clone() const;
+
+        ASTNode * decl_upcast();
 
         ~Symbol() {}
 };
