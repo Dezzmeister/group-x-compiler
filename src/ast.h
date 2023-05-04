@@ -1039,11 +1039,10 @@ class ReturnStatement : public Statement {
 class Assignment : public Statement {
     public:
         // TODO (maybe): Distinguish between lvalue and rvalue at parser level?
-        // CallingExpr is almost an lvalue but not quite
-        const CallingExpr * lhs;
+        const Expr * lhs;
         const Expr * rhs;
 
-        Assignment(const Location loc, const CallingExpr * lhs, const Expr * rhs);
+        Assignment(const Location loc, const Expr * lhs, const Expr * rhs);
 
         virtual ~Assignment();
 

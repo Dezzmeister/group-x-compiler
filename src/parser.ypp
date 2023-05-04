@@ -360,6 +360,14 @@ assignment : calling_expr '=' expr {
                     sym->initialized = true;
                 }
             }
+           | deref_expr '=' expr {
+                $$ = new Assignment(Location(@1, @3), $1, $3);
+                if ($1->get_kind() == Ident::kind) {
+                    const Ident * var = (Ident *) $1;
+                    Symbol * sym = state->symtable->get(var->id);
+                    sym->initialized = true;
+                }
+            }
            ;
 
 var_decl_list : var_decl ';' {$$ = new VarDeclList(Location(@1, @2), {$1});}
