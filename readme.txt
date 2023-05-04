@@ -45,7 +45,6 @@ This tells Vim to use yacc syntax highlighting for .ypp files.
 
 1. We are missing a few AST nodes and corresponding grammar rules:
     - dynamic array typename (ints, float*s)
-    - void return statement (return;)
     - import statements and export decls
     - lambda functions?
     - ternary expr has AST class but no production
