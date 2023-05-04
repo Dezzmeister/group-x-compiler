@@ -64,6 +64,9 @@ const int MemberInitializer::kind = x::next_kind("member_initializer");
 const int InitializerList::kind = x::next_kind("initializer_list");
 const int StructLiteral::kind = x::next_kind("struct_literal");
 const int ArrayIndexExpr::kind = x::next_kind("array_index_expr");
+const int VoidReturnStmt::kind = x::next_kind("void_return_stmt");
+const int ContinueStmt::kind = x::next_kind("continue_stmt");
+const int BreakStmt::kind = x::next_kind("break_stmt");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -1673,4 +1676,46 @@ bool ArrayIndexExpr::operator==(const ASTNode &node) const {
     const ArrayIndexExpr &n = (ArrayIndexExpr &) node;
 
     return (*arr == *(n.arr) && *index == *(n.index));
+}
+
+VoidReturnStmt::VoidReturnStmt(const Location loc) : Statement(loc) {}
+
+void VoidReturnStmt::print() const {
+    printf("return");
+}
+
+std::vector<ASTNode *> VoidReturnStmt::children() {
+    return {};
+}
+
+bool VoidReturnStmt::operator==(const ASTNode &node) const {
+    return (node.get_kind() == VoidReturnStmt::kind);
+}
+
+ContinueStmt::ContinueStmt(const Location loc) : Statement(loc) {}
+
+void ContinueStmt::print() const {
+    printf("continue");
+}
+
+std::vector<ASTNode *> ContinueStmt::children() {
+    return {};
+}
+
+bool ContinueStmt::operator==(const ASTNode &node) const {
+    return (node.get_kind() == ContinueStmt::kind);
+}
+
+BreakStmt::BreakStmt(const Location loc) : Statement(loc) {}
+
+void BreakStmt::print() const {
+    printf("break");
+}
+
+std::vector<ASTNode *> BreakStmt::children() {
+    return {};
+}
+
+bool BreakStmt::operator==(const ASTNode &node) const {
+    return (node.get_kind() == BreakStmt::kind);
 }

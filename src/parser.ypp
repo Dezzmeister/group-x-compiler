@@ -83,6 +83,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 
 %token END
 %token FUNC_TYPE_OP
+%token CONTINUE_KW BREAK_KW
 
 %right '='
 %right TYPE_ALIAS_KW STRUCT_KW RETURN_KW
@@ -195,6 +196,9 @@ statement : type_decl {$$ = $1;}
           | while_statement {$$ = $1;}
           | for_statement {$$ = $1;}
           | assignment {$$ = $1;}
+          | RETURN_KW {$$ = new VoidReturnStmt(Location(@1, @1));}
+          | CONTINUE_KW {$$ = new ContinueStmt(Location(@1, @1));}
+          | BREAK_KW {$$ = new BreakStmt(Location(@1, @1));}
           ;
 
 statement_list : statement ';' {$$ = new StatementList(Location(@1, @2), {$1});}
@@ -447,6 +451,7 @@ func_decl : type_name IDENT '(' {
                 table->set_node($$);
                 Symbol * sym = state->symtable->get($2->id);
                 sym->decl = (Decl) { .func=$$ };
+                sym->initialized = true;
             }
           | type_name DECLARED_VAR '(' {
                 Symbol * sym = state->symtable->get($2->id);

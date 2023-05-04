@@ -1212,4 +1212,49 @@ class ArrayIndexExpr : public CallingExpr {
         KIND_CLASS()
 };
 
+class VoidReturnStmt : public Statement {
+    public:
+        VoidReturnStmt(const Location loc);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class ContinueStmt : public Statement {
+    public:
+        ContinueStmt(const Location loc);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class BreakStmt : public Statement {
+    public:
+        BreakStmt(const Location loc);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
 #endif

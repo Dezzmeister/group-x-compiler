@@ -64,6 +64,8 @@ type        {return TYPE_ALIAS_KW;}
 struct      {return STRUCT_KW;}
 as          {return CAST_KW;}
 return      {return RETURN_KW;}
+continue    {return CONTINUE_KW;}
+break       {return BREAK_KW;}
 if          {return IF_KW;}
 else        {return ELSE_KW;}
 while       {return WHILE_KW;}

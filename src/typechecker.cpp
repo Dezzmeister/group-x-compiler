@@ -884,6 +884,12 @@ void ReturnStatement::typecheck(SymbolTable * symtable, SourceErrors &errors) co
     SymbolTable * table = symtable;
 
     while (table != nullptr) {
+        if (table->node == nullptr) {
+            CompilerError err(loc, "Return statement must be in function", Error);
+            errors.type_errors.push_back(err);
+            return;
+        }
+
         if (table->node->get_kind() == FuncDecl::kind) {
             enclosing_func = (FuncDecl *) table->node;
             break;
@@ -937,4 +943,83 @@ void Assignment::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
             throw CompilerError(loc, "Left hand side and right hand side types must match", Error);
         }
     }
+}
+
+void VoidReturnStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    FuncDecl * enclosing_func = nullptr;
+    SymbolTable * table = symtable;
+
+    while (table != nullptr) {
+        if (table->node == nullptr) {
+            CompilerError err(loc, "Return statement must be in function", Error);
+            errors.type_errors.push_back(err);
+            return;
+        }
+
+        if (table->node->get_kind() == FuncDecl::kind) {
+            enclosing_func = (FuncDecl *) table->node;
+            break;
+        }
+
+        table = table->enclosing;
+    }
+
+    if (enclosing_func == nullptr) {
+        CompilerError err(loc, "Return statement must be in function", Error);
+        errors.type_errors.push_back(err);
+        return;
+    }
+
+    TypeIdent void_type(x::NULL_LOC, "void");
+
+    if (!enclosing_func->ret_type->type_equals(&void_type, symtable)) {
+        CompilerError err(loc, "Cannot return void from non-void function", Error);
+        errors.type_errors.push_back(err);
+    }
+}
+
+void ContinueStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    SymbolTable * table = symtable;
+
+    while (table != nullptr) {
+        if (table->node == nullptr) {
+            CompilerError error(loc, "Continue statement must occur inside loop", Error);
+            errors.type_errors.push_back(error);
+            return;
+        }
+
+        if (table->node->get_kind() == ForStmt::kind) {
+            return;
+        } else if (table->node->get_kind() == WhileStmt::kind) {
+            return;
+        }
+
+        table = table->enclosing;
+    }
+
+    CompilerError error(loc, "Continue statement must occur inside loop", Error);
+    errors.type_errors.push_back(error);
+}
+
+void BreakStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    SymbolTable * table = symtable;
+
+    while (table != nullptr) {
+        if (table->node == nullptr) {
+            CompilerError error(loc, "Break statement must occur inside loop", Error);
+            errors.type_errors.push_back(error);
+            return;
+        }
+
+        if (table->node->get_kind() == ForStmt::kind) {
+            return;
+        } else if (table->node->get_kind() == WhileStmt::kind) {
+            return;
+        }
+
+        table = table->enclosing;
+    }
+
+    CompilerError error(loc, "Break statement must occur inside loop", Error);
+    errors.type_errors.push_back(error);
 }
