@@ -157,6 +157,12 @@ class ExprList : public ASTNode {
         KIND_CLASS()
 };
 
+/**
+ * This name is a little misleading because a "CallingExpr" is any expr that can
+ * potentially be called or dereferenced. Semantically it's closest to an lvalue,
+ * but it's not because a ParensExpr is a CallingExpr: a ParensExpr can be soemthing
+ * like '(3 + 4)' which is not an lvalue.
+ */
 class CallingExpr : public Expr {
     public:
         virtual ~CallingExpr() {}
@@ -1033,10 +1039,11 @@ class ReturnStatement : public Statement {
 class Assignment : public Statement {
     public:
         // TODO (maybe): Distinguish between lvalue and rvalue at parser level?
-        const Expr * lhs;
+        // CallingExpr is almost an lvalue but not quite
+        const CallingExpr * lhs;
         const Expr * rhs;
 
-        Assignment(const Location loc, const Expr * lhs, const Expr * rhs);
+        Assignment(const Location loc, const CallingExpr * lhs, const Expr * rhs);
 
         virtual ~Assignment();
 

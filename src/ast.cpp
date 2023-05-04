@@ -1415,7 +1415,7 @@ bool ReturnStatement::operator==(const ASTNode &node) const {
     return (*val == *(n.val));
 }
 
-Assignment::Assignment(const Location loc, const Expr * lhs, const Expr * rhs) :
+Assignment::Assignment(const Location loc, const CallingExpr * lhs, const Expr * rhs) :
     Statement(loc), lhs(lhs), rhs(rhs) {}
 
 Assignment::~Assignment() {
