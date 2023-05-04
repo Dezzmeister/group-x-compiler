@@ -59,6 +59,7 @@ const int Assignment::kind = x::next_kind("assignment");
 const int BangExpr::kind = x::next_kind("bang_expr");
 const int NotExpr::kind = x::next_kind("not_expr");
 const int PreExpr::kind = x::next_kind("pre_expr");
+// const int StructDeref::kind = x::next_kind("struct_deref");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -1215,7 +1216,7 @@ bool LogicalExpr::operator==(const ASTNode &node) const {
 }
 
 FunctionCallExpr::FunctionCallExpr(const Location loc, const CallingExpr * func, const ExprList * args)
-    : Expr(loc), func(func), args(args) {}
+    : CallingExpr(loc), func(func), args(args) {}
 
 FunctionCallExpr::~FunctionCallExpr() {
     delete func;
@@ -1318,7 +1319,7 @@ bool ParamsList::operator==(const ASTNode &node) const {
 
 FuncDecl::FuncDecl(const Location loc, const Ident * name, const ParamsList * params,
                    const Typename * ret_type, const StatementList * body, SymbolTable * scope)
-    : ASTNode(loc), name(name), params(params), ret_type(ret_type), body(body), scope(scope) {}
+    : ASTNode(loc), name(name), params(params), ret_type(ret_type), body(body), scope(scope), forward_decl(nullptr) {}
 
 FuncDecl::~FuncDecl() {
     delete name;

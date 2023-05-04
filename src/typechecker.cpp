@@ -587,6 +587,16 @@ Typename * LogicalExpr::type_of(SymbolTable * symtable) const {
     return new TypeIdent(x::NULL_LOC, "bool");
 }
 
+Typename * FuncDecl::type_of(SymbolTable * symtable) const {
+    std::vector<Typename *> param_types = {};
+
+    for (size_t i = 0; i < params->params.size(); i++) {
+        param_types.push_back(params->params[i]->type_name->clone());
+    }
+
+    return new FuncTypename(x::NULL_LOC, new TypenameList(x::NULL_LOC, param_types), ret_type->clone());
+}
+
 Typename * BangExpr::type_of(SymbolTable * symtable) const {
     std::unique_ptr<Typename> expr_type(expr->type_of(symtable));
 
@@ -775,6 +785,15 @@ void FuncDecl::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
     }
 
     body->typecheck(scope, errors);
+
+    if (forward_decl != nullptr) {
+        std::unique_ptr<Typename> func_type(this->type_of(symtable));
+
+        if (!func_type->type_equals(forward_decl->type_name, symtable)) {
+            CompilerError error(x::NULL_LOC, "Forward declaration type does not match function type", Error);
+            errors.type_errors.push_back(error);
+        }
+    }
 
     TypeIdent void_type(x::NULL_LOC, "void");
 

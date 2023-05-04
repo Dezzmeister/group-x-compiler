@@ -5,6 +5,8 @@ type X = [int, int] -> float;
 // Tuple type with square brackets for the same reason
 type Tuple1 = [int, float, X];
 
+[int] -> void int_eater;
+
 int bruh = 15;
 
 struct CoolStruct {
@@ -18,7 +20,7 @@ struct CoolStruct {
     struct {
         int u;
         int v;
-        [int, int] -> void int_eater;
+        [int, int] -> void int_eater_2;
         struct {
             float z;
         } strukt2;
@@ -45,7 +47,9 @@ int cool_func_1(int a, int b) {
 
     if (true) {
         int z = fac(10);
-    }; // TODO: Remove trailing comma from grammar for if/while/for/etc.
+    }; // TODO: Remove trailing semicolon from grammar for if/while/for/etc.
+
+    int_eater(4);
 
     for (mut int i = 0; i <= 100; i = i + 1) {
         print(i_to_str(i));
@@ -61,4 +65,8 @@ int cool_func_1(int a, int b) {
     bool b7 = !!!true;
 
     return epic_ptr as int;
+};
+
+void int_eater(int x) {
+    print(i_to_str(x));
 };

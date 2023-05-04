@@ -379,9 +379,14 @@ void typechecker_tests() {
     xtest::tests["full typechecking (rejected)"] = []() {
         const char * code = R"(
             (mut int)[3] eyes = {1, 2, 3};
+            [int] -> int bad_func;
 
             int does_not_return() {
                 int x = 1;
+            };
+
+            void bad_func(int x) {
+                int y = x + 1;
             };
         )";
 
@@ -393,7 +398,7 @@ void typechecker_tests() {
 
         top->typecheck(symtable, errors);
 
-        expect(errors.error_count() == 2);
+        expect(errors.error_count() == 3);
 
         return TEST_SUCCESS;
     };

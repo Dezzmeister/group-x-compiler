@@ -561,8 +561,7 @@ class ParamsList : public ASTNode {
         KIND_CLASS()
 };
 
-// TODO: Inherit from CallingExpr instead
-class FunctionCallExpr : public Expr {
+class FunctionCallExpr : public CallingExpr {
     public:
         const CallingExpr * func;
         const ExprList * args;
@@ -992,6 +991,7 @@ class FuncDecl : public ASTNode {
         const Typename * ret_type;
         const StatementList * body;
         SymbolTable * scope;
+        VarDecl * forward_decl;
 
         FuncDecl(const Location loc, const Ident * name, const ParamsList * params,
                  const Typename * ret_body, const StatementList * body, SymbolTable * scope);
@@ -1002,6 +1002,8 @@ class FuncDecl : public ASTNode {
         virtual std::vector<ASTNode *> children();
 
         void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()

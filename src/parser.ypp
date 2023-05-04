@@ -73,6 +73,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
     TypeIdent * type_ident;
     Assignment * assignment;
     PreExpr * pre_expr;
+    CallingExpr * calling_expr;
 }
 
 %token END
@@ -152,6 +153,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 %type <for_statement> for_statement
 %type <assignment> assignment
 %type <pre_expr> pre_expr
+%type <calling_expr> calling_expr
 
 %%
 
@@ -204,7 +206,7 @@ statement_list : statement ';' {$$ = new StatementList(Location(@1, @2), {$1});}
                }
                ;
 
-expr : '(' expr ')' {$$ = new ParensExpr(Location(@1, @3), $2);}
+expr : calling_expr {$$ = $1;}
      | math_expr {$$ = $1;}
      | bool_expr {$$ = $1;}
      | logical_expr {$$ = $1;}
@@ -213,7 +215,6 @@ expr : '(' expr ')' {$$ = new ParensExpr(Location(@1, @3), $2);}
      | cast_expr {$$ = $1;}
      | tuple_expr {$$ = $1;}
      | array_literal {$$ = $1;}
-     | function_call_expr %prec CALL_PREC {$$ = (Expr *) $1;}
      | '!' expr {$$ = new BangExpr(Location(@1, @2), $2);}
      | NOT_KW expr {$$ = new NotExpr(Location(@1, @2), $2);}
      | pre_expr {$$ = $1;}
@@ -221,9 +222,14 @@ expr : '(' expr ')' {$$ = new ParensExpr(Location(@1, @3), $2);}
      | BOOL {$$ = $1;}
      | CHAR {$$ = $1;}
      | num {$$ = $1;}
-     | DECLARED_VAR {$$ = $1;}
-     | DECLARED_FUNC {$$ = $1;}
      ;
+
+calling_expr : '(' expr ')' {$$ = new ParensExpr(Location(@1, @3), $2);}
+             | DECLARED_VAR {$$ = $1;}
+             | DECLARED_FUNC {$$ = $1;}
+             | function_call_expr %prec CALL_PREC {$$ = $1;}
+             ;
+
 
 expr_list : expr {$$ = new ExprList(Location(@1, @1), {$1});}
           | expr_list ',' expr {
@@ -272,14 +278,10 @@ pre_expr : INC expr {$$ = new PreExpr(Location(@1, @2), "++", $2);}
          | DEC expr {$$ = new PreExpr(Location(@1, @2), "--", $2);}
          ;
 
-function_call_expr : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @4), $1, $3);}
-              | '(' expr ')' '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @6), new ParensExpr(Location(@1, @3), $2), $5);}
-              | DECLARED_VAR '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @4), $1, $3);}
+function_call_expr : calling_expr '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @4), $1, $3);}
               ;
 
-function_call_stmt : DECLARED_FUNC '(' args_list ')' {$$ = new FunctionCallStmt(Location(@1, @4), $1, $3);}
-              | '(' expr ')' '(' args_list ')' {$$ = new FunctionCallStmt(Location(@1, @6), new ParensExpr(Location(@1, @3), $2), $5);}
-              | DECLARED_VAR '(' args_list ')' {$$ = new FunctionCallStmt(Location(@1, @4), $1, $3);}
+function_call_stmt : calling_expr '(' args_list ')' {$$ = new FunctionCallStmt(Location(@1, @4), $1, $3);}
               ;
 
 type_decl : type_alias {$$ = $1;}
