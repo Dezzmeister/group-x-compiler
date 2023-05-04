@@ -78,6 +78,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
     MemberInitializer * member_initializer;
     InitializerList * initializer_list;
     StructLiteral * struct_literal;
+    ArrayIndexExpr * array_index_expr;
 }
 
 %token END
@@ -163,6 +164,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 %type <member_initializer> member_initializer
 %type <initializer_list> initializer_list
 %type <struct_literal> struct_literal
+%type <array_index_expr> array_index_expr
 
 %%
 
@@ -239,7 +241,11 @@ calling_expr : '(' expr ')' {$$ = new ParensExpr(Location(@1, @3), $2);}
              | function_call_expr %prec CALL_PREC {$$ = $1;}
              | struct_deref {$$ = $1;}
              | struct_literal {$$ = $1;}
+             | array_index_expr {$$ = $1;}
              ;
+
+array_index_expr : calling_expr '[' expr ']' {$$ = new ArrayIndexExpr(Location(@1, @4), $1, $3);}
+                 ;
 
 struct_deref : calling_expr '.' IDENT {$$ = new StructDeref(Location(@1, @3), $1, $3);}
              | calling_expr '.' DECLARED_VAR {

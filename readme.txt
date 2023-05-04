@@ -44,12 +44,12 @@ This tells Vim to use yacc syntax highlighting for .ypp files.
 ==================================== TODOs ====================================
 
 1. We are missing a few AST nodes and corresponding grammar rules:
-    - array index expr (arr[4])
     - dynamic array typename (ints, float*s)
     - void return statement (return;)
     - import statements and export decls
     - lambda functions?
     - ternary expr has AST class but no production
+    - generics
 
 2. We need better errors in the parser. There is a "SourceErrors" object that
     gets passed to the parser, and it has vecs for type errors and parse errors.

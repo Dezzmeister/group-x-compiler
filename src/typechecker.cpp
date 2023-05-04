@@ -27,11 +27,11 @@ static const Typename * unaliased(const Typename * typ, SymbolTable * symtable) 
     const Symbol * symbol = symtable->get(ident->id);
 
     if (!symbol) {
-        throw CompilerError(typ->loc, "Undeclared type", Error);
+        __builtin_unreachable();
     }
 
     if (symbol->kind != Type) {
-        throw CompilerError(typ->loc, "Symbol is not a type", Error);
+        __builtin_unreachable();
     }
 
     if (symbol->decl.typ == nullptr) {
@@ -525,9 +525,9 @@ Typename * Deref::type_of(SymbolTable * symtable) const {
     }
 
     const PtrTypename * ptr_type = (PtrTypename *) expr_type.get();
-    Typename * base_type = ptr_type->name->clone();
+    const Typename * base_type = unaliased(ptr_type->name, symtable);
 
-    return base_type;
+    return base_type->clone();
 }
 
 Typename * CastExpr::type_of(SymbolTable * symtable) const {
@@ -684,6 +684,26 @@ Typename * StructLiteral::type_of(SymbolTable * symtable) const {
 
     const VarDeclList * decl_list = new VarDeclList(x::NULL_LOC, var_decls_raw);
     return new StructTypename(x::NULL_LOC, decl_list, scope.release());
+}
+
+Typename * ArrayIndexExpr::type_of(SymbolTable * symtable) const {
+    std::unique_ptr<Typename> arr_type(arr->type_of(symtable));
+    std::unique_ptr<Typename> index_type(index->type_of(symtable));
+    const Typename * index_base = base_type(unaliased(index_type.get(), symtable), symtable);
+
+    if (arr_type->get_kind() != StaticArrayTypename::kind) {
+        throw CompilerError(x::NULL_LOC, "Left hand side of array index expr is not array", Error);
+    }
+
+    TypeIdent int_type(x::NULL_LOC, "int");
+
+    if (!index_base->type_equals(&int_type, symtable)) {
+        throw CompilerError(x::NULL_LOC, "Array index type must be int", Error);
+    }
+
+    const StaticArrayTypename * static_arr_type = (StaticArrayTypename *) arr_type.get();
+
+    return static_arr_type->element_type->clone();
 }
 
 void ProgramSource::typecheck(SymbolTable * symtable, SourceErrors &errors) const {

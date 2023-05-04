@@ -63,6 +63,7 @@ const int StructDeref::kind = x::next_kind("struct_deref");
 const int MemberInitializer::kind = x::next_kind("member_initializer");
 const int InitializerList::kind = x::next_kind("initializer_list");
 const int StructLiteral::kind = x::next_kind("struct_literal");
+const int ArrayIndexExpr::kind = x::next_kind("array_index_expr");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -1643,4 +1644,33 @@ bool StructLiteral::operator==(const ASTNode &node) const {
     const StructLiteral &n = (StructLiteral &) node;
 
     return (*members == *(n.members));
+}
+
+ArrayIndexExpr::ArrayIndexExpr(const Location loc, const CallingExpr * arr, const Expr * index)
+    : CallingExpr(loc), arr(arr), index(index) {}
+
+ArrayIndexExpr::~ArrayIndexExpr() {
+    delete arr;
+    delete index;
+}
+
+void ArrayIndexExpr::print() const {
+    arr->print();
+    putchar('[');
+    index->print();
+    putchar(']');
+}
+
+std::vector<ASTNode *> ArrayIndexExpr::children() {
+    return {(ASTNode *) arr, (ASTNode *) index};
+}
+
+bool ArrayIndexExpr::operator==(const ASTNode &node) const {
+    if (node.get_kind() != ArrayIndexExpr::kind) {
+        return false;
+    }
+
+    const ArrayIndexExpr &n = (ArrayIndexExpr &) node;
+
+    return (*arr == *(n.arr) && *index == *(n.index));
 }

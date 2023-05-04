@@ -1,5 +1,5 @@
 CC = g++
-COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native -pthread
+COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native -pthread -fsanitize=unreachable
 DBG_FLAGS = ${COMMON_FLAGS} -Og
 RELEASE_FLAGS = ${COMMON_FLAGS} -O3
 LD_FLAGS = -pthread

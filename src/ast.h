@@ -1192,4 +1192,24 @@ class StructLiteral : public CallingExpr {
         KIND_CLASS()
 };
 
+class ArrayIndexExpr : public CallingExpr {
+    public:
+        const CallingExpr * arr;
+        const Expr * index;
+
+        ArrayIndexExpr(const Location loc, const CallingExpr * arr, const Expr * index);
+
+        virtual ~ArrayIndexExpr();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
 #endif
