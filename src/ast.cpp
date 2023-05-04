@@ -59,7 +59,10 @@ const int Assignment::kind = x::next_kind("assignment");
 const int BangExpr::kind = x::next_kind("bang_expr");
 const int NotExpr::kind = x::next_kind("not_expr");
 const int PreExpr::kind = x::next_kind("pre_expr");
-// const int StructDeref::kind = x::next_kind("struct_deref");
+const int StructDeref::kind = x::next_kind("struct_deref");
+const int MemberInitializer::kind = x::next_kind("member_initializer");
+const int InitializerList::kind = x::next_kind("initializer_list");
+const int StructLiteral::kind = x::next_kind("struct_literal");
 
 int x::next_kind(const char * const name) {
     static int kind = 0;
@@ -817,7 +820,7 @@ bool TypeAlias::operator==(const ASTNode &node) const {
     return (*name == *(n.name) && *type_expr == *(n.type_expr));
 }
 
-StructTypename::StructTypename(const Location loc, const VarDeclList * members, const SymbolTable * scope)
+StructTypename::StructTypename(const Location loc, const VarDeclList * members, SymbolTable * scope)
     : Typename(loc), members(members), scope(scope) {}
 
 Typename * StructTypename::clone() const {
@@ -835,7 +838,6 @@ Typename * StructTypename::clone() const {
 
 StructTypename::~StructTypename() {
     delete members;
-    delete scope;
 }
 
 void StructTypename::print() const {
@@ -1517,4 +1519,128 @@ bool PreExpr::operator==(const ASTNode &node) const {
     const PreExpr &n = (PreExpr &) node;
 
     return (op == n.op && *expr == *(n.expr));
+}
+
+StructDeref::StructDeref(const Location loc, const CallingExpr * strukt, const Ident * member)
+    : CallingExpr(loc), strukt(strukt), member(member) {}
+
+StructDeref::~StructDeref() {
+    delete strukt;
+    delete member;
+}
+
+void StructDeref::print() const {
+    strukt->print();
+    putchar('.');
+    member->print();
+}
+
+std::vector<ASTNode *> StructDeref::children() {
+    return {(ASTNode *) strukt, (ASTNode *) member};
+}
+
+bool StructDeref::operator==(const ASTNode &node) const {
+    if (node.get_kind() != StructDeref::kind) {
+        return false;
+    }
+
+    const StructDeref &n = (StructDeref &) node;
+
+    return (*strukt == *(n.strukt) && *member == *(n.member));
+}
+
+MemberInitializer::MemberInitializer(const Location loc, const Ident * member, const Expr * expr)
+    : ASTNode(loc), member(member), expr(expr) {}
+
+MemberInitializer::~MemberInitializer() {
+    delete member;
+    delete expr;
+}
+
+void MemberInitializer::print() const {
+    member->print();
+    printf(": ");
+    expr->print();
+}
+
+std::vector<ASTNode *> MemberInitializer::children() {
+    return {(ASTNode *) member, (ASTNode *) expr};
+}
+
+bool MemberInitializer::operator==(const ASTNode &node) const {
+    if (node.get_kind() != MemberInitializer::kind) {
+        return false;
+    }
+
+    const MemberInitializer &n = (MemberInitializer &) node;
+
+    return (*member == *(n.member) && *expr == *(n.expr));
+}
+
+InitializerList::InitializerList(const Location loc, std::vector<MemberInitializer *> members)
+    : ASTNode(loc), members(members) {}
+
+InitializerList::~InitializerList() {
+    members.clear();
+}
+
+void InitializerList::print() const {
+    for (size_t i = 0; i < members.size() - 1; i++) {
+        members[i]->print();
+        putchar('\n');
+    }
+
+    members[members.size() - 1]->print();
+    putchar('\n');
+}
+
+std::vector<ASTNode *> InitializerList::children() {
+    return cast_nodes(members);
+}
+
+bool InitializerList::operator==(const ASTNode &node) const {
+    if (node.get_kind() != InitializerList::kind) {
+        return false;
+    }
+
+    const InitializerList &n = (InitializerList &) node;
+
+    if (members.size() != n.members.size()) {
+        return false;
+    }
+
+    for (size_t i = 0; i < members.size(); i++) {
+        if (*(members[i]) != *(n.members[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+StructLiteral::StructLiteral(const Location loc, const InitializerList * members)
+    : CallingExpr(loc), members(members) {}
+
+StructLiteral::~StructLiteral() {
+    delete members;
+}
+
+void StructLiteral::print() const {
+    printf("{\n");
+    members->print();
+    putchar('}');
+}
+
+std::vector<ASTNode *> StructLiteral::children() {
+    return {(ASTNode *) members};
+}
+
+bool StructLiteral::operator==(const ASTNode &node) const {
+    if (node.get_kind() != StructLiteral::kind) {
+        return false;
+    }
+
+    const StructLiteral &n = (StructLiteral &) node;
+
+    return (*members == *(n.members));
 }

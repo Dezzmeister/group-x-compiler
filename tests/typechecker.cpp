@@ -348,6 +348,16 @@ void typechecker_tests() {
             mut I[3] eyes = {1, 2, 3};
             [int, I, float] tup1 = [1, 2, -3.0];
 
+            // Nested struct type
+            struct A {
+                int x;
+                int y;
+                struct {
+                    int p;
+                    int q;
+                } z;
+            };
+
             float func1(I[3] is) {
                 print(i_to_str(3));
                 return 4.321f;
@@ -358,6 +368,20 @@ void typechecker_tests() {
                 func2(eyes);
 
                 float f2 = func2(eyes) + func1(eyes);
+
+                // Nested struct literal
+                A a = {
+                    x: 1,
+                    y: 2,
+                    z: {
+                        p: 1,
+                        q: 2
+                    }
+                };
+
+                // Nested struct dereference
+                print(i_to_str(a.z.p));
+                int q = a.z.q;
 
                 return 0;
             };

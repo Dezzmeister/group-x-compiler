@@ -738,9 +738,9 @@ class TypeAlias : public TypeDecl {
 class StructTypename : public Typename {
     public:
         const VarDeclList * members;
-        const SymbolTable * scope;
+        SymbolTable * scope;
 
-        StructTypename(const Location loc, const VarDeclList * members, const SymbolTable * scope);
+        StructTypename(const Location loc, const VarDeclList * members, SymbolTable * scope);
 
         virtual Typename * clone() const;
 
@@ -1097,6 +1097,83 @@ class PreExpr : public Expr {
         PreExpr(const Location loc, const char * const op, const Expr * expr);
 
         virtual ~PreExpr();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class StructDeref : public CallingExpr {
+    public:
+        const CallingExpr * strukt;
+        const Ident * member;
+
+        StructDeref(const Location loc, const CallingExpr * strukt, const Ident * member);
+
+        virtual ~StructDeref();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class MemberInitializer : public ASTNode {
+    public:
+        const Ident * member;
+        const Expr * expr;
+
+        MemberInitializer(const Location loc, const Ident * member, const Expr * expr);
+
+        virtual ~MemberInitializer();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class InitializerList : public ASTNode {
+    public:
+        std::vector<MemberInitializer *> members;
+
+        InitializerList(const Location loc, std::vector<MemberInitializer *> members);
+
+        virtual ~InitializerList();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        // The order of members matters in determing equality of initializer lists.
+        // This is because an expr in the initializer list could have side effects that
+        // change the resulting struct literal if it's in a different spot
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class StructLiteral : public CallingExpr {
+    public:
+        const InitializerList * members;
+
+        StructLiteral(const Location loc, const InitializerList * members);
+
+        virtual ~StructLiteral();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();

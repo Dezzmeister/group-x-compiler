@@ -130,6 +130,8 @@ or          {return OR_KW;}
 &           {return '&';}
 %           {return '%';}
 !           {return '!';}
+\.          {return '.';}
+:           {return ':';}
 
 \'\\n\'     {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), '\n'); return CHAR;}
 \'\\t\'     {yylval->char_literal = new CharLiteral(Location(*yylloc, *yylloc), '\t'); return CHAR;}

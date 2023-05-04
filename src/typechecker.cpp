@@ -178,6 +178,8 @@ bool StructTypename::type_equals(const Typename * t, SymbolTable * symtable) con
     for (size_t i = 0; i < members->decls.size(); i++) {
         const VarDecl * this_decl = members->decls[i];
         const VarDecl * t_decl = t_struct->members->decls[i];
+        const Typename * this_decl_type = unaliased(this_decl->type_name, symtable);
+        const Typename * t_decl_type = unaliased(t_decl->type_name, symtable);
 
         // Order of the members matters because it affects the padding. We probably
         // won't pad structs in this compiler but we should keep the option open
@@ -185,7 +187,7 @@ bool StructTypename::type_equals(const Typename * t, SymbolTable * symtable) con
             return false;
         }
 
-        if (!this_decl->type_name->type_equals(t_decl->type_name, symtable)) {
+        if (!this_decl_type->type_equals(t_decl_type, symtable)) {
             return false;
         }
     }
@@ -633,6 +635,57 @@ Typename * PreExpr::type_of(SymbolTable * symtable) const {
     return new TypeIdent(x::NULL_LOC, "int");
 }
 
+Typename * StructDeref::type_of(SymbolTable * symtable) const {
+    std::unique_ptr<Typename> strukt_type(strukt->type_of(symtable));
+
+    if (strukt_type->get_kind() != StructTypename::kind) {
+        throw CompilerError(strukt->loc, "Left hand side must be a struct type", Error);
+    }
+
+    const StructTypename * strukt_struct = (StructTypename *) strukt_type.get();
+    SymbolTable * strukt_scope = strukt_struct->scope;
+
+    const Symbol * sym = strukt_scope->get(member->id);
+
+    if (sym == nullptr) {
+        throw CompilerError(member->loc, "Right hand side must be a member of left hand side struct", Error);
+    }
+
+    if (sym->kind != Var) {
+        throw CompilerError(member->loc, "Right hand side must be a variable member of left hand side struct", Error);
+    }
+
+    const VarDecl * decl = sym->decl.var;
+
+    return decl->type_name->clone();
+}
+
+Typename * StructLiteral::type_of(SymbolTable * symtable) const {
+    std::vector<std::unique_ptr<VarDecl>> var_decls = {};
+    std::unique_ptr<SymbolTable> scope(new SymbolTable(symtable));
+
+    for (auto &member : members->members) {
+        std::unique_ptr<Typename> expr_type(member->expr->type_of(symtable));
+        const Typename * var_type = expr_type.release();
+        const Ident * var_name = new Ident(x::NULL_LOC, member->member->id.c_str());
+        VarDecl * var_decl = new VarDecl(x::NULL_LOC, var_type, var_name);
+
+        scope->put(var_decl->var_name->id, new Symbol(Var, (Decl) {
+            .var = var_decl
+        }));
+        var_decls.push_back(std::unique_ptr<VarDecl>(var_decl));
+    }
+
+    std::vector<VarDecl *> var_decls_raw = {};
+
+    for (auto &var_decl : var_decls) {
+        var_decls_raw.push_back(var_decl.release());
+    }
+
+    const VarDeclList * decl_list = new VarDeclList(x::NULL_LOC, var_decls_raw);
+    return new StructTypename(x::NULL_LOC, decl_list, scope.release());
+}
+
 void ProgramSource::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
     for (auto &node : nodes) {
         try {
@@ -850,7 +903,7 @@ void Assignment::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
     std::unique_ptr<Typename> rhs_type(rhs->type_of(symtable));
 
     if (lhs_type->get_kind() != MutTypename::kind) {
-        throw CompilerError(lhs->loc, "Cannot assign to mutable", Error);
+        throw CompilerError(lhs->loc, "Cannot assign to immutable", Error);
     }
 
     if (rhs_type->get_kind() == MutTypename::kind) {

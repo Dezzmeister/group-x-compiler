@@ -44,7 +44,6 @@ This tells Vim to use yacc syntax highlighting for .ypp files.
 ==================================== TODOs ====================================
 
 1. We are missing a few AST nodes and corresponding grammar rules:
-    - struct member dereference expr (strukt.member)
     - array index expr (arr[4])
     - dynamic array typename (ints, float*s)
     - void return statement (return;)
