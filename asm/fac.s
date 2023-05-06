@@ -49,12 +49,11 @@ fac:
     popq    %rbp        # restore old rbp. no need to reset rsp because we popped the local var already
     ret                 # pop return address into rip
 .FAC_BASE:
-    addq    $8, %rsp    # invalidate local variable
     movl    $1, %eax    # prepare to return 1
+    movq    %rbp, %rsp  # invalidate local stack frame which contains a local variable
     popq    %rbp        # restore old rbp
     ret                 # pop return address into rip. rsp now points at the argument to fac
 
-# %edi: argc, %rsi: argv
 .globl  main            # .globl/.global means that this symbol should be visible to the linker
 /*
     For command line args, the OS will put argc in edi and argv in rsi.
@@ -65,11 +64,10 @@ main:
     cmpl    $2, %edi        # error checking, make sure there are only 2 args by checking argc
     jne     .BAD_ARGS
     addq    $8, %rsi        # rsi now points to argv[1]
-    movq    (%rsi), %rsi    # get argv[1] which is a pointer to the first char in the arg
-    movq    %rsi, %rdi      # prepare to call atoi. first argument goes in rdi
+    movq    (%rsi), %rdi    # get argv[1] which is a pointer to the first char in the arg, prepare to call atoi
     call    atoi@PLT        # call atoi thru "procedure linkage table" - some kind of dynamic linkage which I don't fully understand
     pushq   %rax            # atoi returns to eax, push result as arg to fac
-    call fac                # call fac
+    call    fac                # call fac
     addq    $8, %rsp        # clean up stack because we pushed an argument before call
     leaq    .FMT_STR(%rip), %rdi    # load addr of FMT_STR into rdi, preparing to call printf
     movq    %rax, %rsi      # the second argument to printf, the int to substitute in the fmt string
