@@ -277,17 +277,6 @@ void TernaryExpr::print() const {
     fals->print();
 }
 
-void TernaryExpr::gen_tac() const {
-  cond->gen_tac();
-  int cond_idx = x::bblock->last_instruction();
-  // Label to jump to when false must be filled in later, maybe in a second pass.
-  x::bblock->add_instruction(new CondJumpTAC(cond->get_kind(), cond_idx));
-  tru->gen_tac();
-  // Label to jump to when you want to skip the false branch.
-  x::bblock->add_instruction(new JumpTAC());
-  fals->gen_tac();
-}
-
 std::vector<ASTNode *> TernaryExpr::children() {
     return {(ASTNode *)cond, (ASTNode *)tru, (ASTNode *)fals};
 }
@@ -362,22 +351,6 @@ void MathExpr::print() const {
     right->print();
 }
 
-void MathExpr::gen_tac() const {
-  int left_kind = left->get_kind();
-  int right_kind = right->get_kind();
-  if (left_kind == IntLiteral::kind || FloatLiteral::kind) {
-    if (right_kind == IntLiteral::kind || FloatLiteral::kind) {
-        // left and right are both immediates.
-    } else {
-        // right is some memory address (lvalue).
-    }
-  }
-
-  if (right_kind == IntLiteral::kind || FloatLiteral::kind) {
-    // left is some memory address.
-  }
-}
-
 std::vector<ASTNode *> MathExpr::children() {
     return {(ASTNode *)left, (ASTNode *)right};
 }
@@ -406,22 +379,6 @@ void BoolExpr::print() const {
     right->print();
 }
 
-void BoolExpr::gen_tac() const {
-  int left_kind = left->get_kind();
-  int right_kind = right->get_kind();
-  if (left_kind == BoolLiteral::kind) {
-    if (right_kind == BoolLiteral::kind) {
-      // Both immediates.
-    }
-  }
-
-  if (right_kind == BoolLiteral::kind) {
-    // Left is some memory address.
-  } else {
-    // Both are memory addresses.
-  }
-}
-
 std::vector<ASTNode *> BoolExpr::children() {
     return {(ASTNode *)left, (ASTNode *)right};
 }
@@ -448,8 +405,6 @@ void ParensExpr::print() const {
     expr->print();
     putchar(')');
 }
-
-void ParensExpr::gen_tac() const { expr->gen_tac(); };
 
 std::vector<ASTNode *> ParensExpr::children() {
     return {(ASTNode *)expr};
@@ -668,12 +623,6 @@ bool ExprList::operator==(const ASTNode &node) const {
     return cmp_vectors(exprs, n.exprs);
 }
 
-void ExprList::gen_tac() const {
-  for (auto &expr : exprs) {
-    expr->gen_tac();
-  }
-}
-
 StatementList::StatementList(const Location loc, std::vector<Statement *> statements)
     : ASTNode(loc), statements(statements) {}
 
@@ -688,12 +637,6 @@ void StatementList::print() const {
         statement->print();
         printf(";\n");
     }
-}
-
-void StatementList::gen_tac() const {
-  for (auto &statement : statements) {
-    statement->gen_tac();
-  }
 }
 
 void StatementList::push_statement(Statement * statement) {
@@ -763,8 +706,6 @@ void TupleExpr::print() const {
     expr_list->print();
     putchar(']');
 }
-
-void TupleExpr::gen_tac() const { expr_list->gen_tac(); }
 
 std::vector<ASTNode *> TupleExpr::children() {
     return {(ASTNode *)expr_list};
@@ -1000,18 +941,6 @@ void VarDeclInit::print() const {
     init->print();
 }
 
-void VarDeclInit::gen_tac() const {
-  int init_kind = init->get_kind();
-  if (init_kind == IntLiteral::kind) {
-    // int immediate.
-
-  } else if (init_kind == FloatLiteral::kind) {
-    // float immediate.
-  } else {
-    // resolves to some address in memory.
-  }
-}
-
 std::vector<ASTNode *> VarDeclInit::children() {
     return {(ASTNode *)decl, (ASTNode *)init};
 }
@@ -1037,10 +966,6 @@ void ArrayLiteral::print() const {
     putchar('{');
     items->print();
     putchar('}');
-}
-
-void ArrayLiteral::gen_tac() const {
-  // TODO:
 }
 
 std::vector<ASTNode *> ArrayLiteral::children() {
@@ -1173,15 +1098,6 @@ void ForStmt::print() const {
     printf("}");
 }
 
-void ForStmt::gen_tac() const {
-    init->gen_tac();
-    int init_idx = x::bblock->last_instruction();
-    body->gen_tac();
-    int body_idx = x::bblock->last_instruction();
-    update->gen_tac();
-    x::bblock->add_instruction(new CondJumpTAC(init->get_kind(), init_idx, body_idx));
-}
-
 std::vector<ASTNode *> ForStmt::children() {
     return {(ASTNode *)init, (ASTNode *)condition, (ASTNode *)update,
             (ASTNode *)body};
@@ -1209,12 +1125,6 @@ void AddrOf::print() const {
     expr->print();
 }
 
-void AddrOf::gen_tac() const {
-  expr->gen_tac();
-  int expr_idx = x::bblock->last_instruction();
-  x::bblock->add_instruction(new AddrTac(expr_idx, expr->get_kind()));
-}
-
 std::vector<ASTNode *> AddrOf::children() {
     return {(ASTNode *)expr};
 }
@@ -1239,12 +1149,6 @@ Deref::~Deref() {
 void Deref::print() const {
     putchar('*');
     expr->print();
-}
-
-void Deref::gen_tac() const {
-  expr->gen_tac();
-  int expr_idx = x::bblock->last_instruction();
-  x::bblock->add_instruction(new DerefTAC(expr_idx, expr->get_kind()));
 }
 
 std::vector<ASTNode *> Deref::children() {
@@ -1275,12 +1179,6 @@ void CastExpr::print() const {
     dest_type->print();
 }
 
-void CastExpr::gen_tac() const {
-  expr->gen_tac();
-  int expr_idx = x::bblock->last_instruction();
-  x::bblock->add_instruction(new CastTAC(expr_idx, expr->get_kind(), dest_type->get_kind()));
-}
-
 std::vector<ASTNode *> CastExpr::children() {
     return {(ASTNode *)dest_type, (ASTNode *)expr};
 }
@@ -1307,22 +1205,6 @@ void LogicalExpr::print() const {
     left->print();
     printf(" %s ", op.c_str());
     right->print();
-}
-
-void LogicalExpr::gen_tac() const {
-  int left_kind = left->get_kind();
-  int right_kind = right->get_kind();
-  if (left_kind == BoolLiteral::kind) {
-    if (right_kind == BoolLiteral::kind) {
-        // left and right are both immediates.
-    } else {
-        // right resolves to some memory address.
-    }
-  }
-
-  if (right_kind == BoolLiteral::kind) {
-    // left resolves to some memory address.
-  }
 }
 
 std::vector<ASTNode *> LogicalExpr::children() {
@@ -1381,15 +1263,6 @@ void FunctionCallStmt::print() const {
     putchar('(');
     args->print();
     putchar(')');
-}
-
-void FunctionCallStmt::gen_tac() const {
-  for (auto expr : args->exprs) {
-    expr->gen_tac();
-  }
-  // Need a way to get name for all CallingExprs.
-  CallTAC *call = new CallTAC("func name", args->exprs.size());
-  x::bblock->add_instruction(call);
 }
 
 std::vector<ASTNode *> FunctionCallStmt::children() {
@@ -1473,13 +1346,6 @@ void FuncDecl::print() const {
     printf("}\n");
 }
 
-void FuncDecl::gen_tac() const {
-  x::bblock->add_block(name->id);
-  for (auto statement : body->statements) {
-    statement->gen_tac();
-  }
-}
-
 std::vector<ASTNode *> FuncDecl::children() {
     return {(Expr *)name, (ASTNode *)params, (ASTNode *)ret_type,
             (ASTNode *)body};
@@ -1507,12 +1373,6 @@ void ProgramSource::print() const {
         node->print();
         printf(";\n");
     }
-}
-
-void ProgramSource::gen_tac() const {
-  for (auto &node : nodes) {
-    node->gen_tac();
-  }
 }
 
 void ProgramSource::add_node(ASTNode * node) {
@@ -1545,25 +1405,6 @@ void ReturnStatement::print() const {
     val->print();
 }
 
-void ReturnStatement::gen_tac() const {
-    int ret_kind = val->get_kind();
-    if (ret_kind == IntLiteral::kind) {
-
-    } 
-    else if (ret_kind == CharLiteral::kind) {
-
-    }
-    else if (ret_kind == BoolLiteral::kind) {
-
-    }
-    else if (ret_kind == FloatLiteral::kind) {
-
-    }
-    else {
-        // Everything here resolves to a memory address.
-    }
-}
-
 std::vector<ASTNode *> ReturnStatement::children() {
     return {(ASTNode *)val};
 }
@@ -1592,27 +1433,6 @@ void Assignment::print() const {
     rhs->print();
 }
 
-void Assignment::gen_tac() const {
-  // Should have been type checked to make sure lhs is an lvalue.
-    int right_kind = rhs->get_kind();
-
-    if (right_kind == IntLiteral::kind) {
-
-    } 
-    else if (right_kind == CharLiteral::kind) {
-
-    }
-    else if (right_kind == BoolLiteral::kind) {
-        
-    }
-    else if (right_kind == FloatLiteral::kind) {
-
-    }
-    else {
-        // Everything here resolves to a memory address.
-    }
-}
-
 std::vector<ASTNode *> Assignment::children() {
     return {(ASTNode *)lhs, (ASTNode *)rhs};
 }
@@ -1637,12 +1457,6 @@ BangExpr::~BangExpr() {
 void BangExpr::print() const {
     putchar('!');
     expr->print();
-}
-
-void BangExpr::gen_tac() const {
-    expr->gen_tac();
-    int expr_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new UnaryTAC("!", expr_idx, expr->get_kind()));
 }
 
 std::vector<ASTNode *> BangExpr::children() {
@@ -1671,12 +1485,6 @@ void NotExpr::print() const {
     expr->print();
 }
 
-void NotExpr::gen_tac() const {
-    expr->gen_tac();
-    int expr_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new UnaryTAC("!", expr_idx, expr->get_kind()));
-}
-
 std::vector<ASTNode *> NotExpr::children() {
     return {(ASTNode *)expr};
 }
@@ -1701,12 +1509,6 @@ PreExpr::~PreExpr() {
 void PreExpr::print() const {
     std::cout << op;
     expr->print();
-}
-
-void PreExpr::gen_tac() const {
-    expr->gen_tac();
-    int expr_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new UnaryTAC(op, expr_idx, expr->get_kind()));
 }
 
 std::vector<ASTNode *> PreExpr::children() {
