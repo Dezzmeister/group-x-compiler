@@ -94,7 +94,7 @@ class ASTNode {
 
         virtual void print() const = 0;
         virtual std::vector<ASTNode *> children() = 0;
-        virtual void gen() {}
+        virtual void gen_tac() const {};
         virtual ASTNode * find(FindFunc cond);
 
         virtual bool operator==(const ASTNode &node) const = 0;
@@ -116,6 +116,7 @@ class ProgramSource : public ASTNode {
         virtual ~ProgramSource();
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
@@ -147,6 +148,7 @@ class ExprList : public ASTNode {
         virtual ~ExprList();
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual bool operator==(const ASTNode &node) const;
@@ -189,6 +191,7 @@ class StatementList : public ASTNode {
 
         virtual ~StatementList();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -209,7 +212,8 @@ class ParensExpr : public CallingExpr {
         ParensExpr(const Location loc, const Expr * expr);
 
         virtual ~ParensExpr();
-
+        virtual void gen_tac() const;
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -318,6 +322,8 @@ class TernaryExpr : public Expr {
         TernaryExpr(const Location loc, const Expr * cond, const Expr * tru, const Expr * fals);
 
         virtual ~TernaryExpr();
+
+        virtual void gen_tac() const; 
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
@@ -428,6 +434,8 @@ class MathExpr : public Expr {
 
         virtual ~MathExpr();
 
+        virtual void gen_tac() const;
+
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -448,6 +456,8 @@ class BoolExpr : public Expr {
         BoolExpr(const Location loc, const char * const op, const Expr * left, const Expr * right);
 
         virtual ~BoolExpr();
+
+        virtual void gen_tac() const;
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
@@ -599,6 +609,7 @@ class FunctionCallStmt : public Statement {
 
         virtual ~FunctionCallStmt();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -659,6 +670,8 @@ class TupleExpr : public Expr {
         TupleExpr(const Location loc, const ExprList * expr_list);
 
         virtual ~TupleExpr();
+
+        virtual void gen_tac() const;
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
@@ -794,6 +807,7 @@ class VarDeclInit : public Statement {
 
         virtual ~VarDeclInit();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -813,6 +827,7 @@ class ArrayLiteral : public Expr {
 
         virtual ~ArrayLiteral();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -900,6 +915,7 @@ class ForStmt : public Statement {
 
         virtual ~ForStmt();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -919,6 +935,7 @@ class AddrOf : public Expr {
 
         virtual ~AddrOf();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -938,6 +955,7 @@ class Deref : public Expr {
 
         virtual ~Deref();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -958,6 +976,7 @@ class CastExpr : public Expr {
 
         virtual ~CastExpr();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -979,6 +998,7 @@ class LogicalExpr : public Expr {
 
         virtual ~LogicalExpr();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -1004,6 +1024,7 @@ class FuncDecl : public ASTNode {
 
         virtual ~FuncDecl();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -1026,6 +1047,7 @@ class ReturnStatement : public Statement {
         virtual ~ReturnStatement();
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
@@ -1046,6 +1068,7 @@ class Assignment : public Statement {
 
         virtual ~Assignment();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -1065,6 +1088,7 @@ class BangExpr : public Expr {
 
         virtual ~BangExpr();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -1084,6 +1108,7 @@ class NotExpr : public Expr {
 
         virtual ~NotExpr();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -1104,6 +1129,7 @@ class PreExpr : public Expr {
 
         virtual ~PreExpr();
 
+        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
