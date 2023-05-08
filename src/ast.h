@@ -827,7 +827,6 @@ class ArrayLiteral : public Expr {
 
         virtual ~ArrayLiteral();
 
-        virtual void gen_tac() const;
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
@@ -850,6 +849,7 @@ class IfStmt : public Statement {
         virtual ~IfStmt();
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
@@ -892,6 +892,7 @@ class WhileStmt : public Statement {
         virtual ~WhileStmt();
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;

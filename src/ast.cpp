@@ -13,6 +13,8 @@
 
 std::vector<std::string> x::kind_map;
 
+extern void add_string(const char* str);
+
 const int ProgramSource::kind = x::next_kind("program_source");
 const int IntLiteral::kind = x::next_kind("int_literal");
 const int FloatLiteral::kind = x::next_kind("float_literal");
@@ -240,7 +242,9 @@ bool CharLiteral::operator==(const ASTNode &node) const {
 }
 
 StringLiteral::StringLiteral(const Location loc, const char * const value)
-    : Expr(loc), value(std::string(value)) {}
+    : Expr(loc), value(std::string(value)) {
+        add_string(value);
+    }
 
 void StringLiteral::print() const {
     putchar('"');
@@ -280,12 +284,14 @@ void TernaryExpr::print() const {
 void TernaryExpr::gen_tac() const {
   cond->gen_tac();
   int cond_idx = x::bblock->last_instruction();
-  // Label to jump to when false must be filled in later, maybe in a second pass.
   x::bblock->add_instruction(new CondJumpTAC(cond->get_kind(), cond_idx));
   tru->gen_tac();
-  // Label to jump to when you want to skip the false branch.
+  int tru_label = x::bblock->last_instruction();
+  std::cout << tru_label << '\n';
   x::bblock->add_instruction(new JumpTAC());
   fals->gen_tac();
+  int false_label = x::bblock->last_instruction();
+  std::cout << false_label << '\n';
 }
 
 std::vector<ASTNode *> TernaryExpr::children() {
@@ -1039,10 +1045,6 @@ void ArrayLiteral::print() const {
     putchar('}');
 }
 
-void ArrayLiteral::gen_tac() const {
-  // TODO:
-}
-
 std::vector<ASTNode *> ArrayLiteral::children() {
     return {(ASTNode *)items};
 }
@@ -1064,6 +1066,15 @@ IfStmt::~IfStmt() {
     delete cond;
     delete then;
     delete scope;
+}
+
+void IfStmt::gen_tac() const {
+    cond->gen_tac();
+    int cond_idx = x::bblock->last_instruction();
+    x::bblock->add_instruction(new CondJumpTAC(cond->get_kind(), cond_idx));
+    then->gen_tac();
+    // This is the label that should be jumped to if the condition is false.
+    // int false_label = x::bblock->next_instruction();
 }
 
 void IfStmt::print() const {
@@ -1133,6 +1144,17 @@ void WhileStmt::print() const {
     printf(") {\n");
     body->print();
     printf("};\n");
+}
+
+void WhileStmt::gen_tac() const {
+    cond->gen_tac();
+    int cond_idx = x::bblock->last_instruction();
+    x::bblock->add_instruction(new CondJumpTAC(cond->get_kind(), cond_idx));
+    int body_start = x::bblock->next_instruction();
+    body->gen_tac();
+    x::bblock->add_instruction(new JumpTAC(body_start));
+    // This the label to jump to when the condition is false.
+    // int false_label = x::bblock->next_instruction();
 }
 
 std::vector<ASTNode *> WhileStmt::children() {
@@ -1387,8 +1409,7 @@ void FunctionCallStmt::gen_tac() const {
   for (auto expr : args->exprs) {
     expr->gen_tac();
   }
-  // Need a way to get name for all CallingExprs.
-  CallTAC *call = new CallTAC("func name", args->exprs.size());
+  CallTAC *call = new CallTAC(nullptr, args->exprs.size());
   x::bblock->add_instruction(call);
 }
 
@@ -1916,4 +1937,12 @@ std::vector<ASTNode *> BreakStmt::children() {
 
 bool BreakStmt::operator==(const ASTNode &node) const {
     return (node.get_kind() == BreakStmt::kind);
+}
+
+template <typename T>
+T eval(Expr & e) {
+    if (e.get_kind() == StringLiteral::kind) {
+        return 'a';
+    }
+    return 0;
 }
