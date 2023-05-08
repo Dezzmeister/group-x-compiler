@@ -140,6 +140,20 @@ class IndexCopyTAC : public Quad {
   }
 };
 
+// x[i] = y
+class ValueCopyTAC : public Quad {
+    public:
+        const Symbol* arr;
+        int index;
+        std::string value;
+        int kind;
+        ValueCopyTAC(const Symbol* a, int i, int k) : arr(a), index(i), kind(k) {}
+
+        void print() const {
+            std::cout << arr->name << "[" << index << "]" << " = " << value << std::endl;
+        }
+};
+
 // x = &y
 class AddrTac : public Quad {
  public:
@@ -160,6 +174,19 @@ class DerefTAC : public Quad {
   DerefTAC(int i, int k) : index(i), kind(k) {}
 
   void print() const { std::cout << result << " = *" << index << std::endl; }
+};
+
+// *x = y
+class AddrSetTAC: public Quad {
+    public:
+        int addr;
+        std::string value;
+        int kind;
+        AddrSetTAC(int i, int k) : index(i), kind(k) {}
+
+        void print() const {
+            std::cout << "*" << addr << " = " << value << std::endl;
+        }
 };
 
 class CastTAC : public Quad {
