@@ -7,12 +7,13 @@ LD_FLAGS = -pthread
 SRC_DIR := src
 GENERATED_FILES := ${addprefix ${SRC_DIR}/, scanner.cpp parser.cpp }
 SRC_FILES := ${wildcard ${SRC_DIR}/*.cpp}
+OBJ_FILES =  ${patsubst src/%.cpp, %.o, ${SRC_FILES}} 
 
 DEPS = ${GENERATED_FILES} ${SRC_FILES}
 
 TEST_DIR := tests
 
-all: compiler_debug compiler_release
+all: debug release
 
 debug: debug_bin
 
@@ -20,11 +21,25 @@ release: release_bin
 
 test_all: test_debug test_release
 
-debug_bin: ${DEPS} main.cpp
-	${CC} ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
+${OBJ_FILES}: %.o: src/%.cpp 
+	${CC} ${COMMON_FLAGS} -c $^
 
-release_bin: ${DEPS} main.cpp
-	${CC} ${RELEASE_FLAGS} $^ -o $@ ${LD_FLAGS}
+main.o: main.cpp
+	${CC} ${COMMON_FLAGS} -c $^
+
+src/parser.cpp: src/parser.ypp
+	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
+	${CC} ${COMMON_FLAGS} -c $@
+
+src/scanner.cpp: src/scanner.lex
+	flex -Cfe -o src/scanner.cpp src/scanner.lex
+	${CC} ${COMMON_FLAGS} -c $@
+
+debug_bin: src/scanner.cpp src/parser.cpp main.o ${OBJ_FILES}
+	${CC} ${COMMON_FLAGS} *.o -o $@ 
+
+release_bin: src/scanner.cpp src/parser.cpp main.o ${OBJ_FILES} 
+	${CC} ${RELEASE_FLAGS} *.o -o $@ 
 
 test_debug: ${DEPS} ${TEST_DIR}/*.cpp
 	${CC} -DDEBUG_TOKENS ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
@@ -40,22 +55,12 @@ parser_graph: src/parser.ypp
 	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
 	dot -Tpng src/parser.dot -o parser.png
 
-${GENERATED_FILES}: src/parser.ypp src/scanner.lex
-	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
-	flex -Cfe -o src/scanner.cpp src/scanner.lex
-
-.PHONY: clean todo parser lexer
+.PHONY: clean todo 
 clean:
-	rm -f debug_bin release_bin ${GENERATED_FILES} src/parser.dot src/parser.output parser.png prog.dot
+	rm -f debug_bin release_bin ${GENERATED_FILES} *.o src/scanner.dot src/scanner.output src/parser.dot src/parser.output parser.png prog.dot
 
 todo:
 	grep -Rn TODO
-
-parser:
-	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
-
-lexer: 
-	flex -Cfe -o src/scanner.cpp src/scanner.lex
 
 # Formats source files in a consistent way using astyle. To install astyle, go to
 # https://astyle.sourceforge.net/. I put it in ../tools/ relative to this directory.
