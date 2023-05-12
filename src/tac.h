@@ -15,20 +15,24 @@ class Quad {
 };
 
 template <typename T>
-// x = y op z
+class Value : public Quad {
+  public:
+    T value;
+    Value(T v) : value(v) {}
+};
+
 class AssignTAC : public Quad {
  public:
-  std::string op;
-  T addr1;
-  T addr2;
+  const char op;
+  int lhs, rhs;
   int kind;
-  AssignTAC(std::string o, T a1, T a2, int k)
-      : op(o), addr1(a1), addr2(a2), kind(k) {}
-      
+
+  AssignTAC(const char  o, int l, int r, int k)
+  : op(o), lhs(l), rhs(r), kind(k) {}
+
   void print() const {
-    std::cout << " = " << addr1 << " " << op << " " << addr2
-              << std::endl;
   }
+
 };
 
 class UnaryTAC : public Quad {
@@ -47,34 +51,25 @@ class UnaryTAC : public Quad {
 // x = y
 class CopyTAC : public Quad {
  public:
-  const Symbol* symbol;
   int index;
-  std::string target;
   int kind;
-  CopyTAC(const Symbol* s, int k) : symbol(s), kind(k) {}
   CopyTAC(int i, int k) : index(i), kind(k) {}
-
-   void print() const {
-    std::cout << target << " = " << symbol->name << std::endl;
+  void print() const {
+    std::cout << "this = " << index << '\n';
   }
 };
 
-template <typename T>
 // x relop y
-// jne L
+  // jne L
 class CondJumpRelopTAC : public Quad {
  public:
   char op;
-  T addr1;
-  T addr2;
+  int lhs, rhs;
   int label;
   int kind;
-  CondJumpRelopTAC(T a1, T a2, int l, int k)
-      : addr1(a1), addr2(a2), label(l), kind(k) {}
-
-      void print() const {
-    std::cout << addr1 << " " << op << " " << addr2 << std::endl;
-    std::cout << "jne L" << label << std::endl;
+  CondJumpRelopTAC(int l, int r, int lbl, int k)
+      : lhs(l), rhs(r), label(lbl), kind(k) {}
+  void print() const {
   }
 };
 // if x goto L
@@ -115,13 +110,12 @@ class CallTAC : public Quad {
 
 };
 
-template <typename T>
 // arg x
 class ArgTAC : public Quad {
  public:
+  int arg;
   int kind;
-  T arg;
-  ArgTAC(T a, int k) : arg(a), kind(k) {}
+  ArgTAC(int a, int k) : arg(a), kind(k) {}
 
     void print() const { std::cout << "arg " << arg << std::endl; }
 };
@@ -176,13 +170,12 @@ class DerefTAC : public Quad {
   void print() const { std::cout << " = *" << index << std::endl; }
 };
 // *x = y
-template <typename T>
 class AddrSetTAC : public Quad {
  public:
   int index;
   int kind;
-  T value;
-  AddrSetTAC(int i, int k, T v) : index(i), kind(k), value(v) {}
+  int value;
+  AddrSetTAC(int i, int k, int v) : index(i), kind(k), value(v) {}
 
 
     void print() const {
@@ -204,15 +197,14 @@ class CastTAC : public Quad {
 
 // mov(suffix) %eax
 // ret
-template <typename T>
 class ReturnTAC : public Quad {
  public:
-  T ret_val;
+  int ret_val;
   int kind;
-  ReturnTAC(T ret, int k) : ret_val(ret), kind(k) {}
 
+  ReturnTAC(int ret, int k) : ret_val(ret), kind(k) {}
 
-    void print() const { std::cout << "ret " << ret_val << std::endl; }
+  void print() const { std::cout << "ret " << ret_val << std::endl; }
 };
 
 class BasicBlock {
@@ -233,6 +225,8 @@ class BasicBlock {
   int last_instruction() const { return n_instructions - 1; }
 
   int next_instruction() const { return n_instructions; }
+
+  int get_instruction(const ASTNode & n);
 
   void print() const;
   BasicBlock* prev;

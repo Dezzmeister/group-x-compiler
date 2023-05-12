@@ -285,6 +285,7 @@ class IntLiteral : public NumLiteral {
         IntLiteral(const Location loc, const int value);
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;

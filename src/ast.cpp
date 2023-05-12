@@ -144,6 +144,11 @@ void IntLiteral::print() const {
     printf("%d", value);
 }
 
+void IntLiteral::gen_tac() const {
+    Value<int> * v = new Value<int>(value);
+    x::bblock->add_instruction(v);
+}
+
 std::vector<ASTNode *> IntLiteral::children() {
     return {};
 }
@@ -369,20 +374,12 @@ void MathExpr::print() const {
 }
 
 void MathExpr::gen_tac() const {
-  int left_kind = left->get_kind();
-  int right_kind = right->get_kind();
-  if (left_kind == IntLiteral::kind || FloatLiteral::kind) {
-    if (right_kind == IntLiteral::kind || FloatLiteral::kind) {
-        // left and right are both immediates.
-    } else {
-        // right is some memory address (lvalue).
-    }
-  }
-
-  if (right_kind == IntLiteral::kind || FloatLiteral::kind) {
-    // left is some memory address.
-  }
-}
+    int l_idx = x::bblock->get_instruction(*left);
+    int r_idx = x::bblock->get_instruction(*right);
+    int kind = std::max(left->get_kind(), right->get_kind());
+    AssignTAC * assign = new AssignTAC(op, l_idx, r_idx, kind);
+    x::bblock->add_instruction(assign);
+} 
 
 std::vector<ASTNode *> MathExpr::children() {
     return {(ASTNode *)left, (ASTNode *)right};
@@ -1007,16 +1004,10 @@ void VarDeclInit::print() const {
 }
 
 void VarDeclInit::gen_tac() const {
-  int init_kind = init->get_kind();
-  if (init_kind == IntLiteral::kind) {
-    // int immediate.
-
-  } else if (init_kind == FloatLiteral::kind) {
-    // float immediate.
-  } else {
-    // resolves to some address in memory.
-  }
-}
+    int init_idx = x::bblock->get_instruction(*init);
+    CopyTAC * c = new CopyTAC(init_idx, init->get_kind());
+    x::bblock->add_instruction(c);
+} 
 
 std::vector<ASTNode *> VarDeclInit::children() {
     return {(ASTNode *)decl, (ASTNode *)init};
@@ -1614,24 +1605,6 @@ void Assignment::print() const {
 }
 
 void Assignment::gen_tac() const {
-  // Should have been type checked to make sure lhs is an lvalue.
-    int right_kind = rhs->get_kind();
-
-    if (right_kind == IntLiteral::kind) {
-
-    } 
-    else if (right_kind == CharLiteral::kind) {
-
-    }
-    else if (right_kind == BoolLiteral::kind) {
-        
-    }
-    else if (right_kind == FloatLiteral::kind) {
-
-    }
-    else {
-        // Everything here resolves to a memory address.
-    }
 }
 
 std::vector<ASTNode *> Assignment::children() {
@@ -1937,12 +1910,4 @@ std::vector<ASTNode *> BreakStmt::children() {
 
 bool BreakStmt::operator==(const ASTNode &node) const {
     return (node.get_kind() == BreakStmt::kind);
-}
-
-template <typename T>
-T eval(Expr & e) {
-    if (e.get_kind() == StringLiteral::kind) {
-        return 'a';
-    }
-    return 0;
 }
