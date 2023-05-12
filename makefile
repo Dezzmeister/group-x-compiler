@@ -1,5 +1,5 @@
 CC = g++
-COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native -pthread -fsanitize=unreachable
+COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native -fsanitize=unreachable
 DBG_FLAGS = ${COMMON_FLAGS} -Og
 RELEASE_FLAGS = ${COMMON_FLAGS} -O3
 LD_FLAGS = -pthread
@@ -14,21 +14,17 @@ TEST_DIR := tests
 
 all: compiler_debug compiler_release
 
-debug: compiler_debug
+debug: debug_bin
 
-release: compiler_release
+release: release_bin
 
 test_all: test_debug test_release
 
-# So make doesn't try to build everytime.
 debug_bin: ${DEPS} main.cpp
 	${CC} ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
 
-compiler_debug: ${DEPS} main.cpp
-	${CC} ${DBG_FLAGS} $^ -o debug_bin ${LD_FLAGS}
-
-compiler_release: ${DEPS} main.cpp
-	${CC} ${RELEASE_FLAGS} $^ -o release_bin ${LD_FLAGS}
+release_bin: ${DEPS} main.cpp
+	${CC} ${RELEASE_FLAGS} $^ -o $@ ${LD_FLAGS}
 
 test_debug: ${DEPS} ${TEST_DIR}/*.cpp
 	${CC} -DDEBUG_TOKENS ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
