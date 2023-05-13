@@ -1,7 +1,5 @@
 CC = g++
 COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native -fsanitize=unreachable
-DBG_FLAGS = ${COMMON_FLAGS} -Og
-RELEASE_FLAGS = ${COMMON_FLAGS} -O3
 LD_FLAGS = -pthread
 
 SRC_DIR := src
@@ -10,6 +8,9 @@ SRC_FILES := ${wildcard ${SRC_DIR}/*.cpp}
 OBJ_FILES =  ${patsubst src/%.cpp, %.o, ${SRC_FILES}} 
 
 DEPS = ${GENERATED_FILES} ${SRC_FILES}
+
+debug: CPPFLAGS := -Og
+release: CPPFLAGS := -O3
 
 TEST_DIR := tests
 
@@ -22,27 +23,27 @@ release: release_bin
 test_all: test_debug test_release
 
 ${OBJ_FILES}: %.o: src/%.cpp 
-	${CC} ${COMMON_FLAGS} -c $^
+	${CC} ${COMMON_FLAGS} ${CPPFLAGS} -c $^
 
 main.o: main.cpp
-	${CC} ${COMMON_FLAGS} -c $^
+	${CC} ${COMMON_FLAGS} ${CPPFLAGS} -c $^
 
 src/parser.cpp: src/parser.ypp
 	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
-	${CC} ${COMMON_FLAGS} -c $@
+	${CC} ${COMMON_FLAGS} ${CPPFLAGS} -c $@
 
 src/scanner.cpp: src/scanner.lex
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
-	${CC} ${COMMON_FLAGS} -c $@
+	${CC} ${COMMON_FLAGS} ${CPPFLAGS} -c $@
 
 debug_bin: src/scanner.cpp src/parser.cpp main.o ${OBJ_FILES}
-	${CC} ${COMMON_FLAGS} *.o -o $@ 
+	${CC} ${COMMON_FLAGS} ${CPPFLAGS} *.o -o $@ 
 
 release_bin: src/scanner.cpp src/parser.cpp main.o ${OBJ_FILES} 
-	${CC} ${RELEASE_FLAGS} *.o -o $@ 
+	${CC} ${COMMON_FLAGS} ${CPPFLAGS} *.o -o $@ 
 
 test_debug: ${DEPS} ${TEST_DIR}/*.cpp
-	${CC} -DDEBUG_TOKENS ${DBG_FLAGS} $^ -o $@ ${LD_FLAGS}
+	${CC} -DDEBUG_TOKENS ${CPPFLAGS} $^ -o $@ ${LD_FLAGS}
 	./$@
 	rm -f $@
 

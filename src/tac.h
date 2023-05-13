@@ -8,7 +8,7 @@
 
 class Quad {
  public:
-  virtual void print() const {};
+  virtual void print() const; 
 
  protected:
   virtual ~Quad() = default;
@@ -18,45 +18,41 @@ template <typename T>
 class Value : public Quad {
   public:
     T value;
+    void print() const { std::cout << value;   };
     Value(T v) : value(v) {}
 };
 
 class AssignTAC : public Quad {
  public:
-  const char op;
+  std::string op;
   int lhs, rhs;
-  int kind;
-
-  AssignTAC(const char  o, int l, int r, int k)
-  : op(o), lhs(l), rhs(r), kind(k) {}
-
-  void print() const {
-  }
-
+  AssignTAC(std::string o, int l, int r)
+  : op(o), lhs(l), rhs(r) {}
+  void print() const;
 };
 
 class UnaryTAC : public Quad {
  public:
   std::string op;
   int index;
-  int kind;
+  UnaryTAC(std::string o, int i) : op(o), index(i) {}
+   
+};
 
-  UnaryTAC(std::string o, int i, int k) : op(o), index(i), kind(k) {}
+class LoadTAC : public Quad {
+  public:
+  std::string identifier;
+  LoadTAC(std::string id) : identifier(id) {}
 
-  void print() const {
-    std::cout << index << " = " << op << index << std::endl;
-  }
+  void print() const; 
 };
 
 // x = y
 class CopyTAC : public Quad {
  public:
   int index;
-  int kind;
-  CopyTAC(int i, int k) : index(i), kind(k) {}
-  void print() const {
-    std::cout << "this = " << index << '\n';
-  }
+  CopyTAC(int i) : index(i) {}
+  void print() const ;
 };
 
 // x relop y
@@ -66,25 +62,25 @@ class CondJumpRelopTAC : public Quad {
   char op;
   int lhs, rhs;
   int label;
-  int kind;
-  CondJumpRelopTAC(int l, int r, int lbl, int k)
-      : lhs(l), rhs(r), label(lbl), kind(k) {}
-  void print() const {
-  }
+  CondJumpRelopTAC(int l, int r, int lbl)
+      : lhs(l), rhs(r), label(lbl) {}
+
+  void set_jmp(int lbl) {
+    label = lbl;
+  } 
 };
 // if x goto L
 class CondJumpTAC : public Quad {
  public:
-  int kind;
   int ident_index;
   int jmp_label;
-  CondJumpTAC(int k, int idx, int label = 0)
-      : kind(k), ident_index(idx), jmp_label(label) {}
-
-
-       void print() const {
-    std::cout << "if " << ident_index << " goto L" << jmp_label << std::endl;
+  CondJumpTAC(int idx, int label = 0)
+      :  ident_index(idx), jmp_label(label) {}
+    
+  void set_jmp(int label) {
+    jmp_label = label;
   }
+  
 };
 
 // jmp L
@@ -92,6 +88,10 @@ class JumpTAC : public Quad {
  public:
   int label;
   JumpTAC(int l = 0) : label(l) {}
+
+  void set_jmp(int lbl) {
+    label = lbl;
+  }
 };
 
 // arg 1
@@ -103,21 +103,16 @@ class CallTAC : public Quad {
   int num_args;
   std::string fun;
   CallTAC(void * f, int n) : func(f), num_args(n) {}
-
-  void print() const {
-    std::cout << "call " << fun << '\n';
-  }
-
+  
 };
 
 // arg x
 class ArgTAC : public Quad {
  public:
   int arg;
-  int kind;
-  ArgTAC(int a, int k) : arg(a), kind(k) {}
+  ArgTAC(int a) : arg(a) {}
 
-    void print() const { std::cout << "arg " << arg << std::endl; }
+     
 };
 
 // x = y[i]
@@ -125,13 +120,8 @@ class IndexCopyTAC : public Quad {
  public:
   const Symbol* arr;
   int index;
-  int kind;
-  IndexCopyTAC(const Symbol* a, int i, int k) : arr(a), index(i), kind(k) {}
-
-   void print() const {
-    std::cout <<  " = " << arr->name << "[" << index << "]"
-              << std::endl;
-  }
+  IndexCopyTAC(const Symbol* a, int i) : arr(a), index(i) {}
+   
 };
 
 // x[i] = y
@@ -140,47 +130,37 @@ class ValueCopyTAC : public Quad {
   const Symbol* arr;
   int index;
   std::string value;
-  int kind;
-  ValueCopyTAC(const Symbol* a, int i, int k) : arr(a), index(i), kind(k) {}
+  ValueCopyTAC(const Symbol* a, int i) : arr(a), index(i) {}
 
 
-    void print() const {
-            std::cout << arr->name << "[" << index << "]" << " = " << value << std::endl;
-        }
+    void print() const ;
 };
 
 // x = &y
 class AddrTac : public Quad {
  public:
   int index;
-  int kind;
-  AddrTac(int i, int k) : index(i), kind(k) {}
-
-
-   void print() const { std::cout << " = &" << index << std::endl; }
+  AddrTac(int i) : index(i) {}
+   
 };
 
 // x = *y
 class DerefTAC : public Quad {
  public:
   int index;
-  int kind;
-  DerefTAC(int i, int k) : index(i), kind(k) {}
+  DerefTAC(int i) : index(i) {}
 
-  void print() const { std::cout << " = *" << index << std::endl; }
+   
 };
 // *x = y
 class AddrSetTAC : public Quad {
  public:
   int index;
-  int kind;
   int value;
-  AddrSetTAC(int i, int k, int v) : index(i), kind(k), value(v) {}
+  AddrSetTAC(int i, int v) : index(i), value(v) {}
 
 
-    void print() const {
-            std::cout << "*" << index << " = " << value << std::endl;
-        }
+     
 };
 
 class CastTAC : public Quad {
@@ -192,7 +172,7 @@ class CastTAC : public Quad {
       : index(i), source_kind(src), destination_kind(dest) {}
 
 
-       void print() const { std::cout << "cast " << index << std::endl; }
+        
 };
 
 // mov(suffix) %eax
@@ -200,11 +180,10 @@ class CastTAC : public Quad {
 class ReturnTAC : public Quad {
  public:
   int ret_val;
-  int kind;
 
-  ReturnTAC(int ret, int k) : ret_val(ret), kind(k) {}
+  ReturnTAC(int ret) : ret_val(ret) {}
 
-  void print() const { std::cout << "ret " << ret_val << std::endl; }
+   
 };
 
 class BasicBlock {
@@ -229,6 +208,7 @@ class BasicBlock {
   int get_instruction(const ASTNode & n);
 
   void print() const;
+  
   BasicBlock* prev;
 };
 
