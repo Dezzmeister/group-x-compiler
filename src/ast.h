@@ -361,6 +361,7 @@ class CharLiteral : public Expr {
         CharLiteral(const Location loc, const char value);
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;
@@ -378,6 +379,7 @@ class StringLiteral : public Expr {
         StringLiteral(const Location loc, const char * const value);
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;
@@ -415,6 +417,7 @@ class Ident : public CallingExpr {
         Ident(const Location loc, const char * const _id);
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;

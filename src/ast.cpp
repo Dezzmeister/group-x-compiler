@@ -207,6 +207,11 @@ bool BoolLiteral::operator==(const ASTNode &node) const {
 
 CharLiteral::CharLiteral(const Location loc, const char value) : Expr(loc), value(value) {}
 
+void CharLiteral::gen_tac() const {
+    Value<char> * v = new Value<char>(value);
+    x::bblock->add_instruction(v);
+}
+
 void CharLiteral::print() const {
     switch (value) {
         case '\n':
@@ -261,6 +266,10 @@ std::vector<ASTNode *> StringLiteral::children() {
     return {};
 }
 
+void StringLiteral::gen_tac() const {
+    Value<std::string> * v = new Value<std::string>(value);
+    x::bblock->add_instruction(v);
+}
 bool StringLiteral::operator==(const ASTNode &node) const {
     if (node.get_kind() != StringLiteral::kind) {
         return false;
@@ -287,16 +296,22 @@ void TernaryExpr::print() const {
 }
 
 void TernaryExpr::gen_tac() const {
-  cond->gen_tac();
-  int cond_idx = x::bblock->last_instruction();
-  x::bblock->add_instruction(new CondJumpTAC(cond->get_kind(), cond_idx));
+  int cond_idx = x::bblock->get_instruction(*cond);
+
+  CondJumpTAC * cj = new CondJumpTAC(cond_idx);
+  x::bblock->add_instruction(cj);
+
   tru->gen_tac();
-  int tru_label = x::bblock->last_instruction();
-  std::cout << tru_label << '\n';
-  x::bblock->add_instruction(new JumpTAC());
-  fals->gen_tac();
-  int false_label = x::bblock->last_instruction();
-  std::cout << false_label << '\n';
+
+  // An unconditional jump past the false label in the true block.
+  JumpTAC * tru_exit = new JumpTAC();
+  x::bblock->add_instruction(tru_exit);
+
+  int false_label = x::bblock->get_instruction(*fals);
+  cj->set_jmp(false_label);
+
+  int next = x::bblock->next_instruction();
+  tru_exit->set_jmp(next);
 }
 
 std::vector<ASTNode *> TernaryExpr::children() {
@@ -345,6 +360,11 @@ void Ident::print() const {
     std::cout << id;
 }
 
+void Ident::gen_tac() const {
+    LoadTAC * load = new LoadTAC(id);
+    x::bblock->add_instruction(load);
+}
+
 std::vector<ASTNode *> Ident::children() {
     return {};
 }
@@ -376,8 +396,7 @@ void MathExpr::print() const {
 void MathExpr::gen_tac() const {
     int l_idx = x::bblock->get_instruction(*left);
     int r_idx = x::bblock->get_instruction(*right);
-    int kind = std::max(left->get_kind(), right->get_kind());
-    AssignTAC * assign = new AssignTAC(op, l_idx, r_idx, kind);
+    AssignTAC * assign = new AssignTAC(std::string(1, op), l_idx, r_idx);
     x::bblock->add_instruction(assign);
 } 
 
@@ -410,19 +429,10 @@ void BoolExpr::print() const {
 }
 
 void BoolExpr::gen_tac() const {
-  int left_kind = left->get_kind();
-  int right_kind = right->get_kind();
-  if (left_kind == BoolLiteral::kind) {
-    if (right_kind == BoolLiteral::kind) {
-      // Both immediates.
-    }
-  }
-
-  if (right_kind == BoolLiteral::kind) {
-    // Left is some memory address.
-  } else {
-    // Both are memory addresses.
-  }
+   int l_idx = x::bblock->get_instruction(*left);
+    int r_idx = x::bblock->get_instruction(*right);
+    AssignTAC * a = new AssignTAC(op, l_idx, r_idx);
+    x::bblock->add_instruction(a); 
 }
 
 std::vector<ASTNode *> BoolExpr::children() {
@@ -1005,7 +1015,7 @@ void VarDeclInit::print() const {
 
 void VarDeclInit::gen_tac() const {
     int init_idx = x::bblock->get_instruction(*init);
-    CopyTAC * c = new CopyTAC(init_idx, init->get_kind());
+    CopyTAC * c = new CopyTAC(init_idx);
     x::bblock->add_instruction(c);
 } 
 
@@ -1060,12 +1070,13 @@ IfStmt::~IfStmt() {
 }
 
 void IfStmt::gen_tac() const {
-    cond->gen_tac();
-    int cond_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new CondJumpTAC(cond->get_kind(), cond_idx));
+      cond->gen_tac();
+    int expr_idx = x::bblock->last_instruction();
+    CondJumpTAC * cj = new CondJumpTAC(expr_idx);
+    x::bblock->add_instruction(cj);
     then->gen_tac();
-    // This is the label that should be jumped to if the condition is false.
-    // int false_label = x::bblock->next_instruction();
+    int false_label = x::bblock->next_instruction();
+    cj->set_jmp(false_label);
 }
 
 void IfStmt::print() const {
@@ -1138,14 +1149,15 @@ void WhileStmt::print() const {
 }
 
 void WhileStmt::gen_tac() const {
-    cond->gen_tac();
+     cond->gen_tac();
     int cond_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new CondJumpTAC(cond->get_kind(), cond_idx));
+    CondJumpTAC * cj = new CondJumpTAC(cond->get_kind(), cond_idx);
+    x::bblock->add_instruction(cj);
     int body_start = x::bblock->next_instruction();
     body->gen_tac();
     x::bblock->add_instruction(new JumpTAC(body_start));
-    // This the label to jump to when the condition is false.
-    // int false_label = x::bblock->next_instruction();
+    int false_label = x::bblock->next_instruction();
+    cj->set_jmp(false_label);
 }
 
 std::vector<ASTNode *> WhileStmt::children() {
@@ -1188,11 +1200,12 @@ void ForStmt::print() const {
 
 void ForStmt::gen_tac() const {
     init->gen_tac();
-    int init_idx = x::bblock->last_instruction();
     body->gen_tac();
-    int body_idx = x::bblock->last_instruction();
-    update->gen_tac();
-    x::bblock->add_instruction(new CondJumpTAC(init->get_kind(), init_idx, body_idx));
+    int update_idx = x::bblock->get_instruction(*update);
+    CondJumpTAC * cj = new CondJumpTAC(update_idx);
+    x::bblock->add_instruction(cj);
+    int exit_jmp = x::bblock->next_instruction();
+    cj->set_jmp(exit_jmp);
 }
 
 std::vector<ASTNode *> ForStmt::children() {
@@ -1225,7 +1238,7 @@ void AddrOf::print() const {
 void AddrOf::gen_tac() const {
   expr->gen_tac();
   int expr_idx = x::bblock->last_instruction();
-  x::bblock->add_instruction(new AddrTac(expr_idx, expr->get_kind()));
+  x::bblock->add_instruction(new AddrTac(expr_idx));
 }
 
 std::vector<ASTNode *> AddrOf::children() {
@@ -1257,7 +1270,7 @@ void Deref::print() const {
 void Deref::gen_tac() const {
   expr->gen_tac();
   int expr_idx = x::bblock->last_instruction();
-  x::bblock->add_instruction(new DerefTAC(expr_idx, expr->get_kind()));
+  x::bblock->add_instruction(new DerefTAC(expr_idx));
 }
 
 std::vector<ASTNode *> Deref::children() {
@@ -1323,19 +1336,10 @@ void LogicalExpr::print() const {
 }
 
 void LogicalExpr::gen_tac() const {
-  int left_kind = left->get_kind();
-  int right_kind = right->get_kind();
-  if (left_kind == BoolLiteral::kind) {
-    if (right_kind == BoolLiteral::kind) {
-        // left and right are both immediates.
-    } else {
-        // right resolves to some memory address.
-    }
-  }
-
-  if (right_kind == BoolLiteral::kind) {
-    // left resolves to some memory address.
-  }
+    int l_idx = x::bblock->get_instruction(*left);
+    int r_idx = x::bblock->get_instruction(*right);
+    AssignTAC * a = new AssignTAC(op, l_idx, r_idx);
+    x::bblock->add_instruction(a);
 }
 
 std::vector<ASTNode *> LogicalExpr::children() {
@@ -1558,22 +1562,9 @@ void ReturnStatement::print() const {
 }
 
 void ReturnStatement::gen_tac() const {
-    int ret_kind = val->get_kind();
-    if (ret_kind == IntLiteral::kind) {
-
-    } 
-    else if (ret_kind == CharLiteral::kind) {
-
-    }
-    else if (ret_kind == BoolLiteral::kind) {
-
-    }
-    else if (ret_kind == FloatLiteral::kind) {
-
-    }
-    else {
-        // Everything here resolves to a memory address.
-    }
+   int ret_idx = x::bblock->get_instruction(*val);
+    ReturnTAC * ret = new ReturnTAC(ret_idx);
+    x::bblock->add_instruction(ret);
 }
 
 std::vector<ASTNode *> ReturnStatement::children() {
@@ -1605,6 +1596,9 @@ void Assignment::print() const {
 }
 
 void Assignment::gen_tac() const {
+     int r_idx = x::bblock->get_instruction(*rhs);
+    CopyTAC * c = new CopyTAC(r_idx);
+    x::bblock->add_instruction(c);
 }
 
 std::vector<ASTNode *> Assignment::children() {
@@ -1636,7 +1630,7 @@ void BangExpr::print() const {
 void BangExpr::gen_tac() const {
     expr->gen_tac();
     int expr_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new UnaryTAC("!", expr_idx, expr->get_kind()));
+    x::bblock->add_instruction(new UnaryTAC("!", expr_idx));
 }
 
 std::vector<ASTNode *> BangExpr::children() {
@@ -1668,7 +1662,7 @@ void NotExpr::print() const {
 void NotExpr::gen_tac() const {
     expr->gen_tac();
     int expr_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new UnaryTAC("!", expr_idx, expr->get_kind()));
+    x::bblock->add_instruction(new UnaryTAC("!", expr_idx));
 }
 
 std::vector<ASTNode *> NotExpr::children() {
@@ -1700,7 +1694,7 @@ void PreExpr::print() const {
 void PreExpr::gen_tac() const {
     expr->gen_tac();
     int expr_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new UnaryTAC(op, expr_idx, expr->get_kind()));
+    x::bblock->add_instruction(new UnaryTAC(op, expr_idx));
 }
 
 std::vector<ASTNode *> PreExpr::children() {
