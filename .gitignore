@@ -14,3 +14,4 @@ prog.dot
 _deps
 _debug
 _release
+*.o
