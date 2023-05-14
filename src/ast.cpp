@@ -1022,9 +1022,6 @@ void VarDeclInit::gen_tac() const {
     if (!x::bblock) {
         x::bblock = new BasicBlock("start");
     }
-    if (init->get_kind() == ArrayLiteral::kind) {
-        std::cout << "array lit" << '\n';
-    }
     int init_idx = x::bblock->get_instruction(*init);
     std::string id = decl->var_name->id;
     MoveTAC * mov = new MoveTAC(id, init_idx);

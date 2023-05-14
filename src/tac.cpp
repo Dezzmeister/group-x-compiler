@@ -93,6 +93,7 @@ void CondJumpTAC::print() const {
 void BasicBlock::print() const
 {
     std::cout << name << ":" << '\n';
+    
     int i = 0;
     for (auto trip : trips)
     {

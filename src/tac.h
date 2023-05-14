@@ -233,7 +233,7 @@ public:
 
   BasicBlock(std::string str) : name(str) {}
 
-  BasicBlock *prev;
+  BasicBlock *prev = nullptr;
 };
 
 namespace x
