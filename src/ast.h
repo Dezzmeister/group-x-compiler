@@ -350,6 +350,7 @@ class BoolLiteral : public Expr {
         BoolLiteral(const Location loc, const bool value);
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;
@@ -722,6 +723,30 @@ class FuncTypename : public Typename {
         KIND_CLASS()
 };
 
+class DynamicArrayTypename : public Typename{
+    public:
+        const Typename * element_type;
+        const IntLiteral * size;
+
+        DynamicArrayTypename(const Location loc, const Typename * element_type, const IntLiteral * size);
+
+        virtual Typename * clone() const;
+
+        virtual ~DynamicArrayTypename();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
 class StaticArrayTypename : public Typename {
     public:
         const Typename * element_type;
@@ -889,6 +914,7 @@ class IfElseStmt : public Statement {
         virtual ~IfElseStmt();
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;

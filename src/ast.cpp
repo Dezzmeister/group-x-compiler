@@ -185,6 +185,11 @@ bool FloatLiteral::operator==(const ASTNode &node) const {
 
 BoolLiteral::BoolLiteral(const Location loc, const bool value) : Expr(loc), value(value) {}
 
+void BoolLiteral::gen_tac() const {
+    Value<bool> * v = new Value<bool>(value);
+    x::bblock->add_instruction(v);
+}
+
 void BoolLiteral::print() const {
     if (value) {
         printf("true");
@@ -1014,8 +1019,8 @@ void VarDeclInit::print() const {
 }
 
 void VarDeclInit::gen_tac() const {
-    if (init->get_kind() == ArrayLiteral::kind) {
-        std::cout << "array lit" << '\n';
+    if (!x::bblock) {
+        x::bblock = new BasicBlock("start");
     }
     int init_idx = x::bblock->get_instruction(*init);
     std::string id = decl->var_name->id;
@@ -1083,7 +1088,7 @@ IfStmt::~IfStmt() {
 }
 
 void IfStmt::gen_tac() const {
-      cond->gen_tac();
+    cond->gen_tac();
     int expr_idx = x::bblock->last_instruction();
     CondJumpTAC * cj = new CondJumpTAC(expr_idx);
     x::bblock->add_instruction(cj);
@@ -1121,6 +1126,11 @@ IfElseStmt::~IfElseStmt() {
     delete if_stmt;
     delete els;
     delete scope;
+}
+
+void IfElseStmt::gen_tac() const {
+    if_stmt->gen_tac();
+    els->gen_tac(); 
 }
 
 void IfElseStmt::print() const {
@@ -1503,7 +1513,7 @@ void FuncDecl::print() const {
 }
 
 void FuncDecl::gen_tac() const {
-  x::bblock->add_block(name->id);
+    x::bblock->add_block(name->id);
   for (auto statement : body->statements) {
     statement->gen_tac();
   }

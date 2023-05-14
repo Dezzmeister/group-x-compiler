@@ -97,6 +97,7 @@ public:
   CondJumpTAC(int idx, int label = 0)
       : ident_index(idx), jmp_label(label) {}
 
+  void print() const;
   void set_jmp(int label)
   {
     jmp_label = label;
@@ -209,7 +210,7 @@ public:
 
   std::string name;
 
-  int n_instructions;
+  int n_instructions = 0;
 
   void add_block(std::string name);
 
@@ -228,8 +229,11 @@ public:
   int get_instruction(const ArrayLiteral & arr);
 
   void print() const;
+  BasicBlock() = default;
 
-  BasicBlock *prev;
+  BasicBlock(std::string str) : name(str) {}
+
+  BasicBlock *prev = nullptr;
 };
 
 namespace x
