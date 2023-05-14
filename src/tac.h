@@ -30,8 +30,8 @@ class AssignTAC : public Quad
 {
 public:
   std::string op;
-  int lhs, rhs;
-  AssignTAC(std::string o, int l, int r)
+  Quad *lhs, *rhs;
+  AssignTAC(std::string o, Quad * l, Quad * r)
       : op(o), lhs(l), rhs(r) {}
   void print() const;
 };
@@ -40,8 +40,8 @@ class UnaryTAC : public Quad
 {
 public:
   std::string op;
-  int index;
-  UnaryTAC(std::string o, int i) : op(o), index(i) {}
+  Quad * location;
+  UnaryTAC(std::string o, Quad * loc) : op(o), location(loc) {}
 };
 
 class LoadTAC : public Quad
@@ -56,9 +56,9 @@ public:
 class MoveTAC : public Quad
 {
 public:
-  std::string location;
-  int index;
-  MoveTAC(std::string loc, int i) : location(loc), index(i) {}
+  Quad * location;
+  std::string ident;
+  MoveTAC(std::string id, Quad * loc) : location(loc), ident(id) {}
 
   void print() const;
 };
@@ -67,8 +67,8 @@ public:
 class CopyTAC : public Quad
 {
 public:
-  int index;
-  CopyTAC(int i) : index(i) {}
+  Quad * location;
+  CopyTAC(Quad * loc) : location(loc) {}
   void print() const;
 };
 
@@ -92,10 +92,10 @@ public:
 class CondJumpTAC : public Quad
 {
 public:
-  int ident_index;
+  Quad * location;
   int jmp_label;
-  CondJumpTAC(int idx, int label = 0)
-      : ident_index(idx), jmp_label(label) {}
+  CondJumpTAC(Quad * loc, int label = 0)
+      : location(loc), jmp_label(label) {}
 
   void print() const;
   void set_jmp(int label)
@@ -144,8 +144,8 @@ class IndexCopyTAC : public Quad
 {
 public:
   const Symbol *arr;
-  int index;
-  IndexCopyTAC(const Symbol *a, int i) : arr(a), index(i) {}
+  Quad * location;
+  IndexCopyTAC(const Symbol *a, Quad * loc) : arr(a), location(loc) {}
 };
 
 // x[i] = y
@@ -153,9 +153,9 @@ class ValueCopyTAC : public Quad
 {
 public:
   const Symbol *arr;
-  int index;
+  Quad * location;
   std::string value;
-  ValueCopyTAC(const Symbol *a, int i) : arr(a), index(i) {}
+  ValueCopyTAC(const Symbol *a, Quad * loc) : arr(a), location(loc) {}
 
   void print() const;
 };
@@ -164,34 +164,34 @@ public:
 class AddrTac : public Quad
 {
 public:
-  int index;
-  AddrTac(int i) : index(i) {}
+  Quad * location;
+  AddrTac(Quad * loc) : location(loc) {}
 };
 
 // x = *y
 class DerefTAC : public Quad
 {
 public:
-  int index;
-  DerefTAC(int i) : index(i) {}
+  Quad * location;
+  DerefTAC(Quad * loc) : location(loc) {}
 };
 // *x = y
 class AddrSetTAC : public Quad
 {
 public:
-  int index;
+  Quad * location;
   int value;
-  AddrSetTAC(int i, int v) : index(i), value(v) {}
+  AddrSetTAC(Quad * loc, int v) : location(loc), value(v) {}
 };
 
 class CastTAC : public Quad
 {
 public:
-  int index;
+  Quad * location;
   int source_kind;
   int destination_kind;
-  CastTAC(int i, int src, int dest)
-      : index(i), source_kind(src), destination_kind(dest) {}
+  CastTAC(Quad * loc, int src, int dest)
+      : location(loc), source_kind(src), destination_kind(dest) {}
 };
 
 // mov(suffix) %eax
@@ -225,9 +225,7 @@ public:
 
   int next_instruction() const { return n_instructions; }
 
-  int get_instruction(const ASTNode &n);
-
-  int get_instruction(const ArrayLiteral & arr);
+  Quad * get_instruction(const ASTNode &n);
 
   void print() const;
   BasicBlock() = default;

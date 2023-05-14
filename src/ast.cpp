@@ -144,9 +144,9 @@ void IntLiteral::print() const {
     printf("%d", value);
 }
 
-void IntLiteral::gen_tac() const {
+Quad * IntLiteral::gen_tac() const {
     Value<int> * v = new Value<int>(value);
-    x::bblock->add_instruction(v);
+    return v;
 }
 
 std::vector<ASTNode *> IntLiteral::children() {
@@ -185,7 +185,7 @@ bool FloatLiteral::operator==(const ASTNode &node) const {
 
 BoolLiteral::BoolLiteral(const Location loc, const bool value) : Expr(loc), value(value) {}
 
-void BoolLiteral::gen_tac() const {
+Quad * BoolLiteral::gen_tac() const {
     Value<bool> * v = new Value<bool>(value);
     x::bblock->add_instruction(v);
 }
@@ -212,7 +212,7 @@ bool BoolLiteral::operator==(const ASTNode &node) const {
 
 CharLiteral::CharLiteral(const Location loc, const char value) : Expr(loc), value(value) {}
 
-void CharLiteral::gen_tac() const {
+Quad * CharLiteral::gen_tac() const {
     Value<char> * v = new Value<char>(value);
     x::bblock->add_instruction(v);
 }
@@ -271,7 +271,7 @@ std::vector<ASTNode *> StringLiteral::children() {
     return {};
 }
 
-void StringLiteral::gen_tac() const {
+Quad * StringLiteral::gen_tac() const {
     Value<std::string> * v = new Value<std::string>(value);
     x::bblock->add_instruction(v);
 }
@@ -300,8 +300,8 @@ void TernaryExpr::print() const {
     fals->print();
 }
 
-void TernaryExpr::gen_tac() const {
-  int cond_idx = x::bblock->get_instruction(*cond);
+Quad * TernaryExpr::gen_tac() const {
+  Quad * cond_idx = x::bblock->get_instruction(*cond);
 
   CondJumpTAC * cj = new CondJumpTAC(cond_idx);
   x::bblock->add_instruction(cj);
@@ -312,7 +312,8 @@ void TernaryExpr::gen_tac() const {
   JumpTAC * tru_exit = new JumpTAC();
   x::bblock->add_instruction(tru_exit);
 
-  int false_label = x::bblock->get_instruction(*fals);
+  fals->gen_tac();
+  int false_label = x::bblock->;
   cj->set_jmp(false_label);
 
   int next = x::bblock->next_instruction();
@@ -365,7 +366,7 @@ void Ident::print() const {
     std::cout << id;
 }
 
-void Ident::gen_tac() const {
+Quad * Ident::gen_tac() const {
     LoadTAC * load = new LoadTAC(id);
     x::bblock->add_instruction(load);
 }
@@ -398,9 +399,9 @@ void MathExpr::print() const {
     right->print();
 }
 
-void MathExpr::gen_tac() const {
-    int l_idx = x::bblock->get_instruction(*left);
-    int r_idx = x::bblock->get_instruction(*right);
+Quad * MathExpr::gen_tac() const {
+    Quad * l_idx = x::bblock->get_instruction(*left);
+    Quad * r_idx = x::bblock->get_instruction(*right);
     AssignTAC * assign = new AssignTAC(std::string(1, op), l_idx, r_idx);
     x::bblock->add_instruction(assign);
 } 
@@ -433,9 +434,9 @@ void BoolExpr::print() const {
     right->print();
 }
 
-void BoolExpr::gen_tac() const {
-   int l_idx = x::bblock->get_instruction(*left);
-    int r_idx = x::bblock->get_instruction(*right);
+Quad * BoolExpr::gen_tac() const {
+    Quad * l_idx = x::bblock->get_instruction(*left);
+    Quad * r_idx = x::bblock->get_instruction(*right);
     AssignTAC * a = new AssignTAC(op, l_idx, r_idx);
     x::bblock->add_instruction(a); 
 }
@@ -467,7 +468,7 @@ void ParensExpr::print() const {
     putchar(')');
 }
 
-void ParensExpr::gen_tac() const { expr->gen_tac(); };
+Quad * ParensExpr::gen_tac() const { expr->gen_tac(); };
 
 std::vector<ASTNode *> ParensExpr::children() {
     return {(ASTNode *)expr};
@@ -686,7 +687,7 @@ bool ExprList::operator==(const ASTNode &node) const {
     return cmp_vectors(exprs, n.exprs);
 }
 
-void ExprList::gen_tac() const {
+Quad * ExprList::gen_tac() const {
   for (auto &expr : exprs) {
     expr->gen_tac();
   }
@@ -708,7 +709,7 @@ void StatementList::print() const {
     }
 }
 
-void StatementList::gen_tac() const {
+Quad * StatementList::gen_tac() const {
   for (auto &statement : statements) {
     statement->gen_tac();
   }
@@ -792,7 +793,7 @@ void TupleExpr::print() const {
     putchar(']');
 }
 
-void TupleExpr::gen_tac() const { expr_list->gen_tac(); }
+Quad * TupleExpr::gen_tac() const { expr_list->gen_tac(); }
 
 std::vector<ASTNode *> TupleExpr::children() {
     return {(ASTNode *)expr_list};
@@ -1034,11 +1035,11 @@ void VarDeclInit::print() const {
     init->print();
 }
 
-void VarDeclInit::gen_tac() const {
+Quad * VarDeclInit::gen_tac() const {
     if (!x::bblock) {
         x::bblock = new BasicBlock("start");
     }
-    int init_idx = x::bblock->get_instruction(*init);
+    Quad * init_idx = x::bblock->get_instruction(*init);
     std::string id = decl->var_name->id;
     MoveTAC * mov = new MoveTAC(id, init_idx);
     x::bblock->add_instruction(mov);
@@ -1065,10 +1066,10 @@ ArrayLiteral::~ArrayLiteral() {
     delete items;
 }
 
-void ArrayLiteral::gen_tac() const {
+Quad * ArrayLiteral::gen_tac() const {
     int i = 0;
     for (Expr *expr: items->exprs) {
-        int expr_idx = x::bblock->get_instruction(*expr);
+        Quad * expr_idx = x::bblock->get_instruction(*expr);
         MoveTAC * mov = new MoveTAC("a[" + std::to_string(i++) +  "]", expr_idx);
         x::bblock->add_instruction(mov);
     }
@@ -1103,10 +1104,9 @@ IfStmt::~IfStmt() {
     delete scope;
 }
 
-void IfStmt::gen_tac() const {
-    cond->gen_tac();
-    int expr_idx = x::bblock->last_instruction();
-    CondJumpTAC * cj = new CondJumpTAC(expr_idx);
+Quad * IfStmt::gen_tac() const {
+    Quad * expr_to_check = x::bblock->get_instruction(*cond);
+    CondJumpTAC * cj = new CondJumpTAC(expr_to_check);
     x::bblock->add_instruction(cj);
     then->gen_tac();
     int false_label = x::bblock->next_instruction();
@@ -1144,7 +1144,7 @@ IfElseStmt::~IfElseStmt() {
     delete scope;
 }
 
-void IfElseStmt::gen_tac() const {
+Quad * IfElseStmt::gen_tac() const {
     if_stmt->gen_tac();
     els->gen_tac(); 
 }
@@ -1187,10 +1187,10 @@ void WhileStmt::print() const {
     printf("};\n");
 }
 
-void WhileStmt::gen_tac() const {
-     cond->gen_tac();
-    int cond_idx = x::bblock->last_instruction();
-    CondJumpTAC * cj = new CondJumpTAC(cond->get_kind(), cond_idx);
+Quad * WhileStmt::gen_tac() const {
+    cond->gen_tac();
+    Quad * expr_to_check = x::bblock->get_instruction(*cond);
+    CondJumpTAC * cj = new CondJumpTAC(expr_to_check);
     x::bblock->add_instruction(cj);
     int body_start = x::bblock->next_instruction();
     body->gen_tac();
@@ -1237,10 +1237,11 @@ void ForStmt::print() const {
     printf("}");
 }
 
-void ForStmt::gen_tac() const {
+Quad * ForStmt::gen_tac() const {
     init->gen_tac();
-    int loop_body = x::bblock->get_instruction(*body);
-    int cond_check = x::bblock->get_instruction(*condition);
+    int loop_body = x::bblock->next_instruction();
+    body->gen_tac();
+    Quad * cond_check = x::bblock->get_instruction(*condition);
     CondJumpTAC * cj = new CondJumpTAC(cond_check);
     x::bblock->add_instruction(cj);
     JumpTAC * jmp = new JumpTAC(loop_body);
@@ -1276,10 +1277,10 @@ void AddrOf::print() const {
     expr->print();
 }
 
-void AddrOf::gen_tac() const {
+Quad * AddrOf::gen_tac() const {
   expr->gen_tac();
-  int expr_idx = x::bblock->last_instruction();
-  x::bblock->add_instruction(new AddrTac(expr_idx));
+  Quad * addr_to_get = x::bblock->get_instruction(*expr);
+  x::bblock->add_instruction(new AddrTac(addr_to_get));
 }
 
 std::vector<ASTNode *> AddrOf::children() {
@@ -1308,10 +1309,9 @@ void Deref::print() const {
     expr->print();
 }
 
-void Deref::gen_tac() const {
-  expr->gen_tac();
-  int expr_idx = x::bblock->last_instruction();
-  x::bblock->add_instruction(new DerefTAC(expr_idx));
+Quad * Deref::gen_tac() const {
+  Quad * expr_to_deref = x::bblock->get_instruction(*expr);
+  x::bblock->add_instruction(new DerefTAC(expr_to_deref));
 }
 
 std::vector<ASTNode *> Deref::children() {
@@ -1342,10 +1342,9 @@ void CastExpr::print() const {
     dest_type->print();
 }
 
-void CastExpr::gen_tac() const {
-  expr->gen_tac();
-  int expr_idx = x::bblock->last_instruction();
-  x::bblock->add_instruction(new CastTAC(expr_idx, expr->get_kind(), dest_type->get_kind()));
+Quad * CastExpr::gen_tac() const {
+  Quad * expr_to_cast = x::bblock->get_instruction(*expr);
+  x::bblock->add_instruction(new CastTAC(expr_to_cast, expr->get_kind(), dest_type->get_kind()));
 }
 
 std::vector<ASTNode *> CastExpr::children() {
@@ -1376,9 +1375,9 @@ void LogicalExpr::print() const {
     right->print();
 }
 
-void LogicalExpr::gen_tac() const {
-    int l_idx = x::bblock->get_instruction(*left);
-    int r_idx = x::bblock->get_instruction(*right);
+Quad * LogicalExpr::gen_tac() const {
+    Quad * l_idx = x::bblock->get_instruction(*left);
+    Quad * r_idx = x::bblock->get_instruction(*right);
     AssignTAC * a = new AssignTAC(op, l_idx, r_idx);
     x::bblock->add_instruction(a);
 }
@@ -1441,7 +1440,7 @@ void FunctionCallStmt::print() const {
     putchar(')');
 }
 
-void FunctionCallStmt::gen_tac() const {
+Quad * FunctionCallStmt::gen_tac() const {
   for (auto expr : args->exprs) {
     expr->gen_tac();
   }
@@ -1540,7 +1539,7 @@ void FuncDecl::print() const {
     printf("}\n");
 }
 
-void FuncDecl::gen_tac() const {
+Quad * FuncDecl::gen_tac() const {
     x::bblock->add_block(name->id);
   for (auto statement : body->statements) {
     statement->gen_tac();
@@ -1576,7 +1575,7 @@ void ProgramSource::print() const {
     }
 }
 
-void ProgramSource::gen_tac() const {
+Quad * ProgramSource::gen_tac() const {
   for (auto &node : nodes) {
     node->gen_tac();
   }
@@ -1612,7 +1611,7 @@ void ReturnStatement::print() const {
     val->print();
 }
 
-void ReturnStatement::gen_tac() const {
+Quad * ReturnStatement::gen_tac() const {
    int ret_idx = x::bblock->get_instruction(*val);
     ReturnTAC * ret = new ReturnTAC(ret_idx);
     x::bblock->add_instruction(ret);
@@ -1646,8 +1645,8 @@ void Assignment::print() const {
     rhs->print();
 }
 
-void Assignment::gen_tac() const {
-     int r_idx = x::bblock->get_instruction(*rhs);
+Quad * Assignment::gen_tac() const {
+    Quad * r_idx = x::bblock->get_instruction(*rhs);
     CopyTAC * c = new CopyTAC(r_idx);
     x::bblock->add_instruction(c);
 }
@@ -1678,10 +1677,9 @@ void BangExpr::print() const {
     expr->print();
 }
 
-void BangExpr::gen_tac() const {
-    expr->gen_tac();
-    int expr_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new UnaryTAC("!", expr_idx));
+Quad * BangExpr::gen_tac() const {
+    Quad * expr_to_neg = x::bblock->get_instruction(*expr);
+    x::bblock->add_instruction(new UnaryTAC("!", expr_to_neg));
 }
 
 std::vector<ASTNode *> BangExpr::children() {
@@ -1710,10 +1708,9 @@ void NotExpr::print() const {
     expr->print();
 }
 
-void NotExpr::gen_tac() const {
-    expr->gen_tac();
-    int expr_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new UnaryTAC("!", expr_idx));
+Quad * NotExpr::gen_tac() const {
+    Quad * expr_to_neg = x::bblock->get_instruction(*expr);
+    x::bblock->add_instruction(new UnaryTAC("!", expr_to_neg));
 }
 
 std::vector<ASTNode *> NotExpr::children() {
@@ -1742,10 +1739,9 @@ void PreExpr::print() const {
     expr->print();
 }
 
-void PreExpr::gen_tac() const {
-    expr->gen_tac();
-    int expr_idx = x::bblock->last_instruction();
-    x::bblock->add_instruction(new UnaryTAC(op, expr_idx));
+Quad * PreExpr::gen_tac() const {
+    Quad * pre_expr = x::bblock->get_instruction(*expr);
+    x::bblock->add_instruction(new UnaryTAC(op, pre_expr));
 }
 
 std::vector<ASTNode *> PreExpr::children() {

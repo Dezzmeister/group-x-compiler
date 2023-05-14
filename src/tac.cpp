@@ -45,15 +45,9 @@ void Value<char>::print() const {
 }
 
 
-int BasicBlock::get_instruction(const ASTNode &n)
+Quad * BasicBlock::get_instruction(const ASTNode &n)
 {
-    n.gen_tac();
-    return this->last_instruction();
-}
-
-int BasicBlock::get_instruction(const ArrayLiteral & n) {
-    n.gen_tac();
-    return 0;
+    return n.gen_tac();
 }
 
 void BasicBlock::add_block(std::string name)
