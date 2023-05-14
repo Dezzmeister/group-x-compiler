@@ -1,38 +1,49 @@
 COMMON_FLAGS = -Wall -Werror -std=gnu++17 -march=native -fsanitize=unreachable
 SRCS := $(wildcard src/*.cpp)
 
-SRC_DIR  := src
-DEP_DIR  := deps
-TEST_DIR := tests
+${DEPS_DIR}
+
+SRC_DIR      := src
+DEPS_DIR     := deps
+TEST_DIR     := tests
+RELEASE_DIR  := rel
+DEBUG_DIR    := dbg
 
 GENERATED_FILES := ${addprefix ${SRC_DIR}/,scanner.cpp parser.cpp}
 
 OBJS := $(patsubst ${SRC_DIR}/%.cpp,%.o,$(SRCS))
 OBJS += parser.o scanner.o
 
-DEPENDS := $(addprefix $(DEP_DIR)/, $(patsubst ${SRC_DIR}/%.cpp,%.d,$(SRCS)))
+DBG_OBJS := $(addprefix ${DEBUG_DIR}/,$(OBJS))
+REL_OBJS := $(addprefix ${RELEASE_DIR}/,$(OBJS))
 
-debug: CPPFLAGS := -Og
+DEPS := $(addprefix ${DEPS_DIR}/, $(patsubst ${SRC_DIR}/%.cpp,%.d,$(SRCS)))
+
+debug:   CPPFLAGS := -Og
 release: CPPFLAGS := -O3
+
+release debug: src/parser.h
 
 .PHONY: all clean debug release sweep
 
-all: src/parser.h debug release 
+all: src/parser.h release debug
 
 sweep:
-	rm -rf deps 
+	rm -rf ${DEPS_DIR} 
 
 clean:
-	rm -f debug_bin release_bin *.o ${GENERATED_FILES}
+	rm -f debug_bin release_bin ${GENERATED_FILES}
+	rm -rf ${DEBUG_DIR}
+	rm -rf ${RELEASE_DIR}
 
-release: src/parser.h release_bin
+release: release_bin
 
-release_bin: $(OBJS)
+release_bin: ${REL_OBJS}
 	$(CXX) $(COMMON_FLAGS) $(CPPFLAGS) $^ -o $@
 
-debug: src/parser.h debug_bin 
+debug: debug_bin 
 
-debug_bin: $(OBJS)
+debug_bin: $(DBG_OBJS)
 	$(CXX) $(COMMON_FLAGS) $(CPPFLAGS) $^ -o $@
 
 parser.o: src/parser.cpp
@@ -47,14 +58,24 @@ src/scanner.cpp: src/scanner.lex
 
 src/parser.h:
 	bison --defines=src/parser.h src/parser.ypp
+	rm -f parser.tab.cpp
 
--include $(DEPENDS)
+-include $(DEPS)
 
-$(DEP_DIR):
-	mkdir -p $(DEP_DIR)
+${RELEASE_DIR}: 
+	mkdir -p ${RELEASE_DIR}
 
-%.o: src/%.cpp src/parser.h | $(DEP_DIR)
-	$(CXX) $(COMMON_FLAGS) $(CPPFLAGS) -MMD -MP -c $< -o $@ -MF $(patsubst %.o,${DEP_DIR}/%.d,$@)
+${DEPS_DIR}:
+	mkdir -p ${DEPS_DIR}
+
+${DEBUG_DIR}:
+	mkdir -p ${DEBUG_DIR}
+
+${DEBUG_DIR}/%.o: src/%.cpp | ${DEPS_DIR} ${DEBUG_DIR}
+	$(CXX) $(COMMON_FLAGS) $(CPPFLAGS) -MMD -MP -c $< -o $@ -MF $(patsubst ${DEBUG_DIR}/%.o,${DEPS_DIR}/%.d,$@)
+
+${RELEASE_DIR}/%.o: src/%.cpp | ${DEPS_DIR} ${RELEASE_DIR}
+	$(CXX) $(COMMON_FLAGS) $(CPPFLAGS) -MMD -MP -c $< -o $@ -MF $(patsubst ${RELEASE_DIR}/%.o,${DEPS_DIR}/%.d,$@)
 
 todo:
 	grep -Rn TODO
