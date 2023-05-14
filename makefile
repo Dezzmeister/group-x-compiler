@@ -4,10 +4,10 @@ SRCS := $(wildcard src/*.cpp)
 ${DEPS_DIR}
 
 SRC_DIR      := src
-DEPS_DIR     := deps
+DEPS_DIR     := _deps
 TEST_DIR     := tests
-RELEASE_DIR  := rel
-DEBUG_DIR    := dbg
+RELEASE_DIR  := _release
+DEBUG_DIR    := _debug
 
 GENERATED_FILES := ${addprefix ${SRC_DIR}/,scanner.cpp parser.cpp}
 

@@ -11,6 +11,6 @@ parser.png
 debug_bin
 release_bin
 prog.dot
-deps
-rel 
-dbg
+_deps
+_debug
+_release
