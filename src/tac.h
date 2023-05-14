@@ -11,6 +11,7 @@ std::string next_t();
 class Quad
 {
 public:
+  int bytes;
   virtual void print() const;
 
 protected:
@@ -22,8 +23,9 @@ class Value : public Quad
 {
 public:
   T value;
+  int bytes;
   void print() const { std::cout << next_t() << " = " << value; };
-  Value(T v) : value(v) {}
+  Value(T v, int b) : value(v), bytes(b) {}
 };
 
 class AssignTAC : public Quad
@@ -199,9 +201,8 @@ public:
 class ReturnTAC : public Quad
 {
 public:
-  int ret_val;
-
-  ReturnTAC(int ret) : ret_val(ret) {}
+  Quad * ret_val;
+  ReturnTAC(Quad * ret) : ret_val(ret) {}
 };
 
 class BasicBlock

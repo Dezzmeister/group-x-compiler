@@ -145,7 +145,7 @@ void IntLiteral::print() const {
 }
 
 Quad * IntLiteral::gen_tac() const {
-    Value<int> * v = new Value<int>(value);
+    Value<int> * v = new Value<int>(value, 4);
     return v;
 }
 
@@ -186,7 +186,7 @@ bool FloatLiteral::operator==(const ASTNode &node) const {
 BoolLiteral::BoolLiteral(const Location loc, const bool value) : Expr(loc), value(value) {}
 
 Quad * BoolLiteral::gen_tac() const {
-    Value<bool> * v = new Value<bool>(value);
+    Value<bool> * v = new Value<bool>(value, 2);
     x::bblock->add_instruction(v);
 }
 
@@ -213,7 +213,7 @@ bool BoolLiteral::operator==(const ASTNode &node) const {
 CharLiteral::CharLiteral(const Location loc, const char value) : Expr(loc), value(value) {}
 
 Quad * CharLiteral::gen_tac() const {
-    Value<char> * v = new Value<char>(value);
+    Value<char> * v = new Value<char>(value, 2);
     x::bblock->add_instruction(v);
 }
 
@@ -272,7 +272,8 @@ std::vector<ASTNode *> StringLiteral::children() {
 }
 
 Quad * StringLiteral::gen_tac() const {
-    Value<std::string> * v = new Value<std::string>(value);
+    Value<std::string> * v = new Value<std::string>(value, 8);
+    
     x::bblock->add_instruction(v);
 }
 bool StringLiteral::operator==(const ASTNode &node) const {
@@ -313,7 +314,7 @@ Quad * TernaryExpr::gen_tac() const {
   x::bblock->add_instruction(tru_exit);
 
   fals->gen_tac();
-  int false_label = x::bblock->;
+  int false_label = x::bblock->last_instruction();
   cj->set_jmp(false_label);
 
   int next = x::bblock->next_instruction();
@@ -1043,6 +1044,7 @@ Quad * VarDeclInit::gen_tac() const {
     std::string id = decl->var_name->id;
     MoveTAC * mov = new MoveTAC(id, init_idx);
     x::bblock->add_instruction(mov);
+    return mov;
 } 
 
 std::vector<ASTNode *> VarDeclInit::children() {
@@ -1612,8 +1614,8 @@ void ReturnStatement::print() const {
 }
 
 Quad * ReturnStatement::gen_tac() const {
-   int ret_idx = x::bblock->get_instruction(*val);
-    ReturnTAC * ret = new ReturnTAC(ret_idx);
+    Quad * ret_val = x::bblock->get_instruction(*val);
+    ReturnTAC * ret = new ReturnTAC(ret_val);
     x::bblock->add_instruction(ret);
 }
 
