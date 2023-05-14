@@ -12,3 +12,4 @@ debug_bin
 release_bin
 prog.dot
 *.o
+*.d
