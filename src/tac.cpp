@@ -3,11 +3,16 @@
 #include <iostream>
 #include <iomanip>
 
-BasicBlock *x::bblock = new BasicBlock();
+BasicBlock *x::bblock = nullptr;
 
 std::string next_t() {
     static int i = 0;
     return "t"+ std::to_string(i++);
+}
+
+template<>
+void Value<bool>::print() const {
+    std::cout << next_t() << " = " << std::boolalpha << value;
 }
 
 template <>
@@ -81,6 +86,10 @@ void MoveTAC::print() const
     std::cout << location << " = " << index;
 }
 
+void CondJumpTAC::print() const {
+    std:: cout << "if " << ident_index << " jmp " << jmp_label;
+}
+
 void BasicBlock::print() const
 {
     std::cout << name << ":" << '\n';
@@ -91,7 +100,7 @@ void BasicBlock::print() const
         trip->print();
         std::cout << '\n';
     }
-    std::cout << "ret" << '\n';
+    std::cout << i++  << ": ret" << '\n' << '\n';
     if (this->prev)
     {
         this->prev->print();
