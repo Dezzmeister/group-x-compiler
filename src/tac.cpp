@@ -66,6 +66,14 @@ void BasicBlock::add_block(std::string name)
 
 void Quad::print() const {}
 
+void JumpTAC::print() const {
+    std::cout << "jmp " << label;
+}
+
+void CallTAC::print() const {
+    std::cout << "call " << fun << ' ' << num_args;
+}
+
 void CopyTAC::print() const
 {
     std::cout << "copy " << index;

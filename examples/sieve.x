@@ -1,21 +1,25 @@
-// should we use type_size in typechecker.cpp
-// to create a built-in function for types?
-    int * primes = calloc(1);
+// there is no way to dynamically allocate arrays currently.
+// for an expression like int * primes = calloc(num) below 
+// the three address code currently has no of getting a pointer
+// to memory on the heap.
+int * primes = calloc(1);
 
 mut int num_primes = 0;
 
 void populate_primes(int upper_bound) {
 
-    // The syntax for a dynamically allocated array 
-    // is takan from Section 9.1 of the lrm, but it can change if needed.
     int * sieve = calloc(1);    
     bool * is_prime = calloc(1);
     
     mut int i = 2;
 
-    // statements are not allowed to be empty in our grammar, hence not_used.
+    // statements are not allowed to be empty in our grammar
+    // so we can't have the initialization part of the for loop
+    // be an empty statement, hence the notused variable.
+
     // ++ expressions are not allowed as statements in our grammar. 
     // that is why i = i + 1 is here instead of ++i.
+    
     for (int notused = 0; i * i < upper_bound; i = i + 1) {
         if (is_prime[i]) {
             for (mut int j = i * i; j < upper_bound; j = j + i) {
