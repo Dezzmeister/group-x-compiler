@@ -32,7 +32,7 @@ sweep:
 	rm -rf ${DEPS_DIR} 
 
 clean:
-	rm -f debug_bin release_bin ${GENERATED_FILES}
+	rm -f debug_bin release_bin ${GENERATED_FILES} src/parser.h
 	rm -rf ${DEBUG_DIR}
 	rm -rf ${RELEASE_DIR}
 
@@ -51,13 +51,13 @@ parser.o: src/parser.cpp
 scanner.o: src/scanner.cpp
 
 src/parser.cpp: src/parser.ypp
-	bison --verbose --graph -o src/parser.cpp src/parser.ypp
+	bison ${d} --verbose --graph -o src/parser.cpp src/parser.ypp
 
 src/scanner.cpp: src/scanner.lex
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
 
 src/parser.h:
-	bison --defines=src/parser.h src/parser.ypp
+	bison ${d} --defines=src/parser.h src/parser.ypp
 	rm -f parser.tab.cpp
 
 -include $(DEPS)
