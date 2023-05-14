@@ -99,5 +99,5 @@ parser_graph: src/parser.ypp
 # Formats source files in a consistent way using astyle. To install astyle, go to
 # https://astyle.sourceforge.net/. I put it in ../tools/ relative to this directory.
 # Formatting rules are in .astylerc
-fmt: ${SRC_FILES} ${SRC_DIR}/*.h ${TEST_DIR}/*.cpp ${TEST_DIR}/*.h
+fmt: ${SRCS} ${SRC_DIR}/*.h ${TEST_DIR}/*.cpp ${TEST_DIR}/*.h
 	../tools/astyle --project=.astylerc $^
