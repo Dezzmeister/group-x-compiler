@@ -832,6 +832,7 @@ class ArrayLiteral : public Expr {
         virtual ~ArrayLiteral();
 
         virtual void print() const;
+        virtual void gen_tac() const;
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;

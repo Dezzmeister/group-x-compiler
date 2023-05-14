@@ -1040,6 +1040,15 @@ ArrayLiteral::~ArrayLiteral() {
     delete items;
 }
 
+void ArrayLiteral::gen_tac() const {
+    int i = 0;
+    for (Expr *expr: items->exprs) {
+        int expr_idx = x::bblock->get_instruction(*expr);
+        MoveTAC * mov = new MoveTAC("a[" + std::to_string(i) +  "]", expr_idx);
+        x::bblock->add_instruction(mov);
+    }
+}
+
 void ArrayLiteral::print() const {
     putchar('{');
     items->print();

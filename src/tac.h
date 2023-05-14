@@ -20,7 +20,7 @@ class Value : public Quad
 {
 public:
   T value;
-  void print() const { std::cout << value; };
+  void print() const { std::cout << value << "a"; };
   Value(T v) : value(v) {}
 };
 
