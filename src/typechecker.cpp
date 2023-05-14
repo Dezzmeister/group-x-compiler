@@ -1023,3 +1023,47 @@ void BreakStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
     CompilerError error(loc, "Break statement must occur inside loop", Error);
     errors.type_errors.push_back(error);
 }
+
+int ParensTypename::type_size(SymbolTable * symtable) const {
+    return name->type_size(symtable);
+}
+
+int TypeIdent::type_size(SymbolTable * symtable) const {
+    return unaliased(this, symtable)->type_size(symtable);
+}
+
+int PtrTypename::type_size(SymbolTable * symtable) const {
+    return ADDRESS_WIDTH;
+}
+
+int MutTypename::type_size(SymbolTable * symtable) const {
+    return name->type_size(symtable);
+}
+
+int TupleTypename::type_size(SymbolTable * symtable) const {
+    int size = 0;
+
+    for (auto &item : type_list->types) {
+        size += item->type_size(symtable);
+    }
+
+    return size;
+}
+
+int FuncTypename::type_size(SymbolTable * symtable) const {
+    return ADDRESS_WIDTH;
+}
+
+int StaticArrayTypename::type_size(SymbolTable * symtable) const {
+    return element_type->type_size(symtable) * size->value;
+}
+
+int StructTypename::type_size(SymbolTable * symtable) const {
+    int size = 0;
+
+    for (auto &decl : members->decls) {
+        size += decl->type_name->type_size(symtable);
+    }
+
+    return size;
+}

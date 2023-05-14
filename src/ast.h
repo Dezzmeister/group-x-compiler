@@ -42,6 +42,10 @@
 
 #include "symtable.h"
 
+// Width of address on target machine in bytes - currently only 64 bit is supported
+// with 8 bits to a byte
+#define ADDRESS_WIDTH   8
+
 #define KIND_CLASS()     \
   const static int kind; \
                          \
@@ -241,6 +245,7 @@ class Typename : public ASTNode {
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const = 0;
         virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const = 0;
+        virtual int type_size(SymbolTable * symtable) const = 0;
 
     protected:
         Typename(const Location loc) : ASTNode(loc) {}
@@ -261,6 +266,7 @@ class ParensTypename : public Typename {
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
         virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -403,6 +409,7 @@ class TypeIdent : public Typename {
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
         virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -489,6 +496,7 @@ class PtrTypename : public Typename {
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
         virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -511,6 +519,7 @@ class MutTypename : public Typename {
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
         virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -660,6 +669,7 @@ class TupleTypename : public Typename {
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
         virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -704,6 +714,7 @@ class FuncTypename : public Typename {
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
         virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -727,6 +738,7 @@ class StaticArrayTypename : public Typename {
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
         virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
@@ -774,6 +786,7 @@ class StructTypename : public Typename {
 
         virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
         virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
         NEQ_OPERATOR()
