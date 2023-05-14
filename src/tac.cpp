@@ -1,13 +1,54 @@
 #include "tac.h"
 
 #include <iostream>
+#include <iomanip>
 
 BasicBlock *x::bblock = new BasicBlock();
+
+std::string next_t() {
+    static int i = 0;
+    return "t"+ std::to_string(i++);
+}
+
+template <>
+void Value<char>::print() const {
+    std::cout << next_t() << " = ";
+    switch (value) {
+        case '\n':
+            printf("\\n");
+            break;
+
+        case '\t':
+            printf("\\t");
+            break;
+
+        case '\0':
+            printf("\\0");
+            break;
+
+        case '\e':
+            printf("\\e");
+            break;
+
+        case '\r':
+            printf("\\r");
+            break;
+
+        default:
+            printf("'%c'", value);
+    }
+}
+
 
 int BasicBlock::get_instruction(const ASTNode &n)
 {
     n.gen_tac();
     return this->last_instruction();
+}
+
+int BasicBlock::get_instruction(const ArrayLiteral & n) {
+    n.gen_tac();
+    return 0;
 }
 
 void BasicBlock::add_block(std::string name)

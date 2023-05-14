@@ -13,7 +13,7 @@
 
 std::vector<std::string> x::kind_map;
 
-extern void add_string(const char* str);
+void add_string(const char* str);
 
 const int ProgramSource::kind = x::next_kind("program_source");
 const int IntLiteral::kind = x::next_kind("int_literal");
@@ -1014,9 +1014,13 @@ void VarDeclInit::print() const {
 }
 
 void VarDeclInit::gen_tac() const {
+    if (init->get_kind() == ArrayLiteral::kind) {
+        std::cout << "array lit" << '\n';
+    }
     int init_idx = x::bblock->get_instruction(*init);
-    CopyTAC * c = new CopyTAC(init_idx);
-    x::bblock->add_instruction(c);
+    std::string id = decl->var_name->id;
+    MoveTAC * mov = new MoveTAC(id, init_idx);
+    x::bblock->add_instruction(mov);
 } 
 
 std::vector<ASTNode *> VarDeclInit::children() {
@@ -1044,7 +1048,7 @@ void ArrayLiteral::gen_tac() const {
     int i = 0;
     for (Expr *expr: items->exprs) {
         int expr_idx = x::bblock->get_instruction(*expr);
-        MoveTAC * mov = new MoveTAC("a[" + std::to_string(i) +  "]", expr_idx);
+        MoveTAC * mov = new MoveTAC("a[" + std::to_string(i++) +  "]", expr_idx);
         x::bblock->add_instruction(mov);
     }
 }

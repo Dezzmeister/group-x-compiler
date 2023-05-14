@@ -6,6 +6,8 @@
 #include "ast.h"
 #include "symtable.h"
 
+std::string next_t();
+
 class Quad
 {
 public:
@@ -20,7 +22,7 @@ class Value : public Quad
 {
 public:
   T value;
-  void print() const { std::cout << value; };
+  void print() const { std::cout << next_t() << " = " << value; };
   Value(T v) : value(v) {}
 };
 
@@ -222,6 +224,8 @@ public:
   int next_instruction() const { return n_instructions; }
 
   int get_instruction(const ASTNode &n);
+
+  int get_instruction(const ArrayLiteral & arr);
 
   void print() const;
 
