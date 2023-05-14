@@ -10,7 +10,7 @@ std::string next_t() {
     return "t"+ std::to_string(i++);
 }
 
-template<>
+ template<>
 void Value<bool>::print() const {
     std::cout << next_t() << " = " << std::boolalpha << value;
 }
@@ -42,7 +42,7 @@ void Value<char>::print() const {
         default:
             printf("'%c'", value);
     }
-}
+} 
 
 
 Quad * BasicBlock::get_instruction(const ASTNode &n)
@@ -60,7 +60,7 @@ void BasicBlock::add_block(std::string name)
 
 void Quad::print() const {}
 
-void JumpTAC::print() const {
+ void JumpTAC::print() const {
     std::cout << "jmp " << label;
 }
 
@@ -70,7 +70,7 @@ void CallTAC::print() const {
 
 void CopyTAC::print() const
 {
-    std::cout << "copy " << index;
+    std::cout << "copy " << location;
 }
 
 void LoadTAC::print() const
@@ -85,12 +85,12 @@ void AssignTAC::print() const
 
 void MoveTAC::print() const
 {
-    std::cout << location << " = " << index;
+    std::cout << location << " = " << location;
 }
 
 void CondJumpTAC::print() const {
-    std:: cout << "if " << ident_index << " jmp " << jmp_label;
-}
+    std:: cout << "if " << location << " jmp " << jmp_label;
+} 
 
 void BasicBlock::print() const
 {

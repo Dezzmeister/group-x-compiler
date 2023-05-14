@@ -41,7 +41,8 @@
 #include <vector>
 
 #include "symtable.h"
-#include "tac.h"
+
+class Quad;
 
 // Width of address on target machine in bytes - currently only 64 bit is supported
 // with 8 bits to a byte
