@@ -491,7 +491,7 @@ Typename * TupleExpr::type_of(SymbolTable * symtable) const {
         return item.release();
     });
 
-    return new TupleTypename(x::NULL_LOC, new TypenameList(x::NULL_LOC, raw_tuple_types));
+    return new TupleTypename(x::NULL_LOC, new TypenameList(x::NULL_LOC, raw_tuple_types), symtable);
 }
 
 Typename * ArrayLiteral::type_of(SymbolTable * symtable) const {

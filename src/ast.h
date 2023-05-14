@@ -658,8 +658,10 @@ class VarDeclList : public ASTNode {
 class TupleTypename : public Typename {
     public:
         const TypenameList * type_list;
+        std::vector<int> offsets;
 
-        TupleTypename(const Location loc, const TypenameList * type_list);
+        TupleTypename(const Location loc, const TypenameList * type_list, SymbolTable * scope);
+        TupleTypename(const Location loc, const TypenameList * type_list, const std::vector<int> offsets);
 
         virtual Typename * clone() const;
 
@@ -798,6 +800,9 @@ class TypeAlias : public TypeDecl {
 class StructTypename : public Typename {
     public:
         const VarDeclList * members;
+        // Struct member offsets. As of right now structs are packed because it's simpler
+        // and all of our data types at the moment are 8-byte aligned anyway
+        std::vector<int> offsets;
         SymbolTable * scope;
 
         StructTypename(const Location loc, const VarDeclList * members, SymbolTable * scope);

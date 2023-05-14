@@ -732,8 +732,18 @@ bool StatementList::operator==(const ASTNode &node) const {
     return cmp_vectors(statements, n.statements);
 }
 
-TupleTypename::TupleTypename(const Location loc, const TypenameList * type_list)
-    : Typename(loc), type_list(type_list) {}
+TupleTypename::TupleTypename(const Location loc, const TypenameList * type_list, SymbolTable * scope)
+    : Typename(loc), type_list(type_list), offsets({}) {
+        int size = 0;
+        for (size_t i = 0; i < type_list->types.size(); i++) {
+            offsets.push_back(size);
+
+            size += type_list->types[i]->type_size(scope);
+        }
+    }
+
+TupleTypename::TupleTypename(const Location loc, const TypenameList * type_list, const std::vector<int> offsets)
+    : Typename(loc), type_list(type_list), offsets(offsets) {}
 
 Typename * TupleTypename::clone() const {
     std::vector<Typename *> types = {};
@@ -742,7 +752,7 @@ Typename * TupleTypename::clone() const {
         types.push_back(type_name->clone());
     }
 
-    return new TupleTypename(loc, new TypenameList(x::NULL_LOC, types));
+    return new TupleTypename(loc, new TypenameList(x::NULL_LOC, types), offsets);
 }
 
 TupleTypename::~TupleTypename() {
@@ -902,7 +912,13 @@ bool TypeAlias::operator==(const ASTNode &node) const {
 }
 
 StructTypename::StructTypename(const Location loc, const VarDeclList * members, SymbolTable * scope)
-    : Typename(loc), members(members), scope(scope) {}
+    : Typename(loc), members(members), offsets({}), scope(scope) {
+        size_t size = 0;
+        for (size_t i = 0; i < members->decls.size(); i++) {
+            offsets.push_back(size);
+            size += members->decls[i]->type_name->type_size(scope);
+        }
+    }
 
 Typename * StructTypename::clone() const {
     std::vector<VarDecl *> members_clone = {};
