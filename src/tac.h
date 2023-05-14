@@ -116,6 +116,7 @@ public:
   {
     label = lbl;
   }
+  void print() const;
 };
 
 // arg 1
@@ -124,10 +125,10 @@ public:
 class CallTAC : public Quad
 {
 public:
-  void *func;
-  int num_args;
   std::string fun;
-  CallTAC(void *f, int n) : func(f), num_args(n) {}
+  int num_args;
+  CallTAC(std::string f, int n) : fun(f), num_args(n) {}
+  void print() const;
 };
 
 // arg x

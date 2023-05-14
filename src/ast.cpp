@@ -1223,12 +1223,14 @@ void ForStmt::print() const {
 
 void ForStmt::gen_tac() const {
     init->gen_tac();
-    body->gen_tac();
-    int update_idx = x::bblock->get_instruction(*update);
-    CondJumpTAC * cj = new CondJumpTAC(update_idx);
+    int loop_body = x::bblock->get_instruction(*body);
+    int cond_check = x::bblock->get_instruction(*condition);
+    CondJumpTAC * cj = new CondJumpTAC(cond_check);
     x::bblock->add_instruction(cj);
-    int exit_jmp = x::bblock->next_instruction();
-    cj->set_jmp(exit_jmp);
+    JumpTAC * jmp = new JumpTAC(loop_body);
+    x::bblock->add_instruction(jmp);
+    int loop_exit = x::bblock->next_instruction();
+    cj->set_jmp(loop_exit);
 }
 
 std::vector<ASTNode *> ForStmt::children() {
@@ -1427,7 +1429,17 @@ void FunctionCallStmt::gen_tac() const {
   for (auto expr : args->exprs) {
     expr->gen_tac();
   }
-  CallTAC *call = new CallTAC(nullptr, args->exprs.size());
+  const Ident * ident = dynamic_cast<const Ident *>(func);
+
+  CallTAC * call;
+  int num_args = args->exprs.size();
+  if (ident) {
+      call = new CallTAC(ident->id, num_args);
+  }
+  else {
+    // Here the function to call has no name, just a memory address.
+    call = new CallTAC(nullptr, num_args);
+  }
   x::bblock->add_instruction(call);
 }
 
