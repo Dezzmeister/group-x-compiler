@@ -7,11 +7,11 @@
 #include <fstream>
 #include <iostream>
 
-#include "src/parsedecls.h"
-#include "src/parseutils.h"
-#include "src/parser.h"
-#include "src/symtable.h"
-#include "src/tac.h"
+#include "parsedecls.h"
+#include "parseutils.h"
+#include "parser.h"
+#include "symtable.h"
+#include "tac.h"
 
 extern int yydebug;
 
@@ -67,8 +67,8 @@ int main(int argc, char** argv) {
   top->typecheck(symtable, result.parser_state->errors.sources[top]);
   result.parser_state->errors.print(stderr);
 
-  // result.parser_state->top->gen_tac();
-  // x::bblock->print();
+  result.parser_state->top->gen_tac();
+  x::bblock->print();
 
   if (graph) {
     std::ofstream dotfile;

@@ -39,4 +39,102 @@ void parser_tests() {
 
         return TEST_SUCCESS;
     };
+
+    xtests::tests["string literal declaration"] = []() {
+        const char * code = R"(
+            string a = "abc\n" + "";
+            string b = "^$&Q*!)LL ";
+        )";
+
+        ParseResult result = x::parse_str(code);
+        ProgramSource * output = result.parser_state->top;
+        SymbolTable * symtable = result.parser_state->symtable;
+        ErrorReport &report = result.parser_state->errors;
+        SourceErrors &errors = report.sources[top];
+
+        // This symbol table is not accurate; we are only testing syntax here though
+        SymbolTable * test_symtable = x::default_symtable();
+        Location loc(0, 0, 0, 0);
+        VarDecl * a = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "a"));
+        VarDecl * b = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "a"));
+
+        StringLiteral stringA = new StringLiteral(loc, "abc\n" + "");
+        StringLiteral stringB = new StringLiteral(loc, "^$&Q*!)LL ");
+        StringLiteral parsed_stringA = (StringLiteral *)output->find([](const ASTNode * node) {
+            return node->get_kind() == StringLiteral::kind;
+        });
+        StringLiteral parsed_stringA = (StringLiteral *)output->find([](const ASTNode * node) {
+            return node->get_kind() == StringLiteral::kind;
+        });
+
+        expect(*stringA == *parsed_stringA);
+        expect(*stringB == *parsed_stringB);
+        //need to:
+        // - add stringA and stringB to test_symtable
+        // - check symbol tables
+        // - check VarDeclList
+
+        delete stringA;
+        delete stringB;
+
+        return TEST_SUCCESS
+    };
+
+    xtests::tests["New Struct"] = []() {
+        const char * code = R"(
+            struct dimension {
+                float width;
+                float height;
+            };
+            struct Shape {
+                struct dimension area;
+                string type;
+            };
+
+            int main(int argc) {
+                struct Shape circle = new struct Shape;
+                circle.type = "circle";
+                circle.dimension.width = 5.;
+            }
+        )";
+        ParseResult result = x::parse_str(code);
+        ProgramSource * output = result.parser_state->top;
+
+        //Inaccurate symbol table
+        SymbolTable * test_symtable = x::default_symtable();
+        Location loc(0, 0, 0, 0);
+        Ident * dim = new Ident(loc, "dimension");
+        VarDecl * width = new VarDecl(loc, new TypeIdent(loc, "float"), new Ident(loc, "width"));
+        VarDecl * height = new VarDecl(loc, new TypeIdent(loc, "float"), new Ident(loc, "height"));
+        std::vector<VarDecl *> dimDecls = {
+            width, height
+        };
+        VarDeclList * varsDim = new VarDeclList(loc, dimDecls);
+        StructTypename * dimStruct = new StructTypename(loc, varsDim, test_symtable);
+
+        Ident * shape = new Ident(loc, "Shape");
+        VarDecl * area = new VarDecl(loc, new TypeIdent(loc, dimStruct), new Ident(loc, "area"));
+        VarDecl * type = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "type"));
+        std::vector<VarDecl *> shapeDecls = {
+            area, type
+        };
+        VarDeclList * varsShape = new VarDeclList(loc, shapeDecls);
+        StructTypename * shapeStruct = new StructTypename(loc, varsShape, test_symtable);
+
+        Ident * circle = new Ident(loc, "circle");
+        StructDecl * strukt = new StructDecl(loc, shape, shapeStruct);
+
+        StructDecl * parsed_strukt = (StructDecl *) output->find([](const ASTNode * node) {
+            return node->get_kind() == StructDecl::kind;
+        });
+
+        expect(*strukt == *parsed_strukt);
+
+        //To-Do:
+        // - assign circle.type = "circle"; AND circle.dimension.width = 5.;
+        // - check circle.type and circle.dimension.width
+        delete strukt;
+
+        return TEST_SUCCESS;
+    };
 }

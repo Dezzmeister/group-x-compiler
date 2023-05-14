@@ -1,71 +1,103 @@
-CC = g++
-COMMON_FLAGS = -std=gnu++17 -Wall -Werror -march=native -fsanitize=unreachable
-LD_FLAGS = -pthread
+COMMON_FLAGS = -Wall -Werror -std=gnu++17 -march=native -fsanitize=unreachable
+SRCS := $(wildcard src/*.cpp)
 
-SRC_DIR := src
-GENERATED_FILES := ${addprefix ${SRC_DIR}/, scanner.cpp parser.cpp }
-SRC_FILES := ${wildcard ${SRC_DIR}/*.cpp}
-OBJ_FILES =  ${patsubst src/%.cpp, %.o, ${SRC_FILES}} 
+${DEPS_DIR}
 
-DEPS = ${GENERATED_FILES} ${SRC_FILES}
+SRC_DIR      := src
+DEPS_DIR     := deps
+TEST_DIR     := tests
+RELEASE_DIR  := rel
+DEBUG_DIR    := dbg
 
-debug: CPPFLAGS := -Og
+GENERATED_FILES := ${addprefix ${SRC_DIR}/,scanner.cpp parser.cpp}
+
+OBJS := $(patsubst ${SRC_DIR}/%.cpp,%.o,$(SRCS))
+OBJS += parser.o scanner.o
+
+DBG_OBJS := $(addprefix ${DEBUG_DIR}/,$(OBJS))
+REL_OBJS := $(addprefix ${RELEASE_DIR}/,$(OBJS))
+
+DEPS := $(addprefix ${DEPS_DIR}/, $(patsubst ${SRC_DIR}/%.cpp,%.d,$(SRCS)))
+
+debug:   CPPFLAGS := -Og
 release: CPPFLAGS := -O3
 
-TEST_DIR := tests
+release debug: src/parser.h
 
-all: debug release
+.PHONY: all clean debug release sweep
 
-debug: debug_bin
+all: src/parser.h release debug
+
+sweep:
+	rm -rf ${DEPS_DIR} 
+
+clean:
+	rm -f debug_bin release_bin ${GENERATED_FILES}
+	rm -rf ${DEBUG_DIR}
+	rm -rf ${RELEASE_DIR}
 
 release: release_bin
 
-test_all: test_debug test_release
+release_bin: ${REL_OBJS}
+	$(CXX) $(COMMON_FLAGS) $(CPPFLAGS) $^ -o $@
 
-${OBJ_FILES}: %.o: src/%.cpp 
-	${CC} ${COMMON_FLAGS} ${CPPFLAGS} -c $^
+debug: debug_bin 
 
-main.o: main.cpp
-	${CC} ${COMMON_FLAGS} ${CPPFLAGS} -c $^
+debug_bin: $(DBG_OBJS)
+	$(CXX) $(COMMON_FLAGS) $(CPPFLAGS) $^ -o $@
+
+parser.o: src/parser.cpp
+
+scanner.o: src/scanner.cpp
 
 src/parser.cpp: src/parser.ypp
-	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
-	${CC} ${COMMON_FLAGS} ${CPPFLAGS} -c $@
+	bison --verbose --graph -o src/parser.cpp src/parser.ypp
 
 src/scanner.cpp: src/scanner.lex
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
-	${CC} ${COMMON_FLAGS} ${CPPFLAGS} -c $@
 
-debug_bin: src/scanner.cpp src/parser.cpp main.o ${OBJ_FILES}
-	${CC} ${COMMON_FLAGS} ${CPPFLAGS} *.o -o $@ 
+src/parser.h:
+	bison --defines=src/parser.h src/parser.ypp
+	rm -f parser.tab.cpp
 
-release_bin: src/scanner.cpp src/parser.cpp main.o ${OBJ_FILES} 
-	${CC} ${COMMON_FLAGS} ${CPPFLAGS} *.o -o $@ 
+-include $(DEPS)
 
-test_debug: ${DEPS} ${TEST_DIR}/*.cpp
-	${CC} -DDEBUG_TOKENS ${CPPFLAGS} $^ -o $@ ${LD_FLAGS}
+${RELEASE_DIR}: 
+	mkdir -p ${RELEASE_DIR}
+
+${DEPS_DIR}:
+	mkdir -p ${DEPS_DIR}
+
+${DEBUG_DIR}:
+	mkdir -p ${DEBUG_DIR}
+
+${DEBUG_DIR}/%.o: src/%.cpp | ${DEPS_DIR} ${DEBUG_DIR}
+	$(CXX) $(COMMON_FLAGS) $(CPPFLAGS) -MMD -MP -c $< -o $@ -MF $(patsubst ${DEBUG_DIR}/%.o,${DEPS_DIR}/%.d,$@)
+
+${RELEASE_DIR}/%.o: src/%.cpp | ${DEPS_DIR} ${RELEASE_DIR}
+	$(CXX) $(COMMON_FLAGS) $(CPPFLAGS) -MMD -MP -c $< -o $@ -MF $(patsubst ${RELEASE_DIR}/%.o,${DEPS_DIR}/%.d,$@)
+
+todo:
+	grep -Rn TODO
+
+test_debug: ${TEST_DIR}/*.cpp
+	$(CXX) -DDEBUG_TOKENS $(CPPFLAGS) $^ -o $@ ${LD_FLAGS}
 	./$@
 	rm -f $@
 
-test_release: ${DEPS} ${TEST_DIR}/*.cpp
-	${CC} -DDEBUG_TOKENS ${RELEASE_FLAGS} $^ -o $@ ${LD_FLAGS}
+test_release: ${TEST_DIR}/*.cpp
+	$(CXX) -DDEBUG_TOKENS $(CPPFLAGS) $^ -o $@ ${LD_FLAGS}
 	./$@
 	rm -f $@
+
+test_all: test_debug test_release
 
 parser_graph: src/parser.ypp
 	bison --defines=src/parser.h --verbose --graph -o src/parser.cpp src/parser.ypp
 	dot -Tpng src/parser.dot -o parser.png
-
-.PHONY: clean todo 
-clean:
-	rm -f debug_bin release_bin ${GENERATED_FILES} *.o src/scanner.dot src/scanner.output src/parser.dot src/parser.output parser.png prog.dot
-
-todo:
-	grep -Rn TODO
 
 # Formats source files in a consistent way using astyle. To install astyle, go to
 # https://astyle.sourceforge.net/. I put it in ../tools/ relative to this directory.
 # Formatting rules are in .astylerc
 fmt: ${SRC_FILES} ${SRC_DIR}/*.h ${TEST_DIR}/*.cpp ${TEST_DIR}/*.h
 	../tools/astyle --project=.astylerc $^
-
