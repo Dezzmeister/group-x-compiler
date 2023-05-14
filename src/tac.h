@@ -8,6 +8,8 @@
 
 std::string next_t();
 
+
+
 class Quad
 {
 public:
@@ -24,9 +26,14 @@ class Value : public Quad
 public:
   T value;
   int bytes;
-  void print() const { std::cout << next_t() << " = " << value; };
+  void print() const { std::cout << value; };
   Value(T v, int b) : value(v), bytes(b) {}
+
+  template <typename U>
+  friend std::ostream& operator<<(std::ostream&, const Value<U> *);
 };
+
+
 
 class AssignTAC : public Quad
 {

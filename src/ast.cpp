@@ -1083,14 +1083,21 @@ ArrayLiteral::~ArrayLiteral() {
 Quad * ArrayLiteral::gen_tac() const {
     std::vector<Expr *> things = items->exprs;
     Quad * first =  x::bblock->get_instruction(*things.front());
+    MoveTAC * mov = new MoveTAC("a[" + std::to_string(0) +  "]", first);
+    x::bblock->add_instruction(mov);
 
-    for (std::size_t i = 1; i < items->exprs.size(); ++i) {
-        Quad * expr_idx = x::bblock->get_instruction(*things[i]);
-        MoveTAC * mov = new MoveTAC("a[" + std::to_string(i++) +  "]", expr_idx);
-        x::bblock->add_instruction(mov);
+    // There's probably a better way to do this.
+    auto thing = things.begin();
+    std::advance(thing, 1);
+    int i = 1;
+    while (thing != things.end()) {
+        Quad * expr = (*thing)->gen_tac();
+        MoveTAC * load = new MoveTAC("a[" + std::to_string(i++) +  "]", expr);
+        x::bblock->add_instruction(load);
+        ++thing;
     }
 
-    return first;
+    return mov;
 }
 
 void ArrayLiteral::print() const {

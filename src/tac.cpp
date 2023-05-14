@@ -83,9 +83,14 @@ void AssignTAC::print() const
     std::cout << lhs << ' ' << op << ' ' << rhs;
 }
 
+std::ostream& operator<<(std::ostream& o, Quad * q) {
+    q->print();
+    return o;
+}
+
 void MoveTAC::print() const
 {
-    std::cout << location << " = " << location;
+    std::cout << ident << " = " << location;
 }
 
 void CondJumpTAC::print() const {

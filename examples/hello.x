@@ -1,4 +1,4 @@
 void main() {
-    print("hello world");
+    int x[] = {1, 2, 3};
 };
 
