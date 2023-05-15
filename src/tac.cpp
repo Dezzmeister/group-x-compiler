@@ -96,13 +96,6 @@ void LoadTAC::print() const
     std::cout << identifier;
 }
 
-void AssignTAC::print() const
-{
-    std::string temp = lhs + ' ' + op + ' ' + rhs;
-    instrs.pushback(temp);
-    return lhs; #include a symbol table
-}
-
 void MoveTAC::print() const
 {
     std::cout << location << " = " << index;
@@ -152,7 +145,6 @@ std::string IntLitTAC(const int val, std::vector<Quad *> instrs, SymbolTable * g
 {
     std::string temp = next_t() ;
     std::cout << temp << " = " << val;
-    // wait for joe symbol table thing
     Value<int> *value = new Value<int>(temp, val);
     instrs.push_back(value) ;
     // wait for joe symbol table thing
