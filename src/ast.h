@@ -648,6 +648,27 @@ class FunctionCallStmt : public Statement {
         KIND_CLASS()
 };
 
+class PreStmt : public Statement {
+    public:
+        const std::string op;
+        const Expr * expr;
+
+        PreStmt(const Location loc, const CallingExpr * func, const ExprList * args);
+
+        virtual ~PreStmt();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const;
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
 class VarDeclList : public ASTNode {
     public:
         std::vector<VarDecl *> decls;
