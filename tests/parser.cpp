@@ -157,6 +157,16 @@ void parser_tests() {
                 }
             }
         )";
+    };
+    
+    xtest::test["error test1"] = []() {
+        const char * code = R"(
+            int main() {
+                int x = 0;
+                x = 2;
+            }
+        )";          
+        
         ProgramSource * output = result.parser_state->top;
         SourceErrors &errors = report.sources[output];
         CompilerError err = errors[0];
