@@ -106,6 +106,6 @@ void BasicBlock::print() const
 
 std::string CharTAC(const char c) {
     std::string temp = next_t();
-    instrs.pushback(temp + " = " + c);
+    instrs.pushback(temp + " = '" + std::string(1, c) + "'");
     return temp;
 }
