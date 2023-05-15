@@ -462,6 +462,7 @@ class MathExpr : public Expr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const;
 
         virtual Typename * type_of(SymbolTable * symtable) const;
 
@@ -1215,6 +1216,27 @@ class PreExpr : public Expr {
         KIND_CLASS()
 };
 
+class PostExpr : public Expr {
+    public:
+        const std::string op;
+        const Expr * expr;
+
+        PostExpr(const Location loc, const char * const op, const Expr * expr);
+
+        virtual ~PostExpr();
+
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
 class StructDeref : public CallingExpr {
     public:
         const CallingExpr * strukt;
@@ -1318,6 +1340,21 @@ class ArrayIndexExpr : public CallingExpr {
 class VoidReturnStmt : public Statement {
     public:
         VoidReturnStmt(const Location loc);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class PleaseReturnStmt : public Statement {
+    public:
+        PleaseReturnStmt(const Location loc);
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();

@@ -71,6 +71,7 @@ const int InitializerList::kind = x::next_kind("initializer_list");
 const int StructLiteral::kind = x::next_kind("struct_literal");
 const int ArrayIndexExpr::kind = x::next_kind("array_index_expr");
 const int VoidReturnStmt::kind = x::next_kind("void_return_stmt");
+const int PleaseReturnStmt::kind = x::next_kind("Please_return_stmt");
 const int ContinueStmt::kind = x::next_kind("continue_stmt");
 const int BreakStmt::kind = x::next_kind("break_stmt");
 
@@ -394,6 +395,17 @@ MathExpr::MathExpr(const Location loc, const char op, const Expr * left, const E
 MathExpr::~MathExpr() {
     delete left;
     delete right;
+}
+
+std::string MathExpr::gen_tac(SymbolTable * old_symtable,
+TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> &instrs) const {
+    std::string l = left->gen_tac(old_symtable, global_symtable, names, instrs);
+    std::string r = right->gen_tac(old_symtable, global_symtable, names, instrs);
+    std::string temp_name = next_t();
+    AssignTAC * tac = new AssignTAC(temp_name, std::string(1, op), l, r);
+    instrs.push_back(tac);
+
+    return temp_name;
 }
 
 void MathExpr::print() const {
@@ -1043,9 +1055,10 @@ std::string VarDeclInit::gen_tac(SymbolTable * old_symtable, TypeTable * type_ta
     std::string init_name = init->gen_tac(old_symtable, type_table, names, instrs);
     std::string var_name = decl->var_name->gen_tac(old_symtable, type_table, names, instrs);
 
-    instrs.push_back(new AssignTAC(var_name, init_name));
+    std::string name = decl->var_name->id;
+    instrs.push_back(new AssignTAC(name, "=", var_name, init_name));
 
-    return "";
+    return name;
 }
 
 bool VarDeclInit::operator==(const ASTNode &node) const {
@@ -1571,7 +1584,7 @@ std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table
 
     const int last_stmt_kind = body->statements[body->statements.size() - 1]->get_kind();
 
-    if (last_stmt_kind != ReturnStatement::kind && last_stmt_kind != VoidReturnStmt::kind) {
+    if (last_stmt_kind != ReturnStatement::kind && (last_stmt_kind != VoidReturnStmt::kind || last_stmt_kind != PleaseReturnStmt::kind)) {
         instrs.push_back(new VoidReturnTAC());
     }
 
@@ -1691,9 +1704,9 @@ std::string Assignment::gen_tac(SymbolTable * old_symtable, TypeTable * type_tab
     std::string lhs_name = lhs->gen_tac(old_symtable, type_table, names, instrs);
     std::string rhs_name = rhs->gen_tac(old_symtable, type_table, names, instrs);
 
-    instrs.push_back(new AssignTAC(lhs_name, rhs_name));
-
-    return "";
+    instrs.push_back(new AssignTAC("", "=", lhs_name, rhs_name));
+    
+    return lhs_name;
 }
 
 bool Assignment::operator==(const ASTNode &node) const {
@@ -2009,6 +2022,20 @@ std::vector<ASTNode *> VoidReturnStmt::children() {
 
 bool VoidReturnStmt::operator==(const ASTNode &node) const {
     return (node.get_kind() == VoidReturnStmt::kind);
+}
+
+PleaseReturnStmt::PleaseReturnStmt(const Location loc) : Statement(loc) {}
+
+void PleaseReturnStmt::print() const {
+    printf("return");
+}
+
+std::vector<ASTNode *> PleaseReturnStmt::children() {
+    return {};
+}
+
+bool PleaseReturnStmt::operator==(const ASTNode &node) const {
+    return (node.get_kind() == PleaseReturnStmt::kind);
 }
 
 ContinueStmt::ContinueStmt(const Location loc) : Statement(loc) {}
