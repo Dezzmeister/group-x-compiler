@@ -78,7 +78,7 @@ not[ \t]+in {return NOT_IN_KW;}
 and         {return AND_KW;}
 or          {return OR_KW;}
 
-(\.\w*\n) | (\.///\n) {return NEWLINE;}
+(\.[ \t]*(\/\/.*)?[ \t]*\n) {return NEWLINE;}
 
 {ident}     {
                 yylval->ident = new Ident(Location(*yylloc, *yylloc), yytext);
