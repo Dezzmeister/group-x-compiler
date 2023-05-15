@@ -148,8 +148,8 @@ void IntLiteral::print() const {
 
 std::string IntLiteral::gen_tac(SymbolTable * old_symtable,
     TypeTable * type_table, NamesToNames &names, std::vect<Quad *> instrs) const {
-        std::string p_name = *names.get(id);
-        type_table->put_from_symbol(id, p_name, old_symtable);
+        std::string p_name = *names.get(value);
+        type_table->put_from_symbol(value, p_name, old_symtable);
         return p_name;
 }
 
