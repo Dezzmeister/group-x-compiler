@@ -176,13 +176,13 @@ top_level : program END {
             }
           ;
 
-program : program type_decl ';' {$1->add_node($2); $$ = $1;}
-        | program var_decl_init ';' {$1->add_node($2); $$ = $1;}
-        | program var_decl ';' {$1->add_node($2); $$ = $1;}
-        | program func_decl ';' {$1->add_node($2); $$ = $1;}
-        | program type_decl ';' DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
-        | program var_decl_init ';' DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
-        | program var_decl ';' DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
+program : program type_decl '.' {$1->add_node($2); $$ = $1;}
+        | program var_decl_init '.' {$1->add_node($2); $$ = $1;}
+        | program var_decl '.' {$1->add_node($2); $$ = $1;}
+        | program func_decl '.' {$1->add_node($2); $$ = $1;}
+        | program type_decl '.' DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
+        | program var_decl_init '.' DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
+        | program var_decl '.' DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
         | /* empty */ {$$ = new ProgramSource(Location(0, 0, 0, 0), state->current_source, {});}
         ;
 
@@ -201,18 +201,18 @@ statement : type_decl {$$ = $1;}
           | BREAK_KW {$$ = new BreakStmt(Location(@1, @1));}
           ;
 
-statement_list : statement ';' {$$ = new StatementList(Location(@1, @2), {$1});}
-               | statement ';' DEBUG_TOKEN INT {
+statement_list : statement '.' {$$ = new StatementList(Location(@1, @2), {$1});}
+               | statement '.' DEBUG_TOKEN INT {
                     $$ = new StatementList(Location(@1, @2), {$1});
                     state->debug_stmts[$4->value] = $1;
                     delete $4;
                 }
-               | statement_list statement ';' {
+               | statement_list statement '.' {
                     $1->push_statement($2);
                     $1->loc.set_end(@3);
                     $$ = $1;
                 }
-               | statement_list statement ';' DEBUG_TOKEN INT {
+               | statement_list statement '.' DEBUG_TOKEN INT {
                     $1->push_statement($2);
                     $1->loc.set_end(@3);
                     $$ = $1;
@@ -355,7 +355,7 @@ while_statement : WHILE_KW '(' expr ')' '{'
                     }
                 ;
 
-for_statement : FOR_KW '(' statement ';' {x::create_scope(&state->symtable);} expr ';' statement ')' '{' statement_list '}' {
+for_statement : FOR_KW '(' statement '.' {x::create_scope(&state->symtable);} expr '.' statement ')' '{' statement_list '}' {
                     SymbolTable * table = x::pop_scope(&state->symtable);
                     $$ = new ForStmt(Location(@1, @11), $3, $6, $8, $11, table);
                     table->set_node($$);
@@ -380,8 +380,8 @@ assignment : calling_expr '=' expr {
             }
            ;
 
-var_decl_list : var_decl ';' {$$ = new VarDeclList(Location(@1, @2), {$1});}
-              | var_decl_list var_decl ';' {
+var_decl_list : var_decl '.' {$$ = new VarDeclList(Location(@1, @2), {$1});}
+              | var_decl_list var_decl '.' {
                     $1->push_decl($2);
                     $1->loc.set_end(@3);
                     $$ = $1;

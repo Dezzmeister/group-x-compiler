@@ -1010,7 +1010,7 @@ VarDeclInit::~VarDeclInit() {
 
 
 std::string VarDeclInit::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
-    return ""; 
+    return "";
 }
 
 void VarDeclInit::print() const {
@@ -1241,7 +1241,7 @@ TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const 
     LabelTAC * exit_label_tac = new LabelTAC(exit_label);
 
     init->gen_tac(scope, type_table, block_names, instrs);
-    
+
     instrs.push_back(cond_label_tac);
     std::string cond_var = condition->gen_tac(scope, type_table, block_names, instrs);
 
@@ -1864,6 +1864,7 @@ bool InitializerList::operator==(const ASTNode &node) const {
 
     return true;
 }
+
 StructLiteral::StructLiteral(const Location loc, const InitializerList * members)
     : CallingExpr(loc), members(members) {}
 
@@ -1877,7 +1878,7 @@ void StructLiteral::print() const {
     putchar('}');
 }
 
-std::string StructLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+std::string StructLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     return "";
 }
 

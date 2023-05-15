@@ -1284,7 +1284,7 @@ class StructLiteral : public CallingExpr {
 
         virtual void print() const;
 
-        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const;
 
         virtual std::vector<ASTNode *> children();
 
