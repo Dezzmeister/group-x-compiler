@@ -297,6 +297,8 @@ class IntLiteral : public NumLiteral {
         IntLiteral(const Location loc, const char * int_str);
 
         IntLiteral(const Location loc, const int value);
+  
+        virtual std::string IntLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const ;
 
         virtual void print() const;
         
@@ -316,6 +318,9 @@ class FloatLiteral : public NumLiteral {
 
         FloatLiteral(const Location loc, const char * float_str);
         FloatLiteral(const Location loc, const float value);
+  
+       virtual std::string FloatLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const ;
+
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
@@ -358,6 +363,9 @@ class BoolLiteral : public Expr {
         BoolLiteral(const Location loc, const bool value);
 
         virtual void print() const;
+  
+        virtual std::string BoolLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const ;
+
         
         virtual std::vector<ASTNode *> children();
 
@@ -376,6 +384,9 @@ class CharLiteral : public Expr {
         CharLiteral(const Location loc, const char value);
 
         virtual void print() const;
+  
+        virtual std::string CharLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const ;
+
         
         virtual std::vector<ASTNode *> children();
 
@@ -394,7 +405,9 @@ class StringLiteral : public Expr {
         StringLiteral(const Location loc, const char * const value);
 
         virtual void print() const;
-        
+  
+        virtual std::string StringLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const ;
+
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;
