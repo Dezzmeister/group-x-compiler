@@ -178,6 +178,13 @@ void FloatLiteral::print() const {
     printf("%f", value);
 }
 
+std::string FloatLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    std::string p = next_t();
+    Value<float> * v = new Value<float>(p, value);
+    x::bblock->add_instruction(v);
+    return p;
+}
+
 std::vector<ASTNode *> FloatLiteral::children() {
     return {};
 }
@@ -192,6 +199,13 @@ bool FloatLiteral::operator==(const ASTNode &node) const {
 
 BoolLiteral::BoolLiteral(const Location loc, const bool value) : Expr(loc), value(value) {}
 
+std::string BoolLiteral::gen_tac(SymbolTable *old_symtable, TypeTable *type_table, NamesToNames &names, std::vector<Quad *> instrs) const
+{
+    std::string p = next_t();
+    Value<bool> *v = new Value<bool>(p, value);
+    x::bblock->add_instruction(v);
+    return p;
+}
 void BoolLiteral::print() const {
     if (value) {
         printf("true");
@@ -213,6 +227,13 @@ bool BoolLiteral::operator==(const ASTNode &node) const {
 }
 
 CharLiteral::CharLiteral(const Location loc, const char value) : Expr(loc), value(value) {}
+
+std::string CharLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    std::string p = next_t();
+    Value<char> * v = new Value<char>(p, value);
+    x::bblock->add_instruction(v);
+    return p;
+}
 
 void CharLiteral::print() const {
     switch (value) {

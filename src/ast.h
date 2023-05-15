@@ -377,7 +377,7 @@ class CharLiteral : public Expr {
         CharLiteral(const Location loc, const char value);
 
         virtual void print() const;
-        
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;
