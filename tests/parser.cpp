@@ -101,39 +101,24 @@ void parser_tests() {
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
 
-        //Inaccurate symbol table
-        SymbolTable * test_symtable = x::default_symtable();
-        Location loc(0, 0, 0, 0);
-        // Ident * dim = new Ident(loc, "dimension");
-        VarDecl * width = new VarDecl(loc, new TypeIdent(loc, "float"), new Ident(loc, "width"));
-        VarDecl * height = new VarDecl(loc, new TypeIdent(loc, "float"), new Ident(loc, "height"));
-        std::vector<VarDecl *> dimDecls = {
-            width, height
-        };
-        // VarDeclList * varsDim = new VarDeclList(loc, dimDecls);
-        // StructTypename * dimStruct = new StructTypename(loc, varsDim, test_symtable);
+        const std::string expected_parse = R"(
+            struct dimension {
+                    float width.
+                    float height.
+            };
+            struct Shape {
+                    struct dimension area.
+                    string type.
+            };
+            int main(int argc) {
+                    mut struct Shape circle = new struct Shape.
+                    circle.type = "circle".
+                    circle.dimension.width = 5.
+            }
+        )";
 
-        Ident * shape = new Ident(loc, "Shape");
-        VarDecl * area = new VarDecl(loc, new TypeIdent(loc, "dimStruct"), new Ident(loc, "area"));
-        VarDecl * type = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "type"));
-        std::vector<VarDecl *> shapeDecls = {
-            area, type
-        };
-        VarDeclList * varsShape = new VarDeclList(loc, shapeDecls);
-        StructTypename * shapeStruct = new StructTypename(loc, varsShape, test_symtable);
+        expect(output->name == expected_parse);
 
-        // Ident * circle = new Ident(loc, "circle");
-        StructDecl * strukt = new StructDecl(loc, shape, shapeStruct);
-
-        StructDecl * parsed_strukt = (StructDecl *) output->find([](const ASTNode * node) {
-            return node->get_kind() == StructDecl::kind;
-        });
-
-        expect(*strukt == *parsed_strukt);
-
-        //To-Do:
-        // - assign circle.type = "circle"; AND circle.dimension.width = 5.;
-        // - check circle.type and circle.dimension.width
         delete strukt;
 
         return TEST_SUCCESS;
@@ -159,9 +144,9 @@ void parser_tests() {
         )";
 
         ParseResult result = x::parse_str(code);
-        // ProgramSource * output = result.parser_state->top;
+        ProgramSource * output = result.parser_state->top;
 
-        /*const char * expected_parse = R"(
+        const std::string expected_parse = R"(
             int main() {
                     mut int a.
                     mut int b.
@@ -177,9 +162,8 @@ void parser_tests() {
                             a = a + 1.
                     }
             }
-        )"; */
-
-        // expect(output == expected_parse);
+        )";
+        expect(output->name == expected_parse);
 
         return TEST_SUCCESS;
     };
@@ -326,14 +310,14 @@ void parser_tests() {
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
 
-        /*onst char * expected_parse = R"(
+        const std::string expected_parse = R"(
             int main() {
                     mut ints arr.
                     arr[2] = 3.
             }
-        )"; */
+        )";
 
-        // expect(output == expected_parse);
+        expect(output->name == expected_parse);
 
         return TEST_SUCCESS;
     };
