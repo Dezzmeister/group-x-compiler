@@ -29,4 +29,8 @@ class TypeTable {
         int arg_offset(const ArgTAC * tac);
 };
 
+namespace x {
+    void generate_assembly(const ProgramSource * src, SymbolTable * symtable, std::ostream &code);
+}
+
 #endif

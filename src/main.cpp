@@ -69,17 +69,10 @@ int main(int argc, char** argv) {
   top->typecheck(symtable, result.parser_state->errors.sources[top]);
   result.parser_state->errors.print(stderr);
 
-  TypeTable type_table;
-  NamesToNames names = x::symtable_to_names(nullptr, result.parser_state->symtable);
-  std::vector<Quad *> instrs = {};
-  result.parser_state->top->gen_tac(result.parser_state->symtable, &type_table, names, instrs);
-  AsmState asm_state;
-  for (auto &tac : instrs) {
-    // tac->print();
-    // std::cout << std::endl;
-    tac->to_asm(std::cout, &type_table, names, asm_state);
-    std::cout << std::flush;
-  }
+  std::fstream fs;
+  fs.open("a.s", std::fstream::out);
+  x::generate_assembly(result.parser_state->top, result.parser_state->symtable, fs);
+  fs.close();
 
   if (graph) {
     std::ofstream dotfile;

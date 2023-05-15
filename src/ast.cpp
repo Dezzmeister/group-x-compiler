@@ -403,7 +403,7 @@ TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> &instrs) c
     std::string l = left->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string r = right->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string temp_name = next_t();
-    AssignTAC * tac = new AssignTAC(temp_name, std::string(1, op), l, r);
+    MathTAC * tac = new MathTAC(temp_name, op, l, r);
     instrs.push_back(tac);
 
     return temp_name;
@@ -1065,10 +1065,9 @@ std::string VarDeclInit::gen_tac(SymbolTable * old_symtable, TypeTable * type_ta
     std::string init_name = init->gen_tac(old_symtable, type_table, names, instrs);
     std::string var_name = decl->var_name->gen_tac(old_symtable, type_table, names, instrs);
 
-    std::string name = decl->var_name->id;
-    instrs.push_back(new AssignTAC(name, "=", var_name, init_name));
+    instrs.push_back(new AssignTAC(var_name, init_name));
 
-    return name;
+    return "";
 }
 
 bool VarDeclInit::operator==(const ASTNode &node) const {
@@ -1582,6 +1581,7 @@ std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table
     type_table->put(this_name, this->type_of(old_symtable));
 
     instrs.push_back(new LabelTAC(this_name));
+    instrs.push_back(new SetupStackTAC());
 
     for (size_t i = 0; i < params->params.size(); i++) {
         VarDecl * decl = params->params[i];
@@ -1714,9 +1714,9 @@ std::string Assignment::gen_tac(SymbolTable * old_symtable, TypeTable * type_tab
     std::string lhs_name = lhs->gen_tac(old_symtable, type_table, names, instrs);
     std::string rhs_name = rhs->gen_tac(old_symtable, type_table, names, instrs);
 
-    instrs.push_back(new AssignTAC("", "=", lhs_name, rhs_name));
+    instrs.push_back(new AssignTAC(lhs_name, rhs_name));
     
-    return lhs_name;
+    return "";
 }
 
 bool Assignment::operator==(const ASTNode &node) const {

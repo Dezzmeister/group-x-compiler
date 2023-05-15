@@ -97,6 +97,10 @@ void LogicalTAC::print() const {
     std::cout << id << " = " << left << " " << op << " " << right;
 }
 
+void MathTAC::print() const {
+    std::cout << id << " = " << left << " " << op << " " << right;
+}
+
 void AssignTAC::print() const
 {
     std::cout << id << " = " << rhs;
@@ -108,6 +112,10 @@ void DeleteTAC::print() const {
 
 void LabelTAC::print() const {
     std::cout << label << ":";
+}
+
+void SetupStackTAC::print() const {
+    std::cout << "setup_stack";
 }
 
 void BasicBlock::print() const
@@ -309,6 +317,34 @@ void LogicalTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames
     }
 }
 
+void MathTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    state.clear_reg(GeneralReg::Rax, code);
+    state.regs[GeneralReg::Rax].used = true;
+    state.regs[GeneralReg::Rax].var = id;
+    GeneralReg lhs = state.move_into_reg(left, code, GeneralReg::Rax + 1);
+    GeneralReg rhs = state.move_into_reg(right, code, GeneralReg::Rax + 1);
+    std::string true_label = next_l();
+    std::string false_label = next_l();
+
+    if (op == '+') {
+        code << "movq %" << REG_NAMES[rhs] << ", %rax\n";
+        code << "addq %" << REG_NAMES[lhs] << ", %rax\n";
+    } else if (op == '-') {
+        code << "movq %" << REG_NAMES[rhs] << ", %rax\n";
+        code << "subq %" << REG_NAMES[lhs] << ", %rax\n";
+    } else if (op == '*') {
+        code << "movq %" << REG_NAMES[rhs] << ", %rax\n";
+        code << "imul %rax, %" << REG_NAMES[lhs] << "\n";
+    } else if (op == '/') {
+        code << "movq %" << REG_NAMES[lhs] << ", %rax\n";
+        code << "idiv %" << REG_NAMES[rhs] << "\n";
+    } else if (op == '%') {
+        code << "movq %" << REG_NAMES[lhs] << ", %rax\n";
+        code << "idiv %" << REG_NAMES[rhs] << "\n";
+        code << "movq %rdx, %rax\n";
+    }
+}
+
 void LabelTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
     code << label << ":\n";
 }
@@ -323,6 +359,11 @@ void PushTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &n
         .id = state.regs[reg].var
     };
     state.stack.push_back(stack_var);
+}
+
+void SetupStackTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    code << "pushq %rbp\n";
+    code << "movq %rsp, %rbp\n";
 }
 
 void CallTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
@@ -352,6 +393,7 @@ void ArgTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &na
 }
 
 void VoidReturnTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    code << "leave\n";
     code << "ret\n";
 }
 
@@ -360,6 +402,7 @@ void ReturnTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames 
     GeneralReg reg = state.move_into_reg(id, code, GeneralReg::Rax + 1);
 
     code << "movq %" << REG_NAMES[reg] << ", %rax # prepare return value\n";
+    code << "leave\n";
     code << "ret\n";
     state.regs[GeneralReg::Rax].used = true;
     state.regs[GeneralReg::Rax].var = id;

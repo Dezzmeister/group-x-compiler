@@ -40,11 +40,9 @@ class AssignTAC : public Quad
 {
 public:
   std::string id;
-  std::string op; 
-  std::string lhs;
   std::string rhs;
-  AssignTAC(std::string id, std::string op, std::string lhs, std::string rhs)
-      : id(id), op(op), lhs(lhs), rhs(rhs) {}
+  AssignTAC(std::string id, std::string rhs)
+      : id(id), rhs(rhs) {}
   void print() const;
   virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
@@ -87,6 +85,19 @@ class LogicalTAC : public Quad {
     virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
+class MathTAC : public Quad {
+  public:
+    std::string id;
+    char op;
+    std::string left;
+    std::string right;
+
+    MathTAC(std::string id, char op, std::string left, std::string right) :
+      id(id), op(op), left(left), right(right) {}
+    void print() const;
+    virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
+};
+
 class LabelTAC : public Quad {
   public:
     std::string label;
@@ -102,6 +113,13 @@ class PushTAC : public Quad {
     PushTAC(std::string i) : id(i) { }
     void print() const { std::cout << "push " << id; }
     virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
+};
+
+class SetupStackTAC : public Quad {
+  public:
+    SetupStackTAC() {};
+    void print() const;
+    virtual void to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 class CallTAC : public Quad
@@ -182,8 +200,7 @@ public:
   BasicBlock *prev = nullptr;
 };
 
-namespace x
-{
+namespace x {
   extern BasicBlock *bblock;
 }
 

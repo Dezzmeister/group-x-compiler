@@ -60,3 +60,20 @@ int TypeTable::arg_offset(const ArgTAC * tac) {
     FuncTypename * func_type = (FuncTypename *) typ;
     return func_type->offsets[tac->arg];
 }
+
+void x::generate_assembly(const ProgramSource * src, SymbolTable * symtable, std::ostream &code) {
+    std::vector<Quad *> instrs = {};
+    TypeTable type_table;
+    NamesToNames names = x::symtable_to_names(nullptr, symtable);
+    src->gen_tac(symtable, &type_table, names, instrs);
+
+    AsmState asm_state;
+    code << ".text\n";
+    code << ".globl main\n";
+    
+    for (auto &tac : instrs) {
+        tac->to_asm(code, &type_table, names, asm_state);
+    }
+
+    code << std::flush;
+}
