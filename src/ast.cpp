@@ -349,6 +349,15 @@ bool Ident::operator==(const ASTNode &node) const {
     return (id == n.id);
 }
 
+ virtual std::string FloatLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const 
+ {
+     std::string p_name = *names.get(value) ;
+     type_table->put_from_symbol(value, p_name, old_symtable) ;
+     auto v = new Value <int> (p_name, value) ;
+     instrs.push_back(v) ;
+     return p_name ;
+ }
+
  virtual std::string IntLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const 
  {
      std::string p_name = *names.get(value) ;
