@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "parser.h"
 #include "symtable.h"
+#include "ast.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -78,8 +79,10 @@ not[ \t]+in {return NOT_IN_KW;}
 and         {return AND_KW;}
 or          {return OR_KW;}
 
-{ident}     {
-                yylval->ident = new Ident(Location(*yylloc, *yylloc), yytext); 
+(\.[ \t]*(\/\/.*)?[ \t]*\n) {return NEWLINE;}
+
+{ident}     { {
+                yylval->ident = new Ident(Location(*yylloc, *yylloc), yytext);
                 // Our grammar is not context free because of this: the lexer returns
                 // a different token depending on whether the identifier has been declared
                 // as a type, variable, or function, or if it's undeclared. This is great because
@@ -97,8 +100,25 @@ or          {return OR_KW;}
 
                     return DECLARED_FUNC;
                 }
-
-                return IDENT;
+                if (yytext[yyleng - 1] == 's') {
+                    char * first_part = strdup(yytext);
+                    first_part[yyleng - 1] = '\0';
+                    const Symbol * sym = yyextra->symtable->get(std::string(first_part));
+                    free(first_part);
+                    if (sym != nullptr && sym->kind == Type) {
+                        TypeDecl * decl = sym->decl.typ;
+                            if (decl->get_kind() == TypeAlias::kind) {
+                                TypeAlias * alias = (TypeAlias *) decl;
+                                yylval->dynamic_arr_type_name = new DynamicArrayTypename(Location(*yylloc, *yylloc), alias->type_expr->clone());
+                            } else {
+                                StructDecl * strukt = (StructDecl *) decl;
+                                yylval->dynamic_arr_type_name = new DynamicArrayTypename(Location(*yylloc, *yylloc), strukt->defn->clone());
+                            }
+                            return DYNAMIC_ARR_IDENT;
+                        }
+                    }
+                }
+                return IDENT; 
             }
 
 \-\>        {return FUNC_TYPE_OP;}

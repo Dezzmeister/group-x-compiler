@@ -38,6 +38,7 @@ const int ExprList::kind = x::next_kind("expr_list");
 const int TupleTypename::kind = x::next_kind("tuple_typename");
 const int FuncTypename::kind = x::next_kind("func_typename");
 const int StaticArrayTypename::kind = x::next_kind("static_array_typename");
+const int DynamicArrayTypename::kind = x::next_kind("dynamic_array_typename");
 const int TypeAlias::kind = x::next_kind("type_alias");
 const int StructTypename::kind = x::next_kind("struct_typename");
 const int StructDecl::kind = x::next_kind("struct_decl");
@@ -1186,7 +1187,7 @@ void WhileStmt::print() const {
     printf("};\n");
 }
 
-std::string WhileStmt::gen_tac(SymbolTable * old_symtable, 
+std::string WhileStmt::gen_tac(SymbolTable * old_symtable,
 TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     std::string cond_var = cond->gen_tac(old_symtable, type_table, names, instrs);
     std::string true_label = next_l();
@@ -1245,7 +1246,7 @@ void ForStmt::print() const {
     printf("}");
 }
 
-std::string ForStmt::gen_tac(SymbolTable * old_symtable, 
+std::string ForStmt::gen_tac(SymbolTable * old_symtable,
 TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     NamesToNames block_names = x::symtable_to_names(&names, scope);
 
@@ -1378,8 +1379,8 @@ void LogicalExpr::print() const {
     right->print();
 }
 
-std::string LogicalExpr::gen_tac(SymbolTable * old_symtable, 
-TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> &instrs) const { 
+std::string LogicalExpr::gen_tac(SymbolTable * old_symtable,
+TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> &instrs) const {
     std::string l = left->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string r = right->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string temp_name = next_t();
@@ -1564,7 +1565,7 @@ std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table
         ArgTAC * tac = new ArgTAC(param_name, i);
         instrs.push_back(tac);
     }
-    
+
     body->gen_tac(scope, type_table, block_names, instrs);
 
     const int last_stmt_kind = body->statements[body->statements.size() - 1]->get_kind();
@@ -1937,6 +1938,36 @@ bool ArrayIndexExpr::operator==(const ASTNode &node) const {
     const ArrayIndexExpr &n = (ArrayIndexExpr &) node;
 
     return (*arr == *(n.arr) && *index == *(n.index));
+}
+
+DynamicArrayTypename::DynamicArrayTypename(const Location loc, const Typename * arr)
+    : Typename(loc), element_type(arr) {}
+
+Typename * DynamicArrayTypename::clone() const {
+    return new DynamicArrayTypename(loc, element_type->clone());
+}
+
+DynamicArrayTypename::~DynamicArrayTypename() {
+    delete element_type;
+}
+
+void DynamicArrayTypename::print() const {
+    element_type->print();
+    putchar('s');
+}
+
+std::vector<ASTNode *> DynamicArrayTypename::children() {
+    return {(ASTNode *) element_type};
+}
+
+bool DynamicArrayTypename::operator==(const ASTNode &node) const {
+    if (node.get_kind() != DynamicArrayTypename::kind) {
+        return false;
+    }
+
+    const DynamicArrayTypename &n = (DynamicArrayTypename &) node;
+
+    return *element_type == *(n.element_type);
 }
 
 VoidReturnStmt::VoidReturnStmt(const Location loc) : Statement(loc) {}
