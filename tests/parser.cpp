@@ -160,12 +160,15 @@ void parser_tests() {
         ProgramSource * output = result.parser_state->top;
         SourceErrors &errors = report.sources[output];
         CompilerError err = errors[0];
+        CompilerError err2 = errors[1];
 
         expect(errors.has_errors());
         expect(errors.error_count() == 1);
         expect(errors.type_errors.size() == 1);
         expect(err.level == Error);
+        expect(err2.level == Error);
         expect(err.message == "Cannot assign to immutable");
+        expect(err2.message = "No return");
 
         return TEST_SUCCESS;
     };
