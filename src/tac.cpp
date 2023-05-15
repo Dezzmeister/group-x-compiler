@@ -80,6 +80,18 @@ void RetvalTAC::print() const {
     std::cout << id << " = __retval";
 }
 
+void ArgTAC::print() const {
+    std::cout << id << " = __arg(" << arg << ")";
+}
+
+void VoidReturnTAC::print() const {
+    std::cout << "ret";
+}
+
+void ReturnTAC::print() const {
+    std::cout << "ret " << id;
+}
+
 void CopyTAC::print() const
 {
     std::cout << "copy " << index;
@@ -104,7 +116,7 @@ void LoadTAC::print() const
 
 void AssignTAC::print() const
 {
-    std::cout << lhs << " " << op << " " << rhs;
+    std::cout << id << " = " << rhs;
 }
 
 void MoveTAC::print() const

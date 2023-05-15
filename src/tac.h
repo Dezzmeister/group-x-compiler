@@ -33,10 +33,10 @@ public:
 class AssignTAC : public Quad
 {
 public:
-  std::string op;
-  int lhs, rhs;
-  AssignTAC(std::string o, int l, int r)
-      : op(o), lhs(l), rhs(r) {}
+  std::string id;
+  std::string rhs;
+  AssignTAC(std::string id, std::string rhs)
+      : id(id), rhs(rhs) {}
   void print() const;
 };
 
@@ -204,8 +204,16 @@ class RetvalTAC : public Quad {
 class ArgTAC : public Quad
 {
 public:
+  std::string id;
   int arg;
-  ArgTAC(int a) : arg(a) {}
+  ArgTAC(std::string id, int a) : id(id), arg(a) {}
+  void print() const;
+};
+
+class VoidReturnTAC : public Quad {
+  public:
+    VoidReturnTAC() {}
+    void print() const;
 };
 
 // x = y[i]
@@ -268,9 +276,10 @@ public:
 class ReturnTAC : public Quad
 {
 public:
-  int ret_val;
+  std::string id;
 
-  ReturnTAC(int ret) : ret_val(ret) {}
+  ReturnTAC(std::string id) : id(id) {}
+  void print() const;
 };
 
 class BasicBlock

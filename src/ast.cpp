@@ -147,7 +147,7 @@ void IntLiteral::print() const {
 }
 
 std::string IntLiteral::gen_tac(SymbolTable * old_symtable,
-    TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
         std::string t_name = next_t();
         Value<int> * tac = new Value<int>(t_name, value);
 
@@ -338,7 +338,7 @@ void Ident::print() const {
     std::cout << id;
 }
 std::string Ident::gen_tac(SymbolTable * old_symtable,
-TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     std::string p_name = *names.get(id);
     type_table->put_from_symbol(id, p_name, old_symtable);
     return p_name;
@@ -668,6 +668,14 @@ std::vector<ASTNode *> StatementList::children() {
     return cast_nodes(statements);
 }
 
+std::string StatementList::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
+    for (auto &stmt : statements) {
+        stmt->gen_tac(old_symtable, type_table, names, instrs);
+    }
+
+    return "";
+}
+
 bool StatementList::operator==(const ASTNode &node) const {
     if (node.get_kind() != StatementList::kind) {
         return false;
@@ -982,6 +990,15 @@ std::vector<ASTNode *> VarDeclInit::children() {
     return {(ASTNode *)decl, (ASTNode *)init};
 }
 
+std::string VarDeclInit::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
+    std::string init_name = init->gen_tac(old_symtable, type_table, names, instrs);
+    std::string var_name = decl->var_name->gen_tac(old_symtable, type_table, names, instrs);
+
+    instrs.push_back(new AssignTAC(var_name, init_name));
+
+    return "";
+}
+
 bool VarDeclInit::operator==(const ASTNode &node) const {
     if (node.get_kind() != VarDeclInit::kind) {
         return false;
@@ -1019,7 +1036,7 @@ bool ArrayLiteral::operator==(const ASTNode &node) const {
     return (*items == *(n.items));
 }
 
-std::string IfStmt::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+std::string IfStmt::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     std::string cond_var = cond->gen_tac(old_symtable, type_table, names, instrs);
     std::string label = next_l();
     CmpLiteralTAC * cmp = new CmpLiteralTAC(cond_var, 1);
@@ -1116,7 +1133,7 @@ void WhileStmt::print() const {
 }
 
 std::string WhileStmt::gen_tac(SymbolTable * old_symtable, 
-TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> instrs) const {
+TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> &instrs) const {
     std::string cond_var = cond->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string true_label = next_l();
     std::string false_label = next_l();
@@ -1175,7 +1192,7 @@ void ForStmt::print() const {
 }
 
 std::string ForStmt::gen_tac(SymbolTable * old_symtable, 
-TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     NamesToNames block_names = x::symtable_to_names(&names, scope);
 
     std::string cond_label = next_l();
@@ -1308,7 +1325,7 @@ void LogicalExpr::print() const {
 }
 
 std::string LogicalExpr::gen_tac(SymbolTable * old_symtable, 
-TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> instrs) const { 
+TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> &instrs) const { 
     std::string l = left->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string r = right->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string temp_name = next_t();
@@ -1351,7 +1368,7 @@ std::vector<ASTNode *> FunctionCallExpr::children() {
     return {(ASTNode *)func, (ASTNode *)args};
 }
 
-std::string FunctionCallExpr::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+std::string FunctionCallExpr::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     std::string func_var = func->gen_tac(old_symtable, type_table, names, instrs);
 
     for (auto &arg : args->exprs) {
@@ -1398,7 +1415,7 @@ std::vector<ASTNode *> FunctionCallStmt::children() {
     return {(ASTNode *)func, (ASTNode *)args};
 }
 
-std::string FunctionCallStmt::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+std::string FunctionCallStmt::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     std::string func_var = func->gen_tac(old_symtable, type_table, names, instrs);
 
     for (auto &arg : args->exprs) {
@@ -1478,7 +1495,30 @@ FuncDecl::~FuncDecl() {
     delete scope;
 }
 
-std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
+std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
+    NamesToNames block_names = x::symtable_to_names(&names, scope);
+
+    std::string this_name = *names.get(name->id);
+
+    type_table->put(this_name, this->type_of(old_symtable));
+
+    instrs.push_back(new LabelTAC(this_name));
+
+    for (size_t i = 0; i < params->params.size(); i++) {
+        VarDecl * decl = params->params[i];
+        std::string param_name = decl->var_name->gen_tac(scope, type_table, block_names, instrs);
+        ArgTAC * tac = new ArgTAC(param_name, i);
+        instrs.push_back(tac);
+    }
+    
+    body->gen_tac(scope, type_table, block_names, instrs);
+
+    const int last_stmt_kind = body->statements[body->statements.size() - 1]->get_kind();
+
+    if (last_stmt_kind != ReturnStatement::kind && last_stmt_kind != VoidReturnStmt::kind) {
+        instrs.push_back(new VoidReturnTAC());
+    }
+
     return "";
 };
 
@@ -1556,6 +1596,13 @@ std::vector<ASTNode *> ReturnStatement::children() {
     return {(ASTNode *)val};
 }
 
+std::string ReturnStatement::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
+    std::string name = val->gen_tac(old_symtable, type_table, names, instrs);
+    instrs.push_back(new ReturnTAC(name));
+
+    return "";
+}
+
 bool ReturnStatement::operator==(const ASTNode &node) const {
     if (node.get_kind() != ReturnStatement::kind) {
         return false;
@@ -1582,6 +1629,15 @@ void Assignment::print() const {
 
 std::vector<ASTNode *> Assignment::children() {
     return {(ASTNode *)lhs, (ASTNode *)rhs};
+}
+
+std::string Assignment::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
+    std::string lhs_name = lhs->gen_tac(old_symtable, type_table, names, instrs);
+    std::string rhs_name = rhs->gen_tac(old_symtable, type_table, names, instrs);
+
+    instrs.push_back(new AssignTAC(lhs_name, rhs_name));
+
+    return "";
 }
 
 bool Assignment::operator==(const ASTNode &node) const {
@@ -1867,7 +1923,7 @@ bool BreakStmt::operator==(const ASTNode &node) const {
     return (node.get_kind() == BreakStmt::kind);
 }
 
-std::string ProgramSource::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+std::string ProgramSource::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     for (auto &node : nodes) {
         node->gen_tac(old_symtable, type_table, names, instrs);
     }
