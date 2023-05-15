@@ -328,7 +328,7 @@ Ident::Ident(const Location loc, const char * const _id) :
 void Ident::print() const {
     std::cout << id;
 }
-std::string Ident::gen_tac(SymbolTable * old_symtable, 
+std::string Ident::gen_tac(SymbolTable * old_symtable,
 TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
     std::string p_name = *names.get(id);
     type_table->put_from_symbol(id, p_name, old_symtable);
@@ -346,6 +346,29 @@ bool Ident::operator==(const ASTNode &node) const {
 
     const Ident &n = (Ident &) node;
 
+    return (id == n.id);
+}
+
+IntLiteral::IntLiteral(const Location loc, const char * const _id) :
+    CallingExpr(loc), id(std::string(_id)) {}
+
+void IntLiteral::print() const {
+    std::cout << id;
+}
+std::string IntLiteral::gen_tac(SymbolTable * old_symtable,
+    TypeTable * type_table, NamesToNames &names, std::vect<Quad *> instrs) const {
+        std::string p_name = *names.get(id);
+        type_table->put_from_symbol(id, p_name, old_symtable);
+        return p_name;
+}
+std::vector<ASTNode *> IntLiteral::children() {
+    return {};
+}
+bool IntLiteral::operator==(const ASTNode &node) const {
+    if (node.get_kind() != IntLiteral::kind) {
+        return false;
+    }
+    const IntLiteral &n = (IntLiteral &) node;
     return (id == n.id);
 }
 
@@ -1106,12 +1129,12 @@ void WhileStmt::print() const {
     printf("};\n");
 }
 
-std::string WhileStmt::gen_tac(SymbolTable * old_symtable, 
+std::string WhileStmt::gen_tac(SymbolTable * old_symtable,
 TypeTable * global_symtable, std::vector<Quad *> instrs) const {
     cond->gen_tac(old_symtable, global_symtable, instrs);
     body->gen_tac(old_symtable, global_symtable, instrs);
     return "";
-} 
+}
 
 std::vector<ASTNode *> WhileStmt::children() {
     return {(ASTNode *)cond, (ASTNode *)body};
@@ -1151,14 +1174,14 @@ void ForStmt::print() const {
     printf("}");
 }
 
-std::string ForStmt::gen_tac(SymbolTable * old_symtable, 
+std::string ForStmt::gen_tac(SymbolTable * old_symtable,
 TypeTable * global_symtable, std::vector<Quad *> instrs) const {
     init->gen_tac(old_symtable, global_symtable, instrs);
     condition->gen_tac(old_symtable, global_symtable, instrs);
     update->gen_tac(old_symtable, global_symtable, instrs);
     body->gen_tac(old_symtable, global_symtable, instrs);
     return "";
-} 
+}
 
 std::vector<ASTNode *> ForStmt::children() {
     return {(ASTNode *)init, (ASTNode *)condition, (ASTNode *)update,
@@ -1269,8 +1292,8 @@ void LogicalExpr::print() const {
     right->print();
 }
 
-std::string LogicalExpr::gen_tac(SymbolTable * old_symtable, 
-TypeTable * global_symtable, std::vector<Quad *> instrs) const { 
+std::string LogicalExpr::gen_tac(SymbolTable * old_symtable,
+TypeTable * global_symtable, std::vector<Quad *> instrs) const {
     std::string l = left->gen_tac(old_symtable, global_symtable, instrs);
     std::string r = right->gen_tac(old_symtable, global_symtable, instrs);
     std::string label = next_label();

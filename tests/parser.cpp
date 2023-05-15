@@ -137,7 +137,7 @@ void parser_tests() {
 
         return TEST_SUCCESS;
     };
-    
+
     xtest::tests["error test1"] = []() {
         const char * code = R"(
             int main() {
@@ -151,7 +151,7 @@ void parser_tests() {
         ProgramSource * output = result.parser_state->top;
         SourceErrors &errors = report.sources[top];
         CompilerError err = errors[0];
-        
+
         expect(errors.has_errors());
         expect(errors.error_count() == 1);
         expect(errors.type_errors.size() == 1);
@@ -160,4 +160,26 @@ void parser_tests() {
 
         return TEST_SUCCESS;
     };
+
+    xtests::tests["Nested While"] = []() {
+    const char * code = R"(
+        int main() {
+            int a;
+            int b;
+            int res;
+            a = 1;
+            b = 1;
+            res = 0;
+            while(a<15) {
+                while(b<15) {
+                    res = res + b;
+                    b = b+1;
+                }
+                a = a+1;
+            }
+        }
+    )";
+    ProgramSource * output = result.parser_state->top;
+    expect(output = "");
+    }
 }
