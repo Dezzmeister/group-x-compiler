@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "parser.h"
 #include "symtable.h"
+#include "ast.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -80,7 +81,7 @@ or          {return OR_KW;}
 
 (\.[ \t]*(\/\/.*)?[ \t]*\n) {return NEWLINE;}
 
-{ident}     {
+{ident}     { {
                 yylval->ident = new Ident(Location(*yylloc, *yylloc), yytext);
                 // Our grammar is not context free because of this: the lexer returns
                 // a different token depending on whether the identifier has been declared
@@ -99,25 +100,25 @@ or          {return OR_KW;}
 
                     return DECLARED_FUNC;
                 }
-                if (yytext[yylen - 1] == 's') {
+                if (yytext[yyleng - 1] == 's') {
                     char * first_part = strdup(yytext);
-                    first_part[yylen - 1] = '\0';
-                    const Symbol * sym = yyextra symtable::get(std:string(first_part));
+                    first_part[yyleng - 1] = '\0';
+                    const Symbol * sym = yyextra->symtable->get(std::string(first_part));
                     free(first_part);
                     if (sym != nullptr && sym->kind == Type) {
                         TypeDecl * decl = sym->decl.typ;
-                            if (decl->get_king() == TypeAlias::kind) {
-                                TypeAlias * alias = (TypeALias *) = decl;
-                                yyval->dynamic_arr_type_name = new DynamicArrayTypename(Location(*yyloc, *yylex), alias->type_expr->close());
+                            if (decl->get_kind() == TypeAlias::kind) {
+                                TypeAlias * alias = (TypeAlias *) decl;
+                                yylval->dynamic_arr_type_name = new DynamicArrayTypename(Location(*yylloc, *yylloc), alias->type_expr->clone());
                             } else {
                                 StructDecl * strukt = (StructDecl *) decl;
-                                yylval::dynamic_arr_type_name = new DynamicArrayTypename(Location(*yyloc, &yyloc))
+                                yylval->dynamic_arr_type_name = new DynamicArrayTypename(Location(*yylloc, *yylloc), strukt->defn->clone());
                             }
                             return DYNAMIC_ARR_IDENT;
                         }
                     }
                 }
-                return IDENT;
+                return IDENT; 
             }
 
 \-\>        {return FUNC_TYPE_OP;}

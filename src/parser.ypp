@@ -501,7 +501,7 @@ func_type_name : '[' ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTy
 static_arr_type_name : type_name '[' INT ']' {$$ = new StaticArrayTypename(Location(@1, @4), $1, $3);}
                      ;
 
-dynamic_arr_type_name : type_name 's' {$$ = new DynamicArrayTypename(Location(@1, @4), $1);}
+dynamic_arr_type_name : type_name 's' {$$ = new DynamicArrayTypename(Location(@1, @2), $1);}
                       ;
 
 parens_type_name : '(' type_name ')' {$$ = new ParensTypename(Location(@1, @3), $2);}

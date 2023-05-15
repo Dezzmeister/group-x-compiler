@@ -163,7 +163,7 @@ bool StaticArrayTypename::type_equals(const Typename * t, SymbolTable * symtable
 }
 
 bool DynamicArrayTypename::type_equals(const Typename * t, SymbolTable * symtable) const {
-    const Typename * t_unalias = unalias(t, symtable);
+    const Typename * t_unalias = unaliased(t, symtable);
     if (t_unalias->get_kind() != DynamicArrayTypename::kind) {
         return false;
     }
@@ -174,10 +174,10 @@ bool DynamicArrayTypename::type_equals(const Typename * t, SymbolTable * symtabl
 }
 
 bool DynamicArrayTypename::can_cast_to(const Typename * t, SymbolTable * symtable) const {
-    const Typename * t_unalias = unalias(t, symtable);
+    const Typename * t_unalias = unaliased(t, symtable);
     if(t_unalias->get_kind() == PtrTypename::kind) {
-        PtrTypename t_ptr = (PtrTypename *) t_unalias;
-        return (this->element_type->type_equals(t_ptr->name, symtable);
+        PtrTypename *t_ptr = (PtrTypename *) t_unalias;
+        return (this->element_type->type_equals(t_ptr->name, symtable));
     }
     return false;
 }

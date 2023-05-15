@@ -38,6 +38,7 @@ const int ExprList::kind = x::next_kind("expr_list");
 const int TupleTypename::kind = x::next_kind("tuple_typename");
 const int FuncTypename::kind = x::next_kind("func_typename");
 const int StaticArrayTypename::kind = x::next_kind("static_array_typename");
+const int DynamicArrayTypename::kind = x::next_kind("dynamic_array_typename");
 const int TypeAlias::kind = x::next_kind("type_alias");
 const int StructTypename::kind = x::next_kind("struct_typename");
 const int StructDecl::kind = x::next_kind("struct_decl");
@@ -1232,7 +1233,7 @@ void ForStmt::print() const {
 }
 
 std::string ForStmt::gen_tac(SymbolTable * old_symtable,
-TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
     NamesToNames block_names = x::symtable_to_names(&names, scope);
 
     std::string cond_label = next_l();
@@ -1365,7 +1366,7 @@ void LogicalExpr::print() const {
 }
 
 std::string LogicalExpr::gen_tac(SymbolTable * old_symtable,
-TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> instrs) const {
+TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> &instrs) const {
     std::string l = left->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string r = right->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string temp_name = next_t();
@@ -1521,12 +1522,6 @@ bool ParamsList::operator==(const ASTNode &node) const {
     const ParamsList &n = (ParamsList &) node;
 
     return cmp_vectors(params, n.params);
-}
-
-std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
-    x::bblock->add_block(name->id);
-    body->gen_tac(old_symtable, type_table, names, instrs);
-    return "";
 }
 
 FuncDecl::FuncDecl(const Location loc, const Ident * name, const ParamsList * params,
