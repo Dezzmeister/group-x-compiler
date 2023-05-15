@@ -119,6 +119,10 @@ typedef struct AsmState {
 
     int pop_frame();
 
+    void reserve_space(std::ostream &code, std::string name, int size);
+
+    void copy_addr(std::ostream &code, GeneralReg src_addr, GeneralReg dest_addr, int size);
+
 } AsmState;
 
 #endif

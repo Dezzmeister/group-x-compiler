@@ -2,14 +2,10 @@
 
 TypeTable::TypeTable() : types({}) {}
 
-TypeTable::~TypeTable() {
-    for (std::pair<const std::string, Typename *> &item : types) {
-        delete item.second;
-    }
-}
+TypeTable::~TypeTable() {}
 
-void TypeTable::put(std::string name, Typename * typ) {
-    types[name] = typ;
+void TypeTable::put(std::string name, TypeEntry entry) {
+    types[name] = entry;
 }
 
 /**
@@ -17,7 +13,7 @@ void TypeTable::put(std::string name, Typename * typ) {
  * a new name
  */
 void TypeTable::put_from_symbol(std::string name, std::string new_name, SymbolTable * symtable) {
-    if (get(new_name) != nullptr) {
+    if (has(new_name)) {
         return;
     }
     Symbol * sym = symtable->get(name);
@@ -32,23 +28,36 @@ void TypeTable::put_from_symbol(std::string name, std::string new_name, SymbolTa
     if (sym->kind == Var) {
         VarDecl * decl = sym->decl.var;
         Typename * typ = decl->type_name->clone();
-        types[new_name] = typ;
+        types[new_name] = {
+            .typ = typ,
+            .size = typ->type_size(symtable)
+        };
         return;
     }
     FuncDecl * decl = sym->decl.func;
     Typename * typ = decl->type_of(symtable);
-    types[new_name] = typ;
+    int size = typ->type_size(symtable);
+    types[new_name] = {
+        .typ = typ,
+        .size = size
+    };
 }
 
-Typename * TypeTable::get(std::string name) {
+TypeEntry TypeTable::get(std::string name) {
     if (types.count(name)) {
         return types[name];
     }
-    return nullptr;
+    // TODO: optional
+    return {0};
+}
+
+bool TypeTable::has(std::string name) {
+    return types.count(name);
 }
 
 int TypeTable::arg_offset(const ArgTAC * tac) {
-    Typename * typ = this->get(tac->func);
+    TypeEntry entry = this->get(tac->func);
+    Typename * typ = entry.typ;
     if (typ == nullptr) {
         fprintf(stderr, "type of func can't be null\n");
         exit(1);

@@ -152,6 +152,17 @@ public:
   virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
+class ArrayIndexTAC : public Quad {
+  public:
+    std::string id;
+    std::string base;
+    std::string offset;
+    int stride;
+    ArrayIndexTAC(std::string id, std::string base, std::string offset, int stride) : id(id), base(base), offset(offset), stride(stride) {}
+    void print() const;
+    virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
+};
+
 class VoidReturnTAC : public Quad {
   public:
     VoidReturnTAC() {}

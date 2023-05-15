@@ -153,3 +153,19 @@ int AsmState::pop_frame() {
 
     return out;
 }
+
+void AsmState::reserve_space(std::ostream &code, std::string name, int size) {
+    stack_offset += size;
+    stack.push_back({
+        .size = size,
+        .id = name
+    });
+
+    code << "subq $" << size << ", %rsp\n";
+}
+
+void AsmState::copy_addr(std::ostream &code, GeneralReg src_addr, GeneralReg dest_addr, int size) {
+    for (int i = 0; i < size; i+=8) {
+        code << "movq " << i << "(%" << REG_NAMES[src_addr] << "), " << i << "(%" << REG_NAMES[dest_addr] << ")\n";
+    }
+}

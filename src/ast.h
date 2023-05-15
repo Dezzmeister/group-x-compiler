@@ -1329,6 +1329,7 @@ class ArrayIndexExpr : public CallingExpr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const;
 
         virtual Typename * type_of(SymbolTable * symtable) const;
 

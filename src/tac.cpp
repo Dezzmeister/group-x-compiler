@@ -77,6 +77,10 @@ void ArgTAC::print() const {
     std::cout << id << " = __arg(" << arg << ")";
 }
 
+void ArrayIndexTAC::print() const {
+    std::cout << id << " = (" << stride << " * " << offset << ") + " << base; 
+}
+
 void VoidReturnTAC::print() const {
     std::cout << "ret";
 }
@@ -189,7 +193,7 @@ std::string StringLitTAC(const std::string s, std::vector<Quad *> instrs, Symbol
 }
 
 template <>
-void Value<int>::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+void Value<int>::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {    
     const GeneralReg reg = state.free_reg(code);
     state.regs[reg].used = true;
     state.regs[reg].var = id;
@@ -217,6 +221,31 @@ void Value<std::string>::to_asm(std::ostream &code, TypeTable * type_table, Name
 }
 
 void AssignTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    if (id[0] == '*') {
+        std::string ptr = id.substr(1);
+        std::optional<VarLoc> ptr_loc = state.find_var(ptr);
+
+        if (!ptr_loc) {
+            fprintf(stderr, "null ptr exception");
+            exit(1);
+        }
+
+        VarLoc loc = *ptr_loc;
+        GeneralReg rhs_reg = state.move_into_reg(rhs, code, 0);
+
+        if (loc.loc_type == Reg) {
+            GeneralReg reg = loc.loc.reg;
+            state.regs[reg].used = true;
+            state.regs[reg].var = id;
+            code << "movq %" << REG_NAMES[rhs_reg] << ", (%" << REG_NAMES[reg] << ")\n";
+        } else {
+            StackVarLoc stack_loc = loc.loc.stack;
+            code << "movq %" << REG_NAMED[rhs_reg] << ", -" << stack_loc.offset << "(%rsp)\n";
+        }
+
+        return;
+    }
+    
     std::optional<VarLoc> id_loc = state.find_var(id);
     GeneralReg rhs_reg = state.move_into_reg(rhs, code, 0);
 
@@ -406,4 +435,14 @@ void ReturnTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames 
     code << "ret\n";
     state.regs[GeneralReg::Rax].used = true;
     state.regs[GeneralReg::Rax].var = id;
+}
+
+void ArrayIndexTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    GeneralReg base_reg = state.move_into_reg(base, code, GeneralReg::Rax + 1);
+    GeneralReg offset_reg = state.move_into_reg(offset, code, GeneralReg::Rax + 1);
+    GeneralReg id_reg = state.free_reg(code);
+
+    code << "leaq (%" << REG_NAMES[base_reg] << ", %" << REG_NAMES[offset_reg] << ", $" << stride << "), %" << REG_NAMES[id_reg] << "\n";
+    state.regs[id_reg].used = true;
+    state.regs[id_reg].var = id;
 }

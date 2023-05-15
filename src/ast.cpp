@@ -155,7 +155,13 @@ std::string IntLiteral::gen_tac(SymbolTable * old_symtable,
         std::string t_name = next_t();
         Value<int> * tac = new Value<int>(t_name, value);
 
-        type_table->put(t_name, new TypeIdent(x::NULL_LOC, "int"));
+        TypeIdent * typ = new TypeIdent(x::NULL_LOC, "int");
+        int size = typ->type_size(old_symtable);
+
+        type_table->put(t_name, {
+            .typ = typ,
+            .size = size
+        });
         instrs.push_back(tac);
         return t_name;
 }
@@ -1578,7 +1584,13 @@ std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table
 
     std::string this_name = *names.get(name->id);
 
-    type_table->put(this_name, this->type_of(old_symtable));
+    Typename * this_type = this->type_of(old_symtable);
+    int size = this_type->type_size(old_symtable);
+
+    type_table->put(this_name, {
+        .typ = this_type,
+        .size = size
+    });
 
     instrs.push_back(new LabelTAC(this_name));
     instrs.push_back(new SetupStackTAC());
@@ -1978,6 +1990,21 @@ void ArrayIndexExpr::print() const {
 
 std::vector<ASTNode *> ArrayIndexExpr::children() {
     return {(ASTNode *) arr, (ASTNode *) index};
+}
+
+std::string ArrayIndexExpr::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
+    std::string arr_name = arr->gen_tac(old_symtable, type_table, names, instrs);
+    std::string idx_name = index->gen_tac(old_symtable, type_table, names, instrs);
+
+    std::string t_name = next_t();
+    Typename * typ = this->type_of(old_symtable);
+    int stride = typ->type_size(old_symtable);
+
+    delete typ;
+
+    instrs.push_back(new ArrayIndexTAC(t_name, arr_name, idx_name, stride));
+
+    return "*" + t_name;
 }
 
 bool ArrayIndexExpr::operator==(const ASTNode &node) const {
