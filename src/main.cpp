@@ -67,7 +67,8 @@ int main(int argc, char** argv) {
   top->typecheck(symtable, result.parser_state->errors.sources[top]);
   result.parser_state->errors.print(stderr);
 
-  result.parser_state->top->gen_tac();
+  std::vector<Quad *> instrs = {};
+  result.parser_state->top->gen_tac(result.parser_state->symtable, nullptr, instrs);
   x::bblock->print();
 
   if (graph) {

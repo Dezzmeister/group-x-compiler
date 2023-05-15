@@ -80,7 +80,7 @@ typedef struct {
     bool used;
 } RegisterState;
 
-typedef struct {
+typedef struct AsmState {
     std::vector<StackVar> stack;
     RegisterState regs[GeneralReg::Count];
     int stack_offset;
