@@ -1352,6 +1352,21 @@ class VoidReturnStmt : public Statement {
         KIND_CLASS()
 };
 
+class PleaseReturnStmt : public Statement {
+    public:
+        PleaseReturnStmt(const Location loc);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
 class ContinueStmt : public Statement {
     public:
         ContinueStmt(const Location loc);
