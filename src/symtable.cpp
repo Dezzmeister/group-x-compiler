@@ -1,35 +1,68 @@
 #include "symtable.h"
 
-static SymbolTable * init_symtable();
+Symbol * Symbol::clone() const {
+    Symbol * out = new Symbol(kind, decl);
+    out->next = next;
+    out->name = name;
 
-SymbolTable * x::symtable = init_symtable();
+    return out;
+}
 
-static SymbolTable * init_symtable() {
+ASTNode * Symbol::decl_upcast() {
+    switch (kind) {
+        case Var:
+            return (ASTNode *) decl.var;
+
+        case Type:
+            return (ASTNode *) decl.typ;
+
+        case Func:
+            return (ASTNode *) decl.func;
+    }
+
+    __builtin_unreachable();
+}
+
+SymbolTable * SymbolTable::clone() const {
+    SymbolTable * out = new SymbolTable(enclosing == nullptr ? nullptr : enclosing->clone());
+    out->node = node;
+
+    for (auto &item : table) {
+        out->table[item.first] = item.second->clone();
+    }
+
+    return out;
+}
+
+void SymbolTable::print() {
+    for (auto &item : table) {
+        printf("[%s -> %s]\n", item.first.c_str(), x::symbol_kind_names[item.second->kind]);
+    }
+}
+
+SymbolTable * x::bare_symtable() {
     SymbolTable * out = new SymbolTable(nullptr);
 
+    Decl base_type = { .typ = nullptr };
+
     // Built-in types
-    out->put(std::string("int"), new Symbol(Type));
-    out->put(std::string("float"), new Symbol(Type));
-    out->put(std::string("bool"), new Symbol(Type));
-    out->put(std::string("char"), new Symbol(Type));
-    out->put(std::string("void"), new Symbol(Type));
-
-    // Built-in functions
-    out->put(std::string("print"), new Symbol(Func));
+    out->put(std::string("int"), new Symbol(Type, base_type));
+    out->put(std::string("float"), new Symbol(Type, base_type));
+    out->put(std::string("bool"), new Symbol(Type, base_type));
+    out->put(std::string("char"), new Symbol(Type, base_type));
+    out->put(std::string("void"), new Symbol(Type, base_type));
 
     return out;
 }
 
-SymbolTable * x::create_scope() {
-    SymbolTable * out = new SymbolTable(x::symtable);
-    x::symtable = out;
-
-    return out;
+void x::create_scope(SymbolTable ** table) {
+    SymbolTable * next = new SymbolTable(*table);
+    *table = next;
 }
 
-void x::destroy_scope() {
-    SymbolTable * parent = x::symtable->enclosing;
-    delete x::symtable;
+SymbolTable * x::pop_scope(SymbolTable ** table) {
+    SymbolTable * out = *table;
+    *table = (*table)->enclosing;
 
-    x::symtable = parent;
+    return out;
 }

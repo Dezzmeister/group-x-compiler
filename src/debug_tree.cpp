@@ -8,10 +8,7 @@ struct UniqueNode {
 };
 
 static struct UniqueNode with_id(ASTNode * node, int * id) {
-    struct UniqueNode out = {
-        .node = node,
-        .id = *id
-    };
+    struct UniqueNode out = {.node = node, .id = *id};
 
     (*id)++;
 
@@ -20,31 +17,31 @@ static struct UniqueNode with_id(ASTNode * node, int * id) {
 
 static std::string label(ASTNode * node) {
     if (node->get_kind() == Ident::kind) {
-        Ident * ident = (Ident *) node;
+        Ident * ident = (Ident *)node;
 
         return ident->id;
     }
 
     if (node->get_kind() == TypeIdent::kind) {
-        TypeIdent * ident = (TypeIdent *) node;
+        TypeIdent * ident = (TypeIdent *)node;
 
         return ident->id;
     }
 
     if (node->get_kind() == IntLiteral::kind) {
-        IntLiteral * lit = (IntLiteral *) node;
+        IntLiteral * lit = (IntLiteral *)node;
 
         return std::to_string(lit->value);
     }
 
     if (node->get_kind() == FloatLiteral::kind) {
-        FloatLiteral * lit = (FloatLiteral *) node;
+        FloatLiteral * lit = (FloatLiteral *)node;
 
         return std::to_string(lit->value);
     }
 
     if (node->get_kind() == BoolLiteral::kind) {
-        BoolLiteral * lit = (BoolLiteral *) node;
+        BoolLiteral * lit = (BoolLiteral *)node;
 
         return std::string(lit->value ? "true" : "false");
     }
@@ -60,7 +57,7 @@ void x::tree_dotfile(std::ostream &out, ProgramSource * prog) {
 
     nodes.push(with_id(prog, &id));
 
-    while (! nodes.empty()) {
+    while (!nodes.empty()) {
         struct UniqueNode node = nodes.front();
         nodes.pop();
 

@@ -10,3 +10,8 @@ src/parser.dot
 parser.png
 debug_bin
 release_bin
+prog.dot
+_deps
+_debug
+_release
+*.o

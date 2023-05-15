@@ -1,0 +1,14 @@
+# Docs: https://astyle.sourceforge.net/astyle.html
+style=attach
+indent=spaces=4
+indent-classes
+indent-switches
+indent-namespaces
+indent-continuation=1
+break-blocks
+pad-header
+align-pointer=middle
+align-reference=name
+add-braces
+max-code-length=120
+suffix=none

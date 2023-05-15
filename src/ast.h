@@ -1,81 +1,139 @@
 /**
- * This file contains classes representing crucial elements of the syntax. These include things
- * like int literals, variable declarations, type expressions, etc. Together the classes
- * in this file can be used to build an AST that represents a program. Every class
- * inherits from the abstract class ASTNode. The general model is that no class inherits
- * from a non-abstract class, and abstract classes are used to define useful abstractions
- * of different kinds of syntax elements. For example, the two abstract classes Expr and Statement
- * both inherit from ASTNode, but they represent different things and their derived
- * classes represent specific instances of Expr/Statement.
+ * This file contains classes representing crucial elements of the syntax. These
+ * include things like int literals, variable declarations, type expressions,
+ * etc. Together the classes in this file can be used to build an AST that
+ * represents a program. Every class inherits from the abstract class ASTNode.
+ * The general model is that no class inherits from a non-abstract class, and
+ * abstract classes are used to define useful abstractions of different kinds of
+ * syntax elements. For example, the two abstract classes Expr and Statement
+ * both inherit from ASTNode, but they represent different things and their
+ * derived classes represent specific instances of Expr/Statement.
  *
- * The class hierarchy forms a tree where every leaf node is a non-abstract class, and every other
- * node is abstract. The leaf nodes all have a unique static member called 'kind' which is used at runtime
- * to narrow the abstract type. You can call get_kind() on the object in question and compare it to
- * Class::kind to see if you can make a narrowing cast. The KIND_CLASS macro copies some of the
- * boilerplate to add the static kind member and implement the abstract function. The kinds are
- * initialized in ast.cpp with names; you can use x::kind_map to look up the name for a given kind.
+ * The class hierarchy forms a tree where every leaf node is a non-abstract
+ * class, and every other node is abstract. The leaf nodes all have a unique
+ * static member called 'kind' which is used at runtime to narrow the abstract
+ * type. You can call get_kind() on the object in question and compare it to
+ * Class::kind to see if you can make a narrowing cast. The KIND_CLASS macro
+ * copies some of the boilerplate to add the static kind member and implement
+ * the abstract function. The kinds are initialized in ast.cpp with names; you
+ * can use x::kind_map to look up the name for a given kind.
  *
- * Many of these node classes have a similar structure; e.g., 'left' and 'right' Expr nodes as 
- * members, or similar class members with different types in different classes. Usually we would
- * use generics (templates) to reduce boilerplate and simplify the class hierarchy but in this case we chose
- * not to because we wanted to restrict the set of allowable ASTNodes and keep the classes themselves
- * very simple. The class hierarchy is nice because most classes match up with a grammar production.
+ * Many of these node classes have a similar structure; e.g., 'left' and 'right'
+ * Expr nodes as members, or similar class members with different types in
+ * different classes. Usually we would use generics (templates) to reduce
+ * boilerplate and simplify the class hierarchy but in this case we chose not to
+ * because we wanted to restrict the set of allowable ASTNodes and keep the
+ * classes themselves very simple. The class hierarchy is nice because most
+ * classes match up with a grammar production.
  *
  * ======= Memory Model =======
  *
- * Many of these classes accept pointers to nodes in their constructors. In general, the class takes
- * ownership of the node passed in and is responsible for destroying it. If you add a node that owns
- * other nodes, please implement the destructor.
+ * Many of these classes accept pointers to nodes in their constructors. In
+ * general, the class takes ownership of the node passed in and is responsible
+ * for destroying it. If you add a node that owns other nodes, please implement
+ * the destructor.
  */
 #ifndef SRC_AST_H
 #define SRC_AST_H
 
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
 
 #include "symtable.h"
+#include "tac.h"
 
-#define KIND_CLASS() \
-    const static int kind; \
-    \
-    int get_kind() { \
-        return this->kind; \
-    }
+// Width of address on target machine in bytes - currently only 64 bit is supported
+// with 8 bits to a byte
+#define ADDRESS_WIDTH   8
+
+#define KIND_CLASS()     \
+  const static int kind; \
+                         \
+  virtual int get_kind() const { return this->kind; }
+
+#define NEQ_OPERATOR()  \
+  virtual bool operator!=(const ASTNode &node) const {  \
+    return !(*this == node);  \
+  }
+
+struct YYLTYPE;
+struct SourceErrors;
+
+struct Location {
+    int first_line;
+    int first_col;
+    int last_line;
+    int last_col;
+
+    Location(int first_line, int first_col, int last_line, int last_col);
+    Location(YYLTYPE &start, YYLTYPE &end);
+    Location(const Location &start, const Location &end);
+
+    void set_end(YYLTYPE &end);
+};
+
+typedef struct Location Location;
 
 class ProgramSource;
+class ASTNode;
+class Typename;
+class TypeTable;
+
+typedef bool (*FindFunc)(const ASTNode *);
 
 namespace x {
+    const Location NULL_LOC = Location(0, 0, 0, 0);
+
     extern std::vector<std::string> kind_map;
 
     int next_kind(const char * const name);
 
     void tree_dotfile(std::ostream &out, ProgramSource * prog);
-}
+}  // namespace x
 
 class ASTNode {
     public:
-        virtual int get_kind() = 0;
+        Location loc;
+
+        virtual int get_kind() const = 0;
 
         virtual void print() const = 0;
         virtual std::vector<ASTNode *> children() = 0;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const { 
+            fprintf(stderr, "gen_tac called on unsupported node of kind %s\n", x::kind_map[get_kind()].c_str());
+            return "";
+        };
+        virtual ASTNode * find(FindFunc cond);
+
+        virtual bool operator==(const ASTNode &node) const = 0;
+        virtual bool operator!=(const ASTNode &node) const = 0;
 
         virtual ~ASTNode() {}
 
     protected:
-        ASTNode() {}
+        ASTNode(const Location loc) : loc(loc) {}
 };
 
 class ProgramSource : public ASTNode {
     public:
+        std::string name;
         std::vector<ASTNode *> nodes;
 
-        ProgramSource(std::vector<ASTNode *> nodes);
+        ProgramSource(const Location loc, std::string name, std::vector<ASTNode *> nodes);
 
         virtual ~ProgramSource();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
+
+        void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         void add_node(ASTNode * node);
 
@@ -84,63 +142,74 @@ class ProgramSource : public ASTNode {
 
 class Expr : public ASTNode {
     public:
-        virtual void print() const = 0;
-        virtual std::vector<ASTNode *> children() = 0;
-
         virtual ~Expr() {}
 
+        virtual Typename * type_of(SymbolTable * symtable) const = 0;
+
     protected:
-        Expr() {}
+        Expr(const Location loc) : ASTNode(loc) {}
 };
 
 class ExprList : public ASTNode {
     public:
         std::vector<Expr *> exprs;
 
-        ExprList(std::vector<Expr *> exprs);
+        ExprList(const Location loc, std::vector<Expr *> exprs);
 
         virtual ~ExprList();
 
         virtual void print() const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         void push_expr(Expr * expr);
 
         KIND_CLASS()
 };
 
+/**
+ * This name is a little misleading because a "CallingExpr" is any expr that can
+ * potentially be called or dereferenced. Semantically it's closest to an lvalue,
+ * but it's not because a ParensExpr is a CallingExpr: a ParensExpr can be soemthing
+ * like '(3 + 4)' which is not an lvalue.
+ */
 class CallingExpr : public Expr {
     public:
-        virtual void print() const = 0;
-        virtual std::vector<ASTNode *> children() = 0;
-
         virtual ~CallingExpr() {}
 
     protected:
-        CallingExpr() {}
+        CallingExpr(const Location loc) : Expr(loc) {}
 };
 
 class Statement : public ASTNode {
     public:
-        virtual void print() const = 0;
-        virtual std::vector<ASTNode *> children() = 0;
-
         virtual ~Statement() {}
 
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const = 0;
+
     protected:
-        Statement() {}
+        Statement(const Location loc) : ASTNode(loc) {}
 };
 
 class StatementList : public ASTNode {
     public:
         std::vector<Statement *> statements;
 
-        StatementList(std::vector<Statement *> statements);
+        StatementList(const Location loc, std::vector<Statement *> statements);
 
         virtual ~StatementList();
 
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         void push_statement(Statement * statement);
 
@@ -151,102 +220,132 @@ class ParensExpr : public CallingExpr {
     public:
         const Expr * expr;
 
-        ParensExpr(const Expr * expr);
+        ParensExpr(const Location loc, const Expr * expr);
 
         virtual ~ParensExpr();
-
+        
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
 
 class TypeDecl : public Statement {
     public:
-        virtual void print() const = 0;
-        virtual std::vector<ASTNode *> children() = 0;
-
         virtual ~TypeDecl() {}
 
     protected:
-        TypeDecl() {}
+        TypeDecl(const Location loc) : Statement(loc) {}
 };
 
 class Typename : public ASTNode {
     public:
-        virtual void print() const = 0;
-        virtual std::vector<ASTNode *> children() = 0;
-
         virtual ~Typename() {}
 
+        virtual Typename * clone() const = 0;
+
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const = 0;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const = 0;
+        virtual int type_size(SymbolTable * symtable) const = 0;
+
     protected:
-        Typename() {}
+        Typename(const Location loc) : ASTNode(loc) {}
 };
 
 class ParensTypename : public Typename {
     public:
         const Typename * name;
 
-        ParensTypename(const Typename * name);
+        ParensTypename(const Location loc, const Typename * name);
+
+        virtual Typename * clone() const;
 
         virtual ~ParensTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
         KIND_CLASS()
 };
 
 class NumLiteral : public Expr {
     public:
-        virtual void print() const = 0;
-        virtual std::vector<ASTNode *> children() = 0;
-
         virtual ~NumLiteral() {}
 
     protected:
-        NumLiteral() {}
+        NumLiteral(const Location loc) : Expr(loc) {}
 };
 
 class IntLiteral : public NumLiteral {
     public:
         const int value;
-        
-        IntLiteral(const char * int_str);
 
-        IntLiteral(const int value);
+        IntLiteral(const Location loc, const char * int_str);
+
+        IntLiteral(const Location loc, const int value);
 
         virtual void print() const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
 
 class FloatLiteral : public NumLiteral {
-    public:        
+    public:
         const double value;
 
-        FloatLiteral(const char * float_str);
-        FloatLiteral(const float value);
+        FloatLiteral(const Location loc, const char * float_str);
+        FloatLiteral(const Location loc, const float value);
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
         KIND_CLASS()
 };
 
-class TernaryExpr: public Expr {
+class TernaryExpr : public Expr {
     public:
         const Expr * cond;
         const Expr * tru;
         const Expr * fals;
 
-        TernaryExpr(const Expr * cond, const Expr * tru, const Expr * fals);
+        TernaryExpr(const Location loc, const Expr * cond, const Expr * tru, const Expr * fals);
 
         virtual ~TernaryExpr();
 
+         
+
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -255,10 +354,16 @@ class BoolLiteral : public Expr {
     public:
         const bool value;
 
-        BoolLiteral(const bool value);
+        BoolLiteral(const Location loc, const bool value);
 
         virtual void print() const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -267,10 +372,16 @@ class CharLiteral : public Expr {
     public:
         const char value;
 
-        CharLiteral(const char value);
+        CharLiteral(const Location loc, const char value);
 
         virtual void print() const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -279,10 +390,16 @@ class StringLiteral : public Expr {
     public:
         const std::string value;
 
-        StringLiteral(const char * const value);
+        StringLiteral(const Location loc, const char * const value);
 
         virtual void print() const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -291,10 +408,19 @@ class TypeIdent : public Typename {
     public:
         const std::string id;
 
-        TypeIdent(const char * const _id);
+        TypeIdent(const Location loc, const char * const _id);
+
+        virtual Typename * clone() const;
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -303,10 +429,18 @@ class Ident : public CallingExpr {
     public:
         const std::string id;
 
-        Ident(const char * const _id);
+        Ident(const Location loc, const char * const _id);
 
         virtual void print() const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *> instrs) const;
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -317,12 +451,19 @@ class MathExpr : public Expr {
         const Expr * left;
         const Expr * right;
 
-        MathExpr(const char op, const Expr * left, const Expr * right);
+        MathExpr(const Location loc, const char op, const Expr * left, const Expr * right);
 
         virtual ~MathExpr();
 
+        
+
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -333,12 +474,19 @@ class BoolExpr : public Expr {
         const Expr * left;
         const Expr * right;
 
-        BoolExpr(const char * const op, const Expr * left, const Expr * right);
+        BoolExpr(const Location loc, const char * const op, const Expr * left, const Expr * right);
 
         virtual ~BoolExpr();
 
+        
+
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -347,26 +495,44 @@ class PtrTypename : public Typename {
     public:
         const Typename * name;
 
-        PtrTypename(const Typename * name);
+        PtrTypename(const Location loc, const Typename * name);
+
+        virtual Typename * clone() const;
 
         virtual ~PtrTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
-        KIND_CLASS() 
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
 };
 
 class MutTypename : public Typename {
     public:
         const Typename * name;
 
-        MutTypename(const Typename * name);
+        MutTypename(const Location loc, const Typename * name);
+
+        virtual Typename * clone() const;
 
         virtual ~MutTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -375,12 +541,15 @@ class TypenameList : public ASTNode {
     public:
         std::vector<Typename *> types;
 
-        TypenameList(std::vector<Typename *> types);
+        TypenameList(const Location loc, std::vector<Typename *> types);
 
         virtual ~TypenameList();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         // Pushes the typename onto the back of the type list
         void push_type(Typename * type_name);
@@ -393,12 +562,17 @@ class VarDecl : public Statement {
         const Typename * type_name;
         const Ident * var_name;
 
-        VarDecl(const Typename * type_name, const Ident * var_name);
+        VarDecl(const Location loc, const Typename * type_name, const Ident * var_name);
 
         virtual ~VarDecl();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         void add_to_scope(SymbolTable * symtable);
 
@@ -409,12 +583,15 @@ class ParamsList : public ASTNode {
     public:
         std::vector<VarDecl *> params;
 
-        ParamsList(std::vector<VarDecl *> params);
+        ParamsList(const Location loc, std::vector<VarDecl *> params);
 
         virtual ~ParamsList();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         void push_param(VarDecl * param);
 
@@ -423,18 +600,47 @@ class ParamsList : public ASTNode {
         KIND_CLASS()
 };
 
-// TODO: Find a way to avoid diamond inheritance here
-class FunctionCall : public Statement, public Expr {
+class FunctionCallExpr : public CallingExpr {
     public:
         const CallingExpr * func;
         const ExprList * args;
 
-        FunctionCall(const CallingExpr * func, const ExprList * args);
+        FunctionCallExpr(const Location loc, const CallingExpr * func, const ExprList * args);
 
-        virtual ~FunctionCall();
+        virtual ~FunctionCallExpr();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+// Identical to FunctionCallExpr, except it inherits from Stmt instead. This is
+// to avoid diamond inheritance which causes major problems especially when
+// downcasting. Having two nearly identical classes is a lesser evil
+class FunctionCallStmt : public Statement {
+    public:
+        const CallingExpr * func;
+        const ExprList * args;
+
+        FunctionCallStmt(const Location loc, const CallingExpr * func, const ExprList * args);
+
+        virtual ~FunctionCallStmt();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -443,12 +649,15 @@ class VarDeclList : public ASTNode {
     public:
         std::vector<VarDecl *> decls;
 
-        VarDeclList(std::vector<VarDecl *> decls);
+        VarDeclList(const Location loc, std::vector<VarDecl *> decls);
 
         virtual ~VarDeclList();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         // Pushes the var decl onto the back of the type list
         void push_decl(VarDecl * decl);
@@ -459,13 +668,24 @@ class VarDeclList : public ASTNode {
 class TupleTypename : public Typename {
     public:
         const TypenameList * type_list;
+        std::vector<int> offsets;
 
-        TupleTypename(const TypenameList * type_list);
+        TupleTypename(const Location loc, const TypenameList * type_list, SymbolTable * scope);
+        TupleTypename(const Location loc, const TypenameList * type_list, const std::vector<int> offsets);
+
+        virtual Typename * clone() const;
 
         virtual ~TupleTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -474,12 +694,19 @@ class TupleExpr : public Expr {
     public:
         const ExprList * expr_list;
 
-        TupleExpr(const ExprList * expr_list);
+        TupleExpr(const Location loc, const ExprList * expr_list);
 
         virtual ~TupleExpr();
 
+        
+
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -489,12 +716,45 @@ class FuncTypename : public Typename {
         const TypenameList * params;
         const Typename * ret_type;
 
-        FuncTypename(const TypenameList * params, const Typename * ret_type);
+        FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type);
+
+        virtual Typename * clone() const;
 
         virtual ~FuncTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class DynamicArrayTypename : public Typename{
+    public:
+        const Typename * element_type;
+        const IntLiteral * size;
+
+        DynamicArrayTypename(const Location loc, const Typename * element_type, const IntLiteral * size);
+
+        virtual Typename * clone() const;
+
+        virtual ~DynamicArrayTypename();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -504,12 +764,21 @@ class StaticArrayTypename : public Typename {
         const Typename * element_type;
         const IntLiteral * size;
 
-        StaticArrayTypename(const Typename * element_type, const IntLiteral * size);
+        StaticArrayTypename(const Location loc, const Typename * element_type, const IntLiteral * size);
+
+        virtual Typename * clone() const;
 
         virtual ~StaticArrayTypename();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -519,12 +788,48 @@ class TypeAlias : public TypeDecl {
         const Ident * name;
         const Typename * type_expr;
 
-        TypeAlias(const Ident * name, const Typename * type_expr);
+        TypeAlias(const Location loc, const Ident * name, const Typename * type_expr);
 
         virtual ~TypeAlias();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+/**
+ * NB: The struct typename does not own the symbol table and will not delete it upon
+ * destruction.
+ */
+class StructTypename : public Typename {
+    public:
+        const VarDeclList * members;
+        // Struct member offsets. As of right now structs are packed because it's simpler
+        // and all of our data types at the moment are 8-byte aligned anyway
+        std::vector<int> offsets;
+        SymbolTable * scope;
+
+        StructTypename(const Location loc, const VarDeclList * members, SymbolTable * scope);
+
+        virtual Typename * clone() const;
+
+        virtual ~StructTypename();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual bool type_equals(const Typename * t, SymbolTable * symtable) const;
+        virtual bool can_cast_to(const Typename * t, SymbolTable * symtable) const;
+        virtual int type_size(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -532,14 +837,19 @@ class TypeAlias : public TypeDecl {
 class StructDecl : public TypeDecl {
     public:
         const Ident * name;
-        const VarDeclList * members;
+        const StructTypename * defn;
 
-        StructDecl(const Ident * name, const VarDeclList * members);
+        StructDecl(const Location loc, const Ident * name, const StructTypename * defn);
 
         virtual ~StructDecl();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -548,13 +858,20 @@ class VarDeclInit : public Statement {
     public:
         const VarDecl * decl;
         const Expr * init;
+        int type;
 
-        VarDeclInit(const VarDecl * decl, const Expr * init);
+        VarDeclInit(const Location loc, const VarDecl * decl, const Expr * init);
 
         virtual ~VarDeclInit();
 
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -563,12 +880,18 @@ class ArrayLiteral : public Expr {
     public:
         const ExprList * items;
 
-        ArrayLiteral(const ExprList * items);
+        ArrayLiteral(const Location loc, const ExprList * items);
 
         virtual ~ArrayLiteral();
 
         virtual void print() const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -577,13 +900,22 @@ class IfStmt : public Statement {
     public:
         const Expr * cond;
         const StatementList * then;
+        SymbolTable * scope;
 
-        IfStmt(const Expr * cond, const StatementList * then);
+        IfStmt(const Location loc, const Expr * cond, const StatementList * then, SymbolTable * scope);
 
         virtual ~IfStmt();
 
         virtual void print() const;
+
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *> instrs) const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -592,13 +924,20 @@ class IfElseStmt : public Statement {
     public:
         const IfStmt * if_stmt;
         const StatementList * els;
+        SymbolTable * scope;
 
-        IfElseStmt(const IfStmt * if_stmt, const StatementList * els);
+        IfElseStmt(const Location loc, const IfStmt * if_stmt, const StatementList * els, SymbolTable * scope);
 
         virtual ~IfElseStmt();
 
         virtual void print() const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -607,13 +946,22 @@ class WhileStmt : public Statement {
     public:
         const Expr * cond;
         const StatementList * body;
+        SymbolTable * scope;
 
-        WhileStmt(const Expr * cond, const StatementList * body);
+        WhileStmt(const Location loc, const Expr * cond, const StatementList * body, SymbolTable * scope);
 
         virtual ~WhileStmt();
 
         virtual void print() const;
+
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -624,14 +972,24 @@ class ForStmt : public Statement {
         const Expr * condition;
         const Statement * update;
         const StatementList * body;
+        SymbolTable * scope;
 
-        ForStmt(const Statement *init, const Expr *condition, 
-        const Statement *update, const StatementList * body);
+        ForStmt(const Location loc, const Statement * init, const Expr * condition, const Statement * update,
+                const StatementList * body, SymbolTable * scope);
 
         virtual ~ForStmt();
 
+        
         virtual void print() const;
+
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
+
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -640,12 +998,18 @@ class AddrOf : public Expr {
     public:
         const Expr * expr;
 
-        AddrOf(const Expr * expr);
+        AddrOf(const Location loc, const Expr * expr);
 
         virtual ~AddrOf();
 
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -654,12 +1018,18 @@ class Deref : public Expr {
     public:
         const Expr * expr;
 
-        Deref(const Expr * expr);
+        Deref(const Location loc, const Expr * expr);
 
         virtual ~Deref();
 
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -669,12 +1039,18 @@ class CastExpr : public Expr {
         const Typename * dest_type;
         const Expr * expr;
 
-        CastExpr(const Typename * dest_type, const Expr * expr);
+        CastExpr(const Location loc, const Typename * dest_type, const Expr * expr);
 
         virtual ~CastExpr();
 
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -685,12 +1061,19 @@ class LogicalExpr : public Expr {
         const Expr * left;
         const Expr * right;
 
-        LogicalExpr(const char * const op , const Expr *l, const Expr *r);
+        LogicalExpr(const Location loc, const char * const op, const Expr * l, const Expr * r);
 
         virtual ~LogicalExpr();
 
+        
         virtual void print() const;
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -701,13 +1084,24 @@ class FuncDecl : public ASTNode {
         const ParamsList * params;
         const Typename * ret_type;
         const StatementList * body;
+        SymbolTable * scope;
+        VarDecl * forward_decl;
 
-        FuncDecl(const Ident * name, const ParamsList * params, const Typename * ret_body, const StatementList * body);
+        FuncDecl(const Location loc, const Ident * name, const ParamsList * params,
+                 const Typename * ret_body, const StatementList * body, SymbolTable * scope);
 
         virtual ~FuncDecl();
 
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -716,12 +1110,18 @@ class ReturnStatement : public Statement {
     public:
         const Expr * val;
 
-        ReturnStatement(const Expr * val);
+        ReturnStatement(const Location loc, const Expr * val);
 
         virtual ~ReturnStatement();
 
         virtual void print() const;
+        
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -732,12 +1132,18 @@ class Assignment : public Statement {
         const Expr * lhs;
         const Expr * rhs;
 
-        Assignment(const Expr * lhs, const Expr * rhs);
+        Assignment(const Location loc, const Expr * lhs, const Expr * rhs);
 
         virtual ~Assignment();
 
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -746,12 +1152,18 @@ class BangExpr : public Expr {
     public:
         const Expr * expr;
 
-        BangExpr(const Expr * expr);
+        BangExpr(const Location loc, const Expr * expr);
 
         virtual ~BangExpr();
 
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -760,12 +1172,18 @@ class NotExpr : public Expr {
     public:
         const Expr * expr;
 
-        NotExpr(const Expr * expr);
+        NotExpr(const Location loc, const Expr * expr);
 
         virtual ~NotExpr();
 
+        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
 
         KIND_CLASS()
 };
@@ -775,14 +1193,190 @@ class PreExpr : public Expr {
         const std::string op;
         const Expr * expr;
 
-        PreExpr(const char * const op, const Expr * expr);
+        PreExpr(const Location loc, const char * const op, const Expr * expr);
 
         virtual ~PreExpr();
+
+        
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class StructDeref : public CallingExpr {
+    public:
+        const CallingExpr * strukt;
+        const Ident * member;
+
+        StructDeref(const Location loc, const CallingExpr * strukt, const Ident * member);
+
+        virtual ~StructDeref();
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
         KIND_CLASS()
+};
+
+class MemberInitializer : public ASTNode {
+    public:
+        const Ident * member;
+        const Expr * expr;
+
+        MemberInitializer(const Location loc, const Ident * member, const Expr * expr);
+
+        virtual ~MemberInitializer();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class InitializerList : public ASTNode {
+    public:
+        std::vector<MemberInitializer *> members;
+
+        InitializerList(const Location loc, std::vector<MemberInitializer *> members);
+
+        virtual ~InitializerList();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        // The order of members matters in determing equality of initializer lists.
+        // This is because an expr in the initializer list could have side effects that
+        // change the resulting struct literal if it's in a different spot
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class StructLiteral : public CallingExpr {
+    public:
+        const InitializerList * members;
+
+        StructLiteral(const Location loc, const InitializerList * members);
+
+        virtual ~StructLiteral();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class ArrayIndexExpr : public CallingExpr {
+    public:
+        const CallingExpr * arr;
+        const Expr * index;
+
+        ArrayIndexExpr(const Location loc, const CallingExpr * arr, const Expr * index);
+
+        virtual ~ArrayIndexExpr();
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class VoidReturnStmt : public Statement {
+    public:
+        VoidReturnStmt(const Location loc);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class ContinueStmt : public Statement {
+    public:
+        ContinueStmt(const Location loc);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class BreakStmt : public Statement {
+    public:
+        BreakStmt(const Location loc);
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+/**
+ * This class owns all Typename ptrs, so be sure to call clone() before inserting
+ * a typename into the map
+ */
+class TypeTable {
+    std::map<std::string, Typename *> types;
+
+    TypeTable() : types({}) {}
+
+    ~TypeTable() {
+        for (std::pair<const std::string, Typename *> &item : types) {
+            delete item.second;
+        }
+    }
+
+    void put(std::string name, Typename * typ) {
+        types[name] = typ;
+    }
+
+    Typename * get(std::string name) {
+        if (types.count(name)) {
+            return types[name];
+        }
+
+        return nullptr;
+    }
 };
 
 #endif

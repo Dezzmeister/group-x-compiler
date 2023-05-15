@@ -2,23 +2,31 @@
 #define SRC_PARSEUTILS_H
 
 #include "ast.h"
-#include "parser.h"
+#include "parsedecls.h"
+#include "symtable.h"
 
-#define MAX_STR_LEN     2048
+struct ParseResult {
+    int error;
+    ParserState * parser_state;
 
-extern char * yytext;
-extern FILE * yyin;
+    ParseResult(int error, ParserState * parser_state);
 
-extern int yylex();
-extern int yylen;
+    ~ParseResult();
+};
+
+typedef struct ParseResult ParseResult;
 
 namespace x {
-    extern int lineno;
+    ParseResult parse_file(const char * const path);
 
-    /**
-     * The top level node after parsing. Will be nullptr until the parser is finished.
-     */
-    extern ProgramSource * top;
+    ParseResult parse_stdin();
+
+    ParseResult parse_str(const char * code);
+
+    SymbolTable * default_symtable();
+
+    void setup_symtable();
 }
+
 
 #endif

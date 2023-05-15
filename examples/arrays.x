@@ -6,4 +6,5 @@ type FuncPtrArray = ([] -> void)[1];
 
 void array_func((mut (int[5]))* five_guys) {
     *five_guys = {1, 2, 3, 4, 5};
+    mut (int[5]) x = {1, 2, 3, 4, 5};
 };
