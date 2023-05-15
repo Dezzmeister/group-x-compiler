@@ -64,6 +64,7 @@ const int Assignment::kind = x::next_kind("assignment");
 const int BangExpr::kind = x::next_kind("bang_expr");
 const int NotExpr::kind = x::next_kind("not_expr");
 const int PreExpr::kind = x::next_kind("pre_expr");
+const int PostExpr::kind = x::next_kind("post_expr");
 const int StructDeref::kind = x::next_kind("struct_deref");
 const int MemberInitializer::kind = x::next_kind("member_initializer");
 const int InitializerList::kind = x::next_kind("initializer_list");
