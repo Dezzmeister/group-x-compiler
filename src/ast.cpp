@@ -1018,9 +1018,9 @@ std::string IfStmt::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, 
     instrs.push_back(cmp);
     instrs.push_back(jne);
 
-    NamesToNames block_names = x::symtable_to_names(&names, old_symtable);
+    NamesToNames block_names = x::symtable_to_names(&names, scope);
 
-    then->gen_tac(old_symtable, type_table, block_names, instrs);
+    then->gen_tac(scope, type_table, block_names, instrs);
     LabelTAC * label_tac = new LabelTAC(label);
     instrs.push_back(label_tac);
 
@@ -1107,9 +1107,23 @@ void WhileStmt::print() const {
 }
 
 std::string WhileStmt::gen_tac(SymbolTable * old_symtable, 
-TypeTable * global_symtable, std::vector<Quad *> instrs) const {
-    cond->gen_tac(old_symtable, global_symtable, instrs);
-    body->gen_tac(old_symtable, global_symtable, instrs);
+TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> instrs) const {
+    std::string cond_var = cond->gen_tac(old_symtable, global_symtable, names, instrs);
+    std::string true_label = next_l();
+    std::string false_label = next_l();
+    LabelTAC * true_label_tac = new LabelTAC(true_label);
+    CmpLiteralTAC * cmp = new CmpLiteralTAC(cond_var, 1);
+    JneTAC * jne = new JneTAC(false_label);
+    instrs.push_back(true_label_tac);
+    instrs.push_back(cmp);
+    instrs.push_back(jne);
+
+    NamesToNames block_names = x::symtable_to_names(&names, scope);
+    body->gen_tac(scope, global_symtable, block_names, instrs);
+
+    LabelTAC * false_label_tac = new LabelTAC(false_label);
+    instrs.push_back(false_label_tac);
+
     return "";
 } 
 
@@ -1152,11 +1166,26 @@ void ForStmt::print() const {
 }
 
 std::string ForStmt::gen_tac(SymbolTable * old_symtable, 
-TypeTable * global_symtable, std::vector<Quad *> instrs) const {
-    init->gen_tac(old_symtable, global_symtable, instrs);
-    condition->gen_tac(old_symtable, global_symtable, instrs);
-    update->gen_tac(old_symtable, global_symtable, instrs);
-    body->gen_tac(old_symtable, global_symtable, instrs);
+TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    NamesToNames block_names = x::symtable_to_names(&names, scope);
+
+    std::string cond_label = next_l();
+    LabelTAC * cond_label_tac = new LabelTAC(cond_label);
+    std::string exit_label = next_l();
+    LabelTAC * exit_label_tac = new LabelTAC(exit_label);
+
+    init->gen_tac(scope, type_table, block_names, instrs);
+    
+    instrs.push_back(cond_label_tac);
+    std::string cond_var = condition->gen_tac(scope, type_table, block_names, instrs);
+
+    instrs.push_back(new CmpLiteralTAC(cond_var, 1));
+    instrs.push_back(new JneTAC(exit_label));
+
+    body->gen_tac(scope, type_table, block_names, instrs);
+    update->gen_tac(scope, type_table, block_names, instrs);
+
+    instrs.push_back(exit_label_tac);
     return "";
 } 
 
@@ -1270,15 +1299,14 @@ void LogicalExpr::print() const {
 }
 
 std::string LogicalExpr::gen_tac(SymbolTable * old_symtable, 
-TypeTable * global_symtable, std::vector<Quad *> instrs) const { 
-    std::string l = left->gen_tac(old_symtable, global_symtable, instrs);
-    std::string r = right->gen_tac(old_symtable, global_symtable, instrs);
-    std::string label = next_label();
-    JumpTAC * jmp = new JumpTAC(label);
-    IfTAC * if_tac = new IfTAC(op, l, r);
-    x::bblock->add_instruction(if_tac);
-    x::bblock->add_instruction(jmp);
-    return label;
+TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> instrs) const { 
+    std::string l = left->gen_tac(old_symtable, global_symtable, names, instrs);
+    std::string r = right->gen_tac(old_symtable, global_symtable, names, instrs);
+    std::string temp_name = next_t();
+    LogicalTAC * tac = new LogicalTAC(temp_name, op, l, r);
+    instrs.push_back(tac);
+
+    return temp_name;
 }
 
 std::vector<ASTNode *> LogicalExpr::children() {
@@ -1314,14 +1342,13 @@ std::vector<ASTNode *> FunctionCallExpr::children() {
     return {(ASTNode *)func, (ASTNode *)args};
 }
 
-std::string FunctionCallExpr::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
-    // make new name map
-    for (auto &arg : args->exprs) {
-        std::string temp_var = arg->gen_tac(old_symtable, type_table, instrs);
-        // make new Push quad and add to instrs
-    }
+std::string FunctionCallExpr::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    std::string func_var = func->gen_tac(old_symtable, type_table, names, instrs);
 
-    std::string func_var = func->gen_tac(old_symtable, type_table, instrs);
+    for (auto &arg : args->exprs) {
+        std::string temp_var = arg->gen_tac(old_symtable, type_table, names, instrs);
+        instrs.push_back(new PushTAC(temp_var));
+    }
 
     CallTAC * call = new CallTAC(func_var);
     std::string id = next_t();
@@ -1362,14 +1389,14 @@ std::vector<ASTNode *> FunctionCallStmt::children() {
     return {(ASTNode *)func, (ASTNode *)args};
 }
 
-std::string FunctionCallStmt::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
-    // make new name map
+std::string FunctionCallStmt::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    std::string func_var = func->gen_tac(old_symtable, type_table, names, instrs);
+
     for (auto &arg : args->exprs) {
-        std::string temp_var = arg->gen_tac(old_symtable, type_table, instrs);
-        // make new Push quad and add to instrs
+        std::string temp_var = arg->gen_tac(old_symtable, type_table, names, instrs);
+        instrs.push_back(new PushTAC(temp_var));
     }
 
-    std::string func_var = func->gen_tac(old_symtable, type_table, instrs);
     CallTAC * call = new CallTAC(func_var);
     instrs.push_back(call);
 
@@ -1827,9 +1854,9 @@ bool BreakStmt::operator==(const ASTNode &node) const {
     return (node.get_kind() == BreakStmt::kind);
 }
 
-std::string ProgramSource::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
+std::string ProgramSource::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
     for (auto &node : nodes) {
-        node->gen_tac(old_symtable, type_table, instrs);
+        node->gen_tac(old_symtable, type_table, names, instrs);
     }
 
     return "";

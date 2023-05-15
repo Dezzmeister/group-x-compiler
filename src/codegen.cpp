@@ -6,7 +6,7 @@ NamesToNames x::symtable_to_names(NamesToNames * parent, SymbolTable * symtable)
     NamesToNames out;
 
     for (auto &item : symtable->table) {
-        out->name_map[item.first] = next_p();
+        out.name_map[item.first] = next_p();
     }
 
     out.parent = parent;

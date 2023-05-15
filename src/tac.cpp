@@ -72,11 +72,13 @@ void JumpTAC::print() const {
     std::cout << "jmp " << label;
 }
 
+void CallTAC::print() const {
+    std::cout << "call " << fun;
+}
 
 void RetvalTAC::print() const {
     std::cout << id << " = __retval";
 }
-
 
 void CopyTAC::print() const
 {
@@ -91,6 +93,10 @@ void JneTAC::print() const {
     std::cout << "jne " << label;
 }
 
+void LogicalTAC::print() const {
+    std::cout << id << " = " << left << " " << op << " " << right;
+}
+
 void LoadTAC::print() const
 {
     std::cout << identifier;
@@ -98,9 +104,7 @@ void LoadTAC::print() const
 
 void AssignTAC::print() const
 {
-    std::string temp = lhs + ' ' + op + ' ' + rhs;
-    instrs.pushback(temp);
-    return lhs; #include a symbol table
+    std::cout << lhs << " " << op << " " << rhs;
 }
 
 void MoveTAC::print() const
