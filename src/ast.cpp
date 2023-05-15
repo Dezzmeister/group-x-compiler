@@ -1487,6 +1487,11 @@ bool ParamsList::operator==(const ASTNode &node) const {
     return cmp_vectors(params, n.params);
 }
 
+std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    x::bblock->add_block(name->id);
+    return "";
+}
+
 FuncDecl::FuncDecl(const Location loc, const Ident * name, const ParamsList * params,
                    const Typename * ret_type, const StatementList * body, SymbolTable * scope)
     : ASTNode(loc), name(name), params(params), ret_type(ret_type), body(body), scope(scope), forward_decl(nullptr) {}
@@ -1498,10 +1503,6 @@ FuncDecl::~FuncDecl() {
     delete body;
     delete scope;
 }
-
-std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
-    return "";
-};
 
 void FuncDecl::print() const {
     ret_type->print();
