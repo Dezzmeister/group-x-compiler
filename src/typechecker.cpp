@@ -1010,7 +1010,40 @@ void VoidReturnStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) con
     TypeIdent void_type(x::NULL_LOC, "void");
 
     if (!enclosing_func->ret_type->type_equals(&void_type, symtable)) {
-        CompilerError err(loc, "Cannot return void from non-void function", Error);
+        CompilerError err(loc, "Cannot return void from non-Please/void function", Error);
+        errors.type_errors.push_back(err);
+    }
+}
+
+void PleaseReturnStmt::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
+    FuncDecl * enclosing_func = nullptr;
+    SymbolTable * table = symtable;
+
+    while (table != nullptr) {
+        if (table->node == nullptr) {
+            CompilerError err(loc, "Return statement must be in function", Error);
+            errors.type_errors.push_back(err);
+            return;
+        }
+
+        if (table->node->get_kind() == FuncDecl::kind) {
+            enclosing_func = (FuncDecl *) table->node;
+            break;
+        }
+
+        table = table->enclosing;
+    }
+
+    if (enclosing_func == nullptr) {
+        CompilerError err(loc, "Return statement must be in function", Error);
+        errors.type_errors.push_back(err);
+        return;
+    }
+
+    TypeIdent Please_type(x::NULL_LOC, "Please");
+
+    if (!enclosing_func->ret_type->type_equals(&Please_type, symtable)) {
+        CompilerError err(loc, "Cannot return void from non-Please/void function", Error);
         errors.type_errors.push_back(err);
     }
 }
