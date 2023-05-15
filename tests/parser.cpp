@@ -137,4 +137,27 @@ void parser_tests() {
 
         return TEST_SUCCESS;
     };
+    
+    xtest::tests["error test1"] = []() {
+        const char * code = R"(
+            int main() {
+                int x = 0;
+                x = 2;
+                return 0;
+            }
+            )";
+
+        ParseResult result = x::parse_str(code);
+        ProgramSource * output = result.parser_state->top;
+        SourceErrors &errors = report.sources[top];
+        CompilerError err = errors[0];
+        
+        expect(errors.has_errors());
+        expect(errors.error_count() == 1);
+        expect(errors.type_errors.size() == 1);
+        expect(err.level == Error);
+        expect(err.message == "Cannot assign to immutable");
+
+        return TEST_SUCCESS;
+    };
 }

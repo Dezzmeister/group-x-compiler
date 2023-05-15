@@ -73,10 +73,6 @@ void JumpTAC::print() const {
 }
 
 
-void CallTAC::print() const {
-    std::cout << "call " << fun << ' ';
-}
-
 void RetvalTAC::print() const {
     std::cout << id << " = __retval";
 }
@@ -102,7 +98,9 @@ void LoadTAC::print() const
 
 void AssignTAC::print() const
 {
-    std::cout << lhs << ' ' << op << ' ' << rhs;
+    std::string temp = lhs + ' ' + op + ' ' + rhs;
+    instrs.pushback(temp);
+    return lhs; #include a symbol table
 }
 
 void MoveTAC::print() const
@@ -130,4 +128,57 @@ void BasicBlock::print() const
     {
         this->prev->print();
     }
+}
+
+std::string CharTAC(const char c, std::vector<Quad *> instrs) {
+    std::string temp = next_t();
+    Value<char> *value = new Value<char>(temp, c);
+    instrs.push_back(value);
+    return temp;
+}
+
+std::string FloatLitTAC(const float val, std::vector<Quad *> instrs, SymbolTable * global_symtable)
+{
+    std::string temp = next_t() ;
+    std::cout << temp << " = " << val ;
+    Value<float> *value = new Value<float>(temp, val);
+    instrs.push_back(value) ;
+    // wait for joe symbol table thing
+    // global_symtable->put(temp, val) ;
+    return temp ;
+}
+
+std::string IntLitTAC(const int val, std::vector<Quad *> instrs, SymbolTable * global_symtable)
+{
+    std::string temp = next_t() ;
+    std::cout << temp << " = " << val;
+    // wait for joe symbol table thing
+    Value<int> *value = new Value<int>(temp, val);
+    instrs.push_back(value) ;
+    // wait for joe symbol table thing
+    // global_symtable->put(temp, val) ;
+    return temp ;
+    
+}
+
+std::string BoolLitTAC(const bool b, std::vector<Quad *> instrs, SymbolTable * global_symtable)
+{
+    std::string temp = next_t() ;
+    std::cout << temp << " = " << b;
+    Value<bool> *value = new Value<bool>(temp, b);
+    instrs.push_back(value) ;
+    // wait for joe symbol table thing
+    // global_symtable->put(temp, val) ;
+    return temp ;
+}
+
+std::string StringLitTAC(const std::string s, std::vector<Quad *> instrs, SymbolTable * global_symtable)
+{
+    std::string temp = next_t() ;
+    std::cout << temp << " = " << s;
+    Value<std::string> *value = new Value<std::string>(temp, s);
+    instrs.push_back(value) ;
+    // wait for joe symbol table thing
+    // global_symtable->put(temp, val) ;
+    return temp;
 }
