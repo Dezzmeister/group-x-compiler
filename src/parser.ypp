@@ -50,6 +50,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
     VarDeclList * var_decl_list;
     FuncTypename * func_type_name;
     StaticArrayTypename * static_arr_type_name;
+    DynamicArrayTypename * dynamic_arr_type_name;
     TypeAlias * type_alias;
     StructTypename * struct_type_name;
     TypeDecl * type_decl;
@@ -105,11 +106,11 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 %right ELSE_KW
 %right '!' NOT_KW
 %right INC DEC
-%left '.'
 
 %nonassoc CALL_PREC
 
 %nonassoc <ident> IDENT DECLARED_VAR DECLARED_FUNC
+%nonassoc <dynamic_arr_type_name> DYNAMIC_ARR_IDENT
 %nonassoc <type_ident> DECLARED_TYPE
 %nonassoc <int_literal> INT
 %nonassoc <float_literal> FLOAT
@@ -118,6 +119,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 %nonassoc <char_literal> CHAR
 
 %nonassoc <debug_idx> DEBUG_TOKEN
+%nonassoc NEWLINE
 
 %type <program_source> program
 %type <statement> statement
@@ -136,6 +138,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 %type <parens_type_name> parens_type_name
 %type <func_type_name> func_type_name
 %type <static_arr_type_name> static_arr_type_name
+%type <dynamic_arr_type_name> dynamic_arr_type_name
 %type <type_list> type_list
 %type <var_decl_list> var_decl_list
 %type <struct_decl> struct_decl
@@ -176,13 +179,13 @@ top_level : program END {
             }
           ;
 
-program : program type_decl '.' {$1->add_node($2); $$ = $1;}
-        | program var_decl_init '.' {$1->add_node($2); $$ = $1;}
-        | program var_decl '.' {$1->add_node($2); $$ = $1;}
-        | program func_decl '.' {$1->add_node($2); $$ = $1;}
-        | program type_decl '.' DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
-        | program var_decl_init '.' DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
-        | program var_decl '.' DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
+program : program type_decl NEWLINE {$1->add_node($2); $$ = $1;}
+        | program var_decl_init NEWLINE {$1->add_node($2); $$ = $1;}
+        | program var_decl NEWLINE {$1->add_node($2); $$ = $1;}
+        | program func_decl NEWLINE {$1->add_node($2); $$ = $1;}
+        | program type_decl NEWLINE DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
+        | program var_decl_init NEWLINE DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
+        | program var_decl NEWLINE DEBUG_TOKEN INT {$1->add_node($2); $$ = $1; state->debug_stmts[$5->value] = $2; delete $5;}
         | /* empty */ {$$ = new ProgramSource(Location(0, 0, 0, 0), state->current_source, {});}
         ;
 
@@ -201,18 +204,18 @@ statement : type_decl {$$ = $1;}
           | BREAK_KW {$$ = new BreakStmt(Location(@1, @1));}
           ;
 
-statement_list : statement '.' {$$ = new StatementList(Location(@1, @2), {$1});}
-               | statement '.' DEBUG_TOKEN INT {
+statement_list : statement NEWLINE {$$ = new StatementList(Location(@1, @2), {$1});}
+               | statement NEWLINE DEBUG_TOKEN INT {
                     $$ = new StatementList(Location(@1, @2), {$1});
                     state->debug_stmts[$4->value] = $1;
                     delete $4;
                 }
-               | statement_list statement '.' {
+               | statement_list statement NEWLINE {
                     $1->push_statement($2);
                     $1->loc.set_end(@3);
                     $$ = $1;
                 }
-               | statement_list statement '.' DEBUG_TOKEN INT {
+               | statement_list statement NEWLINE DEBUG_TOKEN INT {
                     $1->push_statement($2);
                     $1->loc.set_end(@3);
                     $$ = $1;
@@ -251,8 +254,8 @@ calling_expr : '(' expr ')' {$$ = new ParensExpr(Location(@1, @3), $2);}
 array_index_expr : calling_expr '[' expr ']' {$$ = new ArrayIndexExpr(Location(@1, @4), $1, $3);}
                  ;
 
-struct_deref : calling_expr '.' IDENT {$$ = new StructDeref(Location(@1, @3), $1, $3);}
-             | calling_expr '.' DECLARED_VAR {
+struct_deref : calling_expr NEWLINE IDENT {$$ = new StructDeref(Location(@1, @3), $1, $3);}
+             | calling_expr NEWLINE DECLARED_VAR {
                 // This allows you to bring a struct member into the scope by assigning
                 // it to a variable of the same name, like 'int q = strukt.q'
                 $$ = new StructDeref(Location(@1, @3), $1, $3);
@@ -355,7 +358,7 @@ while_statement : WHILE_KW '(' expr ')' '{'
                     }
                 ;
 
-for_statement : FOR_KW '(' statement '.' {x::create_scope(&state->symtable);} expr '.' statement ')' '{' statement_list '}' {
+for_statement : FOR_KW '(' statement NEWLINE {x::create_scope(&state->symtable);} expr NEWLINE statement ')' '{' statement_list '}' {
                     SymbolTable * table = x::pop_scope(&state->symtable);
                     $$ = new ForStmt(Location(@1, @11), $3, $6, $8, $11, table);
                     table->set_node($$);
@@ -380,8 +383,8 @@ assignment : calling_expr '=' expr {
             }
            ;
 
-var_decl_list : var_decl '.' {$$ = new VarDeclList(Location(@1, @2), {$1});}
-              | var_decl_list var_decl '.' {
+var_decl_list : var_decl NEWLINE {$$ = new VarDeclList(Location(@1, @2), {$1});}
+              | var_decl_list var_decl NEWLINE {
                     $1->push_decl($2);
                     $1->loc.set_end(@3);
                     $$ = $1;
@@ -486,6 +489,7 @@ type_name : simple_type_name {$$ = $1;}
           | tuple_type_name {$$ = $1;}
           | func_type_name {$$ = $1;}
           | static_arr_type_name {$$ = $1;}
+          | dynamic_arr_type_name {$$ = $1;}
           | parens_type_name {$$ = $1;}
           | STRUCT_KW struct_type_name {$$ = $2;}
           ;
@@ -496,6 +500,9 @@ func_type_name : '[' ']' FUNC_TYPE_OP type_name %prec FUNC_PREC {$$ = new FuncTy
 
 static_arr_type_name : type_name '[' INT ']' {$$ = new StaticArrayTypename(Location(@1, @4), $1, $3);}
                      ;
+
+dynamic_arr_type_name : type_name 's' {$$ = new DynamicArrayTypename(Location(@1, @4), $1, $3);}
+                      ;
 
 parens_type_name : '(' type_name ')' {$$ = new ParensTypename(Location(@1, @3), $2);}
                  ;

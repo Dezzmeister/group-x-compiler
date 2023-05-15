@@ -78,8 +78,10 @@ not[ \t]+in {return NOT_IN_KW;}
 and         {return AND_KW;}
 or          {return OR_KW;}
 
+(\.\w*\n) | (\.///\n) {return NEWLINE;}
+
 {ident}     {
-                yylval->ident = new Ident(Location(*yylloc, *yylloc), yytext); 
+                yylval->ident = new Ident(Location(*yylloc, *yylloc), yytext);
                 // Our grammar is not context free because of this: the lexer returns
                 // a different token depending on whether the identifier has been declared
                 // as a type, variable, or function, or if it's undeclared. This is great because
@@ -97,7 +99,24 @@ or          {return OR_KW;}
 
                     return DECLARED_FUNC;
                 }
-
+                if (yytext[yylen - 1] == 's') {
+                    char * first_part = strdup(yytext);
+                    first_part[yylen - 1] = '\0';
+                    const Symbol * sym = yyextra symtable::get(std:string(first_part));
+                    free(first_part);
+                    if (sym != nullptr && sym->kind == Type) {
+                        TypeDecl * decl = sym->decl.typ;
+                            if (decl->get_king() == TypeAlias::kind) {
+                                TypeAlias * alias = (TypeALias *) = decl;
+                                yyval->dynamic_arr_type_name = new DynamicArrayTypename(Location(*yyloc, *yylex), alias->type_expr->close());
+                            } else {
+                                StructDecl * strukt = (StructDecl *) decl;
+                                yylval::dynamic_arr_type_name = new DynamicArrayTypename(Location(*yyloc, &yyloc))
+                            }
+                            return DYNAMIC_ARR_IDENT;
+                        }
+                    }
+                }
                 return IDENT;
             }
 

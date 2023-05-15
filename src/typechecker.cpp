@@ -162,6 +162,30 @@ bool StaticArrayTypename::type_equals(const Typename * t, SymbolTable * symtable
     return (element_type->type_equals(t_array->element_type, symtable) && *size == *(t_array->size));
 }
 
+bool DynamicArrayTypename::type_equals(const Typename * t, SymbolTable * symtable) const {
+    const Typename * t_unalias = unalias(t, symtable);
+    if (t_unalias->get_kind() != DynamicArrayTypename::kind) {
+        return false;
+    }
+
+    const DynamicArrayTypename * t_array = (DynamicArrayTypename *) t_unalias;
+
+    return (element_type->type_equals(t_array->element_type, symtable));
+}
+
+bool DynamicArrayTypename::can_cast_to(const Typename * t, SymbolTable * symtable) const {
+    const Typename * t_unalias = unalias(t, symtable);
+    if(t_unalias->get_kind() == PtrTypename::kind) {
+        PtrTypename t_ptr = (PtrTypename *) t_unalias;
+        return (this->element_type->type_equals(t_ptr->name, symtable);
+    }
+    return false;
+}
+
+int DynamicArrayTypename::type_size(SymbolTable * symtable) const {
+    return ADDRESS_WIDTH;
+}
+
 bool StructTypename::type_equals(const Typename * t, SymbolTable * symtable) const {
     const Typename * t_unalias = unaliased(t, symtable);
 

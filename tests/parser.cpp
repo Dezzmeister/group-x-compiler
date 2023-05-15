@@ -208,7 +208,7 @@ void parser_tests() {
 
         return TEST_SUCCESS;
     };
-    
+
     xtest::tests["(Exepcted Fail) Missing curly brace"] = []() {
         const char * code = R"(
             int main() {
@@ -219,7 +219,7 @@ void parser_tests() {
                 return 0.
             }
         )";
-        
+
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
         SourceErrors &errors = report.sources[output];
@@ -231,7 +231,7 @@ void parser_tests() {
         expect(err.level == Error);
         expect(err.message == "Missing curly brace");
     };
-    
+
     xtest::tests["(Expected Fail) Missing comma"] = []() {
         const char * code = R"(
             int difference(int lower int upper) {
@@ -246,7 +246,7 @@ void parser_tests() {
                 return 0.
             }
         )";
-        
+
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
         SourceErrors &errors = report.sources[output];
@@ -258,7 +258,7 @@ void parser_tests() {
         expect(err.level == Error);
         expect(err.message == "Missing comma");
     };
-    
+
     xtest::tests["(Expected Fail) Missing parenthesis"] = []() {
         const char * code = R"(
             int main() {
@@ -268,7 +268,7 @@ void parser_tests() {
                 return 0.
             }
         )";
-        
+
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
         SourceErrors &errors = report.sources[output];
@@ -280,7 +280,7 @@ void parser_tests() {
         expect(err.level == Error);
         expect(err.message == "Missing parenthesis");
    `};
-    
+
     xtest::tests["Array test"] = []() {
         const char * code = R"(
             int main() {
@@ -290,7 +290,7 @@ void parser_tests() {
                 return 0.
             }
         )";
-        
+
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
         SourceErrors &errors = report.sources[output];
@@ -300,7 +300,7 @@ void parser_tests() {
             if (out->get_kind() == VarDeclInit::kind) {
                 VarDeclInit * vardecl = (VarDeclInit*) out;
                 ArrayIndexExpr * rhs = (ArrayIndexExpr *) vardecl->init;
-                const Expr * index = rhs->index; 
+                const Expr * index = rhs->index;
                 IntLiteral * index_as_int = (IntLiteral *) index;
                 expect(index_as_int->value == 3);
                 expect(rhs->type_equals(new TypeIdent(x::NULL_LOC, "float"));
