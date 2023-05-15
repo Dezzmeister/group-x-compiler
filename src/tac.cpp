@@ -89,7 +89,7 @@ void CondJumpTAC::print() const {
 void BasicBlock::print() const
 {
     std::cout << name << ":" << '\n';
-    
+
     int i = 0;
     for (auto trip : trips)
     {
@@ -102,4 +102,10 @@ void BasicBlock::print() const
     {
         this->prev->print();
     }
+}
+
+std::string CharTAC(const char c) {
+    std::string temp = next_t();
+    instrs.pushback(temp + " = " + c);
+    return temp;
 }
