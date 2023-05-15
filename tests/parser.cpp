@@ -41,7 +41,7 @@ void parser_tests() {
         return TEST_SUCCESS;
     };
 
-    xtests::tests["string literal declaration"] = []() {
+    xtest::tests["string literal declaration"] = []() {
         const char * code = R"(
             string a = "abc\n" + "";
             string b = "^$&Q*!)LL ";
@@ -49,22 +49,22 @@ void parser_tests() {
 
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
-        SymbolTable * symtable = result.parser_state->symtable;
-        ErrorReport &report = result.parser_state->errors;
-        SourceErrors &errors = report.sources[result.parser->top];
+        // SymbolTable * symtable = result.parser_state->symtable;
+        // ErrorReport &report = result.parser_state->errors;
+        // SourceErrors &errors = report.sources[result.parser_state->top];
 
         // This symbol table is not accurate; we are only testing syntax here though
-        SymbolTable * test_symtable = x::default_symtable();
+        // SymbolTable * test_symtable = x::default_symtable();
         Location loc(0, 0, 0, 0);
-        VarDecl * a = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "a"));
-        VarDecl * b = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "a"));
+        // VarDecl * a = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "a"));
+        // VarDecl * b = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "a"));
 
-        StringLiteral * stringA = new StringLiteral(loc, "abc\n" + "");
-        StringLiteral * stringB = new StringLiteral(loc, "^$&Q*!)LL ");
-        StringLiteral * parsed_stringA = (StringLiteral *)output->find([](const ASTNode * node) {
+        StringLiteral *stringA = new StringLiteral(loc, std::string("abc\n" + std::string("")).c_str());
+        StringLiteral *stringB = new StringLiteral(loc, "^$&Q*!)LL ");
+        StringLiteral *parsed_stringA = (StringLiteral *)output->find([](const ASTNode * node) {
             return node->get_kind() == StringLiteral::kind;
         });
-        StringLiteral parsed_stringB = (StringLiteral *)output->find([](const ASTNode * node) {
+        StringLiteral *parsed_stringB = (StringLiteral *)output->find([](const ASTNode * node) {
             return node->get_kind() == StringLiteral::kind;
         });
 
@@ -78,10 +78,10 @@ void parser_tests() {
         delete stringA;
         delete stringB;
 
-        return TEST_SUCCESS
+        return TEST_SUCCESS;
     };
 
-    xtests::tests["New Struct"] = []() {
+    xtest::tests["New Struct"] = []() {
         const char * code = R"(
             struct dimension {
                 float width;
@@ -104,17 +104,17 @@ void parser_tests() {
         //Inaccurate symbol table
         SymbolTable * test_symtable = x::default_symtable();
         Location loc(0, 0, 0, 0);
-        Ident * dim = new Ident(loc, "dimension");
+        // Ident * dim = new Ident(loc, "dimension");
         VarDecl * width = new VarDecl(loc, new TypeIdent(loc, "float"), new Ident(loc, "width"));
         VarDecl * height = new VarDecl(loc, new TypeIdent(loc, "float"), new Ident(loc, "height"));
         std::vector<VarDecl *> dimDecls = {
             width, height
         };
-        VarDeclList * varsDim = new VarDeclList(loc, dimDecls);
-        StructTypename * dimStruct = new StructTypename(loc, varsDim, test_symtable);
+        // VarDeclList * varsDim = new VarDeclList(loc, dimDecls);
+        // StructTypename * dimStruct = new StructTypename(loc, varsDim, test_symtable);
 
         Ident * shape = new Ident(loc, "Shape");
-        VarDecl * area = new VarDecl(loc, new TypeIdent(loc, dimStruct), new Ident(loc, "area"));
+        VarDecl * area = new VarDecl(loc, new TypeIdent(loc, "dimStruct"), new Ident(loc, "area"));
         VarDecl * type = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "type"));
         std::vector<VarDecl *> shapeDecls = {
             area, type
@@ -122,7 +122,7 @@ void parser_tests() {
         VarDeclList * varsShape = new VarDeclList(loc, shapeDecls);
         StructTypename * shapeStruct = new StructTypename(loc, varsShape, test_symtable);
 
-        Ident * circle = new Ident(loc, "circle");
+        // Ident * circle = new Ident(loc, "circle");
         StructDecl * strukt = new StructDecl(loc, shape, shapeStruct);
 
         StructDecl * parsed_strukt = (StructDecl *) output->find([](const ASTNode * node) {
@@ -138,26 +138,48 @@ void parser_tests() {
 
         return TEST_SUCCESS;
     };
+
+    xtests::tests["Fail: Nested While"] = []() {
+        const char * code = R"(
+            int main() {
+                int a;
+                int b;
+                int res;
+                a = 1;
+                b = 1;
+                res = 0;
+                while(a<15) {
+                    while(b<15) {
+                        res = res + b;
+                        b = b+1;
+                    }
+                    a = a+1;
+                }
+            }
+        )";
+        return TEST_SUCCESS;
+    };
     
-    xtest::tests["error test1"] = []() {
+    xtest::test["error test1"] = []() {
         const char * code = R"(
             int main() {
                 int x = 0;
                 x = 2;
-                return 0;
             }
-            )";
-
-        ParseResult result = x::parse_str(code);
+        )";          
+        
         ProgramSource * output = result.parser_state->top;
         SourceErrors &errors = report.sources[output];
         CompilerError err = errors[0];
-        
+        CompilerError err2 = errors[1];
+
         expect(errors.has_errors());
         expect(errors.error_count() == 1);
         expect(errors.type_errors.size() == 1);
         expect(err.level == Error);
+        expect(err2.level == Error);
         expect(err.message == "Cannot assign to immutable");
+        expect(err2.message = "No return");
 
         return TEST_SUCCESS;
     };

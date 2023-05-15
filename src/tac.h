@@ -111,6 +111,17 @@ class JneTAC : public Quad {
     void print() const;
 };
 
+class LogicalTAC : public Quad {
+  public:
+    std::string id;
+    std::string op;
+    std::string left;
+    std::string right;
+
+    LogicalTAC(std::string id, std::string op, std::string left, std::string right) : id(id), op(op), left(left), right(right) {}
+    void print() const;
+};
+
 // x relop y
 // jne L
 class CondJumpRelopTAC : public Quad
@@ -167,9 +178,10 @@ public:
 };
 
 class PushTAC : public Quad {
-  std::string id; 
-  PushTAC(std::string i) : id(i) { }
-  void print() const { std::cout << "push " << id; }
+  public:
+    std::string id; 
+    PushTAC(std::string i) : id(i) { }
+    void print() const { std::cout << "push " << id; }
 };
 
 class CallTAC : public Quad

@@ -301,6 +301,8 @@ class IntLiteral : public NumLiteral {
         virtual std::string IntLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const ;
 
         virtual void print() const;
+
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
         
         virtual std::vector<ASTNode *> children();
 
@@ -342,8 +344,6 @@ class TernaryExpr : public Expr {
         TernaryExpr(const Location loc, const Expr * cond, const Expr * tru, const Expr * fals);
 
         virtual ~TernaryExpr();
-
-         
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
@@ -1106,6 +1106,7 @@ class FuncDecl : public ASTNode {
 
         
         virtual void print() const;
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
         virtual std::vector<ASTNode *> children();
 
         void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
@@ -1370,19 +1371,19 @@ class BreakStmt : public Statement {
 class TypeTable {
     public:
         std::map<std::string, Typename *> types;
-    
+
         TypeTable() : types({}) {}
-    
+
         ~TypeTable() {
             for (std::pair<const std::string, Typename *> &item : types) {
                 delete item.second;
             }
         }
-    
+
         void put(std::string name, Typename * typ) {
             types[name] = typ;
         }
-    
+
         /**
          * Look up the symbol and get its type, then insert it into the type table with
          * a new name
@@ -1391,36 +1392,36 @@ class TypeTable {
             if (get(new_name) != nullptr) {
                 return;
             }
-    
+
             Symbol * sym = symtable->get(name);
-    
+
             if (sym == nullptr) {
                 fprintf(stderr, "symbol '%s' does not exist\n", name.c_str());
                 return;
             }
-    
+
             if (sym->kind == Type) {
                 fprintf(stderr, "tried to insert typename into type table\n");
                 return;
             }
-    
+
             if (sym->kind == Var) {
                 VarDecl * decl = sym->decl.var;
                 Typename * typ = decl->type_name->clone();
                 types[new_name] = typ;
                 return;
             }
-    
+
             FuncDecl * decl = sym->decl.func;
             Typename * typ = decl->type_of(symtable);
             types[new_name] = typ;
         }
-    
+
         Typename * get(std::string name) {
             if (types.count(name)) {
                 return types[name];
             }
-    
+
             return nullptr;
         }
 };
