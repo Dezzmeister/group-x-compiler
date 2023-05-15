@@ -1,6 +1,6 @@
 #include "asm.h"
 
-AsmState::AsmState() : stack(std::vector<StackVar>()), regs{ 0 }, stack_offset(0), reg_roulette(0) {}
+AsmState::AsmState() : stack(std::vector<StackVar>()), regs{ {0} }, stack_offset(0), reg_roulette(0) {}
 
 std::optional<VarLoc> AsmState::find_var(std::string id) {
     for (int i = 0; i < GeneralReg::Count; i++) {
