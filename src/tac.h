@@ -22,9 +22,10 @@ template <typename T>
 class Value : public Quad
 {
 public:
+  std::string id;
   T value;
-  void print() const { std::cout << next_t() << " = " << value; };
-  Value(T v) : value(v) {}
+  void print() const { std::cout << id << " = " << value; };
+  Value(std::string id, T v) : id(id), value(v) {}
 };
 
 class AssignTAC : public Quad

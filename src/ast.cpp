@@ -1740,9 +1740,9 @@ bool BreakStmt::operator==(const ASTNode &node) const {
     return (node.get_kind() == BreakStmt::kind);
 }
 
-std::string ProgramSource::gen_tac(SymbolTable * old_symtable, SymbolTable * globl_symtable, std::vector<Quad *> instrs) const {
+std::string ProgramSource::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
     for (auto &node : nodes) {
-        node->gen_tac(old_symtable, globl_symtable, instrs);
+        node->gen_tac(old_symtable, type_table, instrs);
     }
 
     return "";

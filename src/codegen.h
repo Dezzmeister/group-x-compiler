@@ -1,6 +1,8 @@
 #ifndef CODEGEN_H
 #define CODEGEN_H
+
 #include "tac.h"
+
 class CodeGenerator {
 
     void generate_code(const BasicBlock * b);
