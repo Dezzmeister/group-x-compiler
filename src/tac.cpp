@@ -5,24 +5,29 @@
 
 BasicBlock *x::bblock = nullptr;
 
-std::string next_label() {
+std::string next_l() {
     static int i = 0;
     return ".L" + std::to_string(i++);
 }
 
 std::string next_t() {
     static int i = 0;
-    return "t" + std::to_string(i++);
+    return "__t" + std::to_string(i++);
+}
+
+std::string next_p() {
+    static int i = 0;
+    return "__p" + std::to_string(i++);
 }
 
 template<>
 void Value<bool>::print() const {
-    std::cout << next_t() << " = " << std::boolalpha << value;
+    std::cout << id << " = " << std::boolalpha << value;
 }
 
 template <>
 void Value<char>::print() const {
-    std::cout << next_t() << " = ";
+    std::cout << id << " = ";
     switch (value) {
         case '\n':
             printf("\\n");
@@ -59,6 +64,10 @@ void BasicBlock::add_block(std::string name)
 
 void Quad::print() const {}
 
+void LabelTAC::print() const {
+    std::cout << label << ":";
+}
+
 void JumpTAC::print() const {
     std::cout << "jmp " << label;
 }
@@ -76,6 +85,14 @@ void RetvalTAC::print() const {
 void CopyTAC::print() const
 {
     std::cout << "copy " << index;
+}
+
+void CmpLiteralTAC::print() const {
+    std::cout << "cmp " << id << ", " << literal;
+}
+
+void JneTAC::print() const {
+    std::cout << "jne " << label;
 }
 
 void LoadTAC::print() const
@@ -113,10 +130,4 @@ void BasicBlock::print() const
     {
         this->prev->print();
     }
-}
-
-std::string CharTAC(const char c) {
-    std::string temp = next_t();
-    instrs.pushback(temp + " = " + c);
-    return temp;
 }

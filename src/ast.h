@@ -41,6 +41,7 @@
 #include <string>
 #include <vector>
 
+#include "codegen.h"
 #include "symtable.h"
 #include "tac.h"
 
@@ -101,7 +102,7 @@ class ASTNode {
 
         virtual void print() const = 0;
         virtual std::vector<ASTNode *> children() = 0;
-        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const { 
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const { 
             fprintf(stderr, "gen_tac called on unsupported node of kind %s\n", x::kind_map[get_kind()].c_str());
             return "";
         };
@@ -128,7 +129,7 @@ class ProgramSource : public ASTNode {
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
 
-        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
 
         void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
@@ -435,7 +436,7 @@ class Ident : public CallingExpr {
         
         virtual std::vector<ASTNode *> children();
 
-        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *> instrs) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
 
         virtual Typename * type_of(SymbolTable * symtable) const;
 
@@ -454,8 +455,6 @@ class MathExpr : public Expr {
         MathExpr(const Location loc, const char op, const Expr * left, const Expr * right);
 
         virtual ~MathExpr();
-
-        
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
@@ -611,7 +610,7 @@ class FunctionCallExpr : public CallingExpr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
-        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
 
         virtual Typename * type_of(SymbolTable * symtable) const;
 
@@ -635,7 +634,7 @@ class FunctionCallStmt : public Statement {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
-        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
 
         virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
@@ -908,7 +907,7 @@ class IfStmt : public Statement {
 
         virtual void print() const;
 
-        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *> instrs) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
         
         virtual std::vector<ASTNode *> children();
 
@@ -954,7 +953,7 @@ class WhileStmt : public Statement {
 
         virtual void print() const;
 
-        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *>) const;
         
         virtual std::vector<ASTNode *> children();
 
@@ -982,7 +981,7 @@ class ForStmt : public Statement {
         
         virtual void print() const;
 
-        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *>) const;
 
         virtual std::vector<ASTNode *> children();
 
@@ -1067,7 +1066,7 @@ class LogicalExpr : public Expr {
 
         
         virtual void print() const;
-        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *>) const;
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;
@@ -1356,27 +1355,61 @@ class BreakStmt : public Statement {
  * a typename into the map
  */
 class TypeTable {
-    std::map<std::string, Typename *> types;
-
-    TypeTable() : types({}) {}
-
-    ~TypeTable() {
-        for (std::pair<const std::string, Typename *> &item : types) {
-            delete item.second;
+    public:
+        std::map<std::string, Typename *> types;
+    
+        TypeTable() : types({}) {}
+    
+        ~TypeTable() {
+            for (std::pair<const std::string, Typename *> &item : types) {
+                delete item.second;
+            }
         }
-    }
-
-    void put(std::string name, Typename * typ) {
-        types[name] = typ;
-    }
-
-    Typename * get(std::string name) {
-        if (types.count(name)) {
-            return types[name];
+    
+        void put(std::string name, Typename * typ) {
+            types[name] = typ;
         }
-
-        return nullptr;
-    }
+    
+        /**
+         * Look up the symbol and get its type, then insert it into the type table with
+         * a new name
+         */
+        void put_from_symbol(std::string name, std::string new_name, SymbolTable * symtable) {
+            if (get(new_name) != nullptr) {
+                return;
+            }
+    
+            Symbol * sym = symtable->get(name);
+    
+            if (sym == nullptr) {
+                fprintf(stderr, "symbol '%s' does not exist\n", name.c_str());
+                return;
+            }
+    
+            if (sym->kind == Type) {
+                fprintf(stderr, "tried to insert typename into type table\n");
+                return;
+            }
+    
+            if (sym->kind == Var) {
+                VarDecl * decl = sym->decl.var;
+                Typename * typ = decl->type_name->clone();
+                types[new_name] = typ;
+                return;
+            }
+    
+            FuncDecl * decl = sym->decl.func;
+            Typename * typ = decl->type_of(symtable);
+            types[new_name] = typ;
+        }
+    
+        Typename * get(std::string name) {
+            if (types.count(name)) {
+                return types[name];
+            }
+    
+            return nullptr;
+        }
 };
 
 #endif

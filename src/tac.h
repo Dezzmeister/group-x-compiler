@@ -8,6 +8,8 @@
 #include "symtable.h"
 
 std::string next_t();
+std::string next_l();
+std::string next_p();
 
 class Quad
 {
@@ -94,6 +96,21 @@ public:
   void print() const;
 };
 
+class CmpLiteralTAC : public Quad {
+  public:
+    std::string id;
+    int literal;
+    CmpLiteralTAC(std::string id, int literal) : id(id), literal(literal) {}
+    void print() const;
+};
+
+class JneTAC : public Quad {
+  public:
+    std::string label;
+    JneTAC(std::string label) : label(label) {}
+    void print() const;
+};
+
 // x relop y
 // jne L
 class CondJumpRelopTAC : public Quad
@@ -127,6 +144,14 @@ public:
 
 };
 
+class LabelTAC : public Quad {
+  public:
+    std::string label;
+
+    LabelTAC(std::string label) : label(label) {};
+    void print() const;
+};
+
 // jmp L
 class JumpTAC : public Quad
 {
@@ -147,13 +172,12 @@ class PushTAC : public Quad {
   void print() const { std::cout << "push " << id; }
 };
 
-
 class CallTAC : public Quad
 {
 public:
   std::string fun;
   CallTAC(std::string f) : fun(f) {}
-  void print() const { std::cout << "call " << fun; };
+  void print() const;
 };
 
 // t0 = __retval. asm stage will replace with rax
