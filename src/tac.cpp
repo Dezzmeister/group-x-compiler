@@ -64,10 +64,6 @@ void JumpTAC::print() const {
 }
 
 
-void CallTAC::print() const {
-    std::cout << "call " << fun << ' ';
-}
-
 void RetvalTAC::print() const {
     std::cout << id << " = __retval";
 }
@@ -115,9 +111,10 @@ void BasicBlock::print() const
     }
 }
 
-std::string CharTAC(const char c) {
+std::string CharTAC(const char c, std::vector<Quad *> instrs) {
     std::string temp = next_t();
-    instrs.pushback(temp + " = '" + std::string(1, c) + "'");
+    Value<char> *value = new Value<char>(temp, c);
+    instrs.push_back(value);
     return temp;
 }
 
