@@ -146,6 +146,13 @@ void IntLiteral::print() const {
     printf("%d", value);
 }
 
+std::string IntLiteral::gen_tac(SymbolTable * old_symtable,
+    TypeTable * type_table, NamesToNames &names, std::vect<Quad *> instrs) const {
+        std::string p_name = *names.get(id);
+        type_table->put_from_symbol(id, p_name, old_symtable);
+        return p_name;
+}
+
 std::vector<ASTNode *> IntLiteral::children() {
     return {};
 }
@@ -345,29 +352,6 @@ bool Ident::operator==(const ASTNode &node) const {
 
     const Ident &n = (Ident &) node;
 
-    return (id == n.id);
-}
-
-IntLiteral::IntLiteral(const Location loc, const char * const _id) :
-    CallingExpr(loc), id(std::string(_id)) {}
-
-void IntLiteral::print() const {
-    std::cout << id;
-}
-std::string IntLiteral::gen_tac(SymbolTable * old_symtable,
-    TypeTable * type_table, NamesToNames &names, std::vect<Quad *> instrs) const {
-        std::string p_name = *names.get(id);
-        type_table->put_from_symbol(id, p_name, old_symtable);
-        return p_name;
-}
-std::vector<ASTNode *> IntLiteral::children() {
-    return {};
-}
-bool IntLiteral::operator==(const ASTNode &node) const {
-    if (node.get_kind() != IntLiteral::kind) {
-        return false;
-    }
-    const IntLiteral &n = (IntLiteral &) node;
     return (id == n.id);
 }
 
