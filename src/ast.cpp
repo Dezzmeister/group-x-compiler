@@ -278,6 +278,13 @@ StringLiteral::StringLiteral(const Location loc, const char * const value)
     : Expr(loc), value(std::string(value)) {
     }
 
+std::string StringLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    std::string p = next_t();
+    Value<std::string> *v = new Value<std::string>(p, value);
+    x::bblock->add_instruction(v);
+    return p;
+}
+
 void StringLiteral::print() const {
     putchar('"');
     std::cout << value;
@@ -1025,6 +1032,13 @@ ArrayLiteral::~ArrayLiteral() {
     delete items;
 }
 
+std::string ArrayLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    for (auto & expr : items->exprs) {
+        expr->gen_tac(old_symtable, type_table, names, instrs);
+    }
+    return "";
+}
+
 void ArrayLiteral::print() const {
     putchar('{');
     items->print();
@@ -1494,10 +1508,7 @@ bool ParamsList::operator==(const ASTNode &node) const {
 
 std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
     x::bblock->add_block(name->id);
-<<<<<<< HEAD
-=======
     body->gen_tac(old_symtable, type_table, names, instrs);
->>>>>>> enable tac printing
     return "";
 }
 
@@ -1799,7 +1810,6 @@ bool InitializerList::operator==(const ASTNode &node) const {
 
     return true;
 }
-
 StructLiteral::StructLiteral(const Location loc, const InitializerList * members)
     : CallingExpr(loc), members(members) {}
 
@@ -1811,6 +1821,10 @@ void StructLiteral::print() const {
     printf("{\n");
     members->print();
     putchar('}');
+}
+
+std::string StructLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    return "";
 }
 
 std::vector<ASTNode *> StructLiteral::children() {
