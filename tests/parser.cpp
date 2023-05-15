@@ -334,8 +334,10 @@ void parser_tests() {
         )"; */
 
         // expect(output == expected_parse);
+
+        return TEST_SUCCESS;
     };
-     
+
     xtest::tests["Continue test"] = []() {
         const char * code = R"(
             int main() {
@@ -360,10 +362,11 @@ void parser_tests() {
             if (out->get_kind() == VarDeclInit::kind) {
                 VarDeclInit * vardecl = (VarDeclInit*) out;
                 ArrayIndexExpr * rhs = (ArrayIndexExpr *) vardecl->init;
-                const Expr * index = rhs->index; 
+                const Expr * index = rhs->index;
                 IntLiteral * index_as_int = (IntLiteral *) index;
                 expect(index_as_int->value == 3);
             }
         }
+        return TEST_SUCCESS;
     };
 }
