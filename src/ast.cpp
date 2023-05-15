@@ -1784,6 +1784,32 @@ bool PreExpr::operator==(const ASTNode &node) const {
     return (op == n.op && *expr == *(n.expr));
 }
 
+PostExpr::PostExpr(const Location loc, const char * const op, const Expr * expr)
+    : Expr(loc), op(std::string(op)), expr(expr) {}
+
+PostExpr::~PostExpr() {
+    delete expr;
+}
+
+void PostExpr::print() const {
+    std::cout << op;
+    expr->print();
+}
+
+std::vector<ASTNode *> PostExpr::children() {
+    return {(ASTNode *)expr};
+}
+
+bool PostExpr::operator==(const ASTNode &node) const {
+    if (node.get_kind() != PostExpr::kind) {
+        return false;
+    }
+
+    const PostExpr &n = (PostExpr &) node;
+
+    return (op == n.op && *expr == *(n.expr));
+}
+
 StructDeref::StructDeref(const Location loc, const CallingExpr * strukt, const Ident * member)
     : CallingExpr(loc), strukt(strukt), member(member) {}
 
