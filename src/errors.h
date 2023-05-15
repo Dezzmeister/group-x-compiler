@@ -27,7 +27,7 @@ struct CompilerError {
 typedef struct CompilerError CompilerError;
 
 struct SourceErrors {
-    std::vector<CompilerError> parse_errors;
+        std::vector<CompilerError> parse_errors;
     std::vector<CompilerError> type_errors;
 
     SourceErrors();

@@ -4,7 +4,7 @@
 #include "../src/ast.h"
 #include "../src/parseutils.h"
 #include "../src/symtable.h"
-#include "../src/error.h"
+#include "../src/errors.h"
 
 void parser_tests() {
     xtest::tests["struct parse tree"] = []() {
@@ -139,12 +139,12 @@ void parser_tests() {
         return TEST_SUCCESS;
     };
 
-    xtests::tests["Fail: Nested While"] = []() {
+    xtest::tests["Nested While"] = []() {
         const char * code = R"(
             int main() {
-                int a;
-                int b;
-                int res;
+                mut int a;
+                mut int b;
+                mut int res;
                 a = 1;
                 b = 1;
                 res = 0;
@@ -157,21 +157,46 @@ void parser_tests() {
                 }
             }
         )";
+
+        ParseResult result = x::parse_str(code);
+        // ProgramSource * output = result.parser_state->top;
+
+        /*const char * expected_parse = R"(
+            int main() {
+                    mut int a;
+                    mut int b;
+                    mut int res;
+                    a = 1;
+                    b = 1;
+                    res = 0;
+                    while (a < 15) {
+                            while (b < 15) {
+                                    res = res + b;
+                                    b = b + 1;
+                            }
+                            a = a + 1;
+                    }
+            }
+        )"; */
+
+        // expect(output == expected_parse);
+
         return TEST_SUCCESS;
     };
-    
-    xtest::test["error test1"] = []() {
+
+    xtest::tests["error test1"] = []() {
         const char * code = R"(
             int main() {
                 int x = 0;
                 x = 2;
             }
-        )";          
-        
-        ProgramSource * output = result.parser_state->top;
-        SourceErrors &errors = report.sources[output];
-        CompilerError err = errors[0];
-        CompilerError err2 = errors[1];
+        )";
+
+        ParseResult result = x::parse_str(code);
+        // ProgramSource * output = result.parser_state->top;
+        SourceErrors &errors = result.parser_state->current_errors;
+        CompilerError err = errors.parse_errors[0];
+        CompilerError err2 = errors.parse_errors[1];
 
         expect(errors.has_errors());
         expect(errors.error_count() == 1);
@@ -179,7 +204,7 @@ void parser_tests() {
         expect(err.level == Error);
         expect(err2.level == Error);
         expect(err.message == "Cannot assign to immutable");
-        expect(err2.message = "No return");
+        expect(err2.message == "No return");
 
         return TEST_SUCCESS;
     };
