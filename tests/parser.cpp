@@ -50,7 +50,7 @@ void parser_tests() {
         ProgramSource * output = result.parser_state->top;
         SymbolTable * symtable = result.parser_state->symtable;
         ErrorReport &report = result.parser_state->errors;
-        SourceErrors &errors = report.sources[top];
+        SourceErrors &errors = report.sources[result.parser->top];
 
         // This symbol table is not accurate; we are only testing syntax here though
         SymbolTable * test_symtable = x::default_symtable();
@@ -58,12 +58,12 @@ void parser_tests() {
         VarDecl * a = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "a"));
         VarDecl * b = new VarDecl(loc, new TypeIdent(loc, "string"), new Ident(loc, "a"));
 
-        StringLiteral stringA = new StringLiteral(loc, "abc\n" + "");
-        StringLiteral stringB = new StringLiteral(loc, "^$&Q*!)LL ");
-        StringLiteral parsed_stringA = (StringLiteral *)output->find([](const ASTNode * node) {
+        StringLiteral * stringA = new StringLiteral(loc, "abc\n" + "");
+        StringLiteral * stringB = new StringLiteral(loc, "^$&Q*!)LL ");
+        StringLiteral * parsed_stringA = (StringLiteral *)output->find([](const ASTNode * node) {
             return node->get_kind() == StringLiteral::kind;
         });
-        StringLiteral parsed_stringA = (StringLiteral *)output->find([](const ASTNode * node) {
+        StringLiteral parsed_stringB = (StringLiteral *)output->find([](const ASTNode * node) {
             return node->get_kind() == StringLiteral::kind;
         });
 
@@ -149,7 +149,7 @@ void parser_tests() {
 
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
-        SourceErrors &errors = report.sources[top];
+        SourceErrors &errors = report.sources[output];
         CompilerError err = errors[0];
         
         expect(errors.has_errors());
