@@ -299,6 +299,8 @@ class IntLiteral : public NumLiteral {
         IntLiteral(const Location loc, const int value);
 
         virtual void print() const;
+
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
         
         virtual std::vector<ASTNode *> children();
         virtual std::string gen_tac(SymbolTable *old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
