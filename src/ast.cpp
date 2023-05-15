@@ -147,10 +147,13 @@ void IntLiteral::print() const {
 }
 
 std::string IntLiteral::gen_tac(SymbolTable * old_symtable,
-    TypeTable * type_table, NamesToNames &names, std::vect<Quad *> instrs) const {
-        std::string p_name = *names.get(value);
-        type_table->put_from_symbol(value, p_name, old_symtable);
-        return p_name;
+    TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+        std::string t_name = next_t();
+        Value<int> * tac = new Value<int>(t_name, value);
+
+        type_table->put(t_name, new TypeIdent(x::NULL_LOC, "int"));
+        instrs.push_back(tac);
+        return t_name;
 }
 
 std::vector<ASTNode *> IntLiteral::children() {
