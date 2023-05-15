@@ -320,9 +320,7 @@ class FloatLiteral : public NumLiteral {
         FloatLiteral(const Location loc, const float value);
 
         virtual void print() const;
-
         virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
-
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;
@@ -361,7 +359,6 @@ class BoolLiteral : public Expr {
         BoolLiteral(const Location loc, const bool value);
 
         virtual void print() const;
-
         virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
 
         virtual std::vector<ASTNode *> children();
@@ -381,9 +378,7 @@ class CharLiteral : public Expr {
         CharLiteral(const Location loc, const char value);
 
         virtual void print() const;
-
         virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const;
-
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;
@@ -1104,7 +1099,7 @@ class FuncDecl : public ASTNode {
 
 
         virtual void print() const;
-        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *>) const;
         virtual std::vector<ASTNode *> children();
 
         void typecheck(SymbolTable * symtable, SourceErrors &errors) const;

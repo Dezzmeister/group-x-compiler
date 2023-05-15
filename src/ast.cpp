@@ -178,6 +178,13 @@ void FloatLiteral::print() const {
     printf("%f", value);
 }
 
+std::string FloatLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    std::string p = next_t();
+    Value<float> * v = new Value<float>(p, value);
+    x::bblock->add_instruction(v);
+    return p;
+}
+
 std::vector<ASTNode *> FloatLiteral::children() {
     return {};
 }
@@ -192,6 +199,13 @@ bool FloatLiteral::operator==(const ASTNode &node) const {
 
 BoolLiteral::BoolLiteral(const Location loc, const bool value) : Expr(loc), value(value) {}
 
+std::string BoolLiteral::gen_tac(SymbolTable *old_symtable, TypeTable *type_table, NamesToNames &names, std::vector<Quad *> instrs) const
+{
+    std::string p = next_t();
+    Value<bool> *v = new Value<bool>(p, value);
+    x::bblock->add_instruction(v);
+    return p;
+}
 void BoolLiteral::print() const {
     if (value) {
         printf("true");
@@ -213,6 +227,13 @@ bool BoolLiteral::operator==(const ASTNode &node) const {
 }
 
 CharLiteral::CharLiteral(const Location loc, const char value) : Expr(loc), value(value) {}
+
+std::string CharLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    std::string p = next_t();
+    Value<char> * v = new Value<char>(p, value);
+    x::bblock->add_instruction(v);
+    return p;
+}
 
 void CharLiteral::print() const {
     switch (value) {
@@ -1466,6 +1487,11 @@ bool ParamsList::operator==(const ASTNode &node) const {
     return cmp_vectors(params, n.params);
 }
 
+std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    x::bblock->add_block(name->id);
+    return "";
+}
+
 FuncDecl::FuncDecl(const Location loc, const Ident * name, const ParamsList * params,
                    const Typename * ret_type, const StatementList * body, SymbolTable * scope)
     : ASTNode(loc), name(name), params(params), ret_type(ret_type), body(body), scope(scope), forward_decl(nullptr) {}
@@ -1477,10 +1503,6 @@ FuncDecl::~FuncDecl() {
     delete body;
     delete scope;
 }
-
-std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
-    return "";
-};
 
 void FuncDecl::print() const {
     ret_type->print();
