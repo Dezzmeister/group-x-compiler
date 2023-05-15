@@ -184,7 +184,7 @@ void parser_tests() {
         return TEST_SUCCESS;
     };
 
-    xtest::tests["error test1"] = []() {
+    xtest::tests["(Expected fail) No return, immutable variable"] = []() {
         const char * code = R"(
             int main() {
                 int x = 0.
@@ -193,19 +193,105 @@ void parser_tests() {
         )";
 
         ParseResult result = x::parse_str(code);
-        // ProgramSource * output = result.parser_state->top;
-        SourceErrors &errors = result.parser_state->current_errors;
-        CompilerError err = errors.parse_errors[0];
-        CompilerError err2 = errors.parse_errors[1];
+        ProgramSource * output = result.parser_state->top;
+        SourceErrors &errors = report.sources[output];
+        CompilerError err = errors[0];
+        CompilerError err2 = errors[1];
+
+        expect(errors.has_errors());
+        expect(errors.error_count() == 1);
+        expect(errors.type_errors.size() == 2);
+        expect(err.level == Error);
+        expect(err2.level == Error);
+        expect(err.message == "Cannot assign to immutable");
+        expect(err2.message = "No return");
+
+        return TEST_SUCCESS;
+    };
+    
+    xtest::tests["(Exepcted Fail) Missing curly brace"] = []() {
+        const char * code = R"(
+            int main() {
+                mut int x = 0.
+                x = x + 1.
+                if (!x) {
+                    return 1.
+                return 0.
+            }
+        )";
+        
+        ParseResult result = x::parse_str(code);
+        ProgramSource * output = result.parser_state->top;
+        SourceErrors &errors = report.sources[output];
+        CompilerError err = errors[0];
 
         expect(errors.has_errors());
         expect(errors.error_count() == 1);
         expect(errors.type_errors.size() == 1);
         expect(err.level == Error);
-        expect(err2.level == Error);
-        expect(err.message == "Cannot assign to immutable");
-        expect(err2.message == "No return");
+        expect(err.message == "Missing curly brace");
+    };
+    
+    xtest::tests["(Expected Fail) Missing comma"] = []() {
+        const char * code = R"(
+            int difference(int lower int upper) {
+                    return upper - lower.
+            }
 
-        return TEST_SUCCESS;
+            int main() {
+                int lower = 5.
+                int upper = 10.
+                int diff = difference.
+                print(diff).
+                return 0.
+            }
+        )";
+        
+        ParseResult result = x::parse_str(code);
+        ProgramSource * output = result.parser_state->top;
+        SourceErrors &errors = report.sources[output];
+        CompilerError err = errors[0];
+
+        expect(errors.has_errors());
+        expect(errors.error_count() == 1);
+        expect(errors.type_errors.size() == 1);
+        expect(err.level == Error);
+        expect(err.message == "Missing comma");
+    };
+    
+    xtest::tests["(Expected Fail) Missing parenthesis"] = []() {
+        const * code = R"(
+            int main() {
+                print("Hello World").
+                int x = 5 * (4 + 6.
+                print(x).
+                return 0.
+            }
+        )";
+        
+        ParseResult result = x::parse_str(code);
+        ProgramSource * output = result.parser_state->top;
+        SourceErrors &errors = report.sources[output];
+        CompilerError err = errors[0];
+
+        expect(errors.has_errors());
+        expect(errors.error_count() == 1);
+        expect(errors.type_errors.size() == 1);
+        expect(err.level == Error);
+        expect(err.message == "Missing parenthesis");
+   `};
+    
+    xtest::tests["Array test"] = []() {
+        const * code = R"(
+            int main() {
+                mut int [5] arr = {0, 1, 2, 3, 4}.
+                int x = arr[2].
+                arr[2] = 3.
+                return 0.
+            }
+        )";
+        
+        ParseResult result = x::parse_str(code);
+        ProgramSource * output = result.parser_state->top;
     };
 }

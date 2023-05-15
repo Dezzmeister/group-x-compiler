@@ -10,6 +10,8 @@ TEST_DIR     := tests
 RELEASE_DIR  := _release
 DEBUG_DIR    := _debug
 
+SRCS_NO_MAIN := $(filter src/main.cpp, $(SRCS))
+
 GENERATED_FILES := ${addprefix ${SRC_DIR}/,scanner.cpp parser.cpp}
 
 OBJS := $(patsubst ${SRC_DIR}/%.cpp,%.o,$(SRCS))
@@ -81,12 +83,12 @@ ${RELEASE_DIR}/%.o: src/%.cpp | ${DEPS_DIR} ${RELEASE_DIR}
 todo:
 	grep -Rn TODO
 
-test_debug: ${TEST_DIR}/*.cpp ${SRCS}
+test_debug: ${TEST_DIR}/*.cpp $(filter-out src/main.cpp, $(SRCS)) 
 	$(CXX) -DDEBUG_TOKENS ${COMMON_FLAGS} $(CPPFLAGS) $^ -o $@ ${LD_FLAGS}
 	./$@
 	rm -f $@
 
-test_release: ${TEST_DIR}/*.cpp ${SRCS}
+test_release: ${TEST_DIR}/*.cpp $(filter-out src/main.cpp, $(SRCS))
 	$(CXX) -DDEBUG_TOKENS ${COMMON_FLAGS} $(CPPFLAGS) $^ -o $@ ${LD_FLAGS}
 	./$@
 	rm -f $@
