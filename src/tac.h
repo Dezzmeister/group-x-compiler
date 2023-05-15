@@ -40,9 +40,11 @@ class AssignTAC : public Quad
 {
 public:
   std::string id;
+  std::string op; 
+  std::string lhs;
   std::string rhs;
-  AssignTAC(std::string id, std::string rhs)
-      : id(id), rhs(rhs) {}
+  AssignTAC(std::string id, std::string op, std::string lhs, std::string rhs)
+      : id(id), op(op), lhs(lhs), rhs(rhs) {}
   void print() const;
   virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
