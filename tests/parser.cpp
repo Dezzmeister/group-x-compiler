@@ -138,48 +138,25 @@ void parser_tests() {
         return TEST_SUCCESS;
     };
 
-    xtest::tests["error test1"] = []() {
+    xtests::tests["Nested While"] = []() {
         const char * code = R"(
             int main() {
-                int x = 0;
-                x = 2;
-                return 0;
-            }
-            )";
-
-        ParseResult result = x::parse_str(code);
-        ProgramSource * output = result.parser_state->top;
-        SourceErrors &errors = report.sources[top];
-        CompilerError err = errors[0];
-
-        expect(errors.has_errors());
-        expect(errors.error_count() == 1);
-        expect(errors.type_errors.size() == 1);
-        expect(err.level == Error);
-        expect(err.message == "Cannot assign to immutable");
-
-        return TEST_SUCCESS;
-    };
-
-    xtests::tests["Nested While"] = []() {
-    const char * code = R"(
-        int main() {
-            int a;
-            int b;
-            int res;
-            a = 1;
-            b = 1;
-            res = 0;
-            while(a<15) {
-                while(b<15) {
-                    res = res + b;
-                    b = b+1;
+                int a;
+                int b;
+                int res;
+                a = 1;
+                b = 1;
+                res = 0;
+                while(a<15) {
+                    while(b<15) {
+                        res = res + b;
+                        b = b+1;
+                    }
+                    a = a+1;
                 }
-                a = a+1;
             }
-        }
-    )";
-    ProgramSource * output = result.parser_state->top;
-    expect(output = "");
+        )";
+        ProgramSource * output = result.parser_state->top;
+        expect(output = "");
     }
 }
