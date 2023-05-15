@@ -51,6 +51,7 @@ SymbolTable * x::bare_symtable() {
     out->put(std::string("bool"), new Symbol(Type, base_type));
     out->put(std::string("char"), new Symbol(Type, base_type));
     out->put(std::string("void"), new Symbol(Type, base_type));
+    out->put(std::string("Please"), new Symbol(Type, base_type));
 
     return out;
 }
