@@ -5,4 +5,4 @@ int main() {
     int out = x.
 
     return out.
-};
+}.

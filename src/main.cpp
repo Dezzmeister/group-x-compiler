@@ -7,6 +7,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "asm.h"
+#include "asm_utils.h"
 #include "parsedecls.h"
 #include "parseutils.h"
 #include "parser.h"
@@ -71,9 +73,12 @@ int main(int argc, char** argv) {
   NamesToNames names = x::symtable_to_names(nullptr, result.parser_state->symtable);
   std::vector<Quad *> instrs = {};
   result.parser_state->top->gen_tac(result.parser_state->symtable, &type_table, names, instrs);
+  AsmState asm_state;
   for (auto &tac : instrs) {
-    tac->print();
-    std::cout << std::endl;
+    // tac->print();
+    // std::cout << std::endl;
+    tac->to_asm(std::cout, &type_table, names, asm_state);
+    std::cout << std::flush;
   }
 
   if (graph) {

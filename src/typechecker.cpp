@@ -411,7 +411,7 @@ Typename * Ident::type_of(SymbolTable * symtable) const {
         params_clone.push_back(type_name);
     }
 
-    return new FuncTypename(x::NULL_LOC, new TypenameList(x::NULL_LOC, params_clone), decl->ret_type->clone());
+    return new FuncTypename(x::NULL_LOC, new TypenameList(x::NULL_LOC, params_clone), decl->ret_type->clone(), symtable);
 }
 
 Typename * MathExpr::type_of(SymbolTable * symtable) const {
@@ -620,7 +620,7 @@ Typename * FuncDecl::type_of(SymbolTable * symtable) const {
         param_types.push_back(params->params[i]->type_name->clone());
     }
 
-    return new FuncTypename(x::NULL_LOC, new TypenameList(x::NULL_LOC, param_types), ret_type->clone());
+    return new FuncTypename(x::NULL_LOC, new TypenameList(x::NULL_LOC, param_types), ret_type->clone(), symtable);
 }
 
 Typename * BangExpr::type_of(SymbolTable * symtable) const {

@@ -2,6 +2,7 @@
 #define SRC_ASM_H
 
 #include <iostream>
+#include <stack>
 #include <optional>
 #include <vector>
 
@@ -73,15 +74,19 @@ typedef struct {
     VarLocInfo loc;
 } VarLoc;
 
-typedef struct {
+typedef struct RegisterState {
     // id of variable in this register
     std::string var;
     // If true, this register is in use and cannot be cleaned up
     bool used;
+
+    RegisterState();
+
 } RegisterState;
 
 typedef struct AsmState {
     std::vector<StackVar> stack;
+    std::stack<int> offsets;
     RegisterState regs[GeneralReg::Count];
     int stack_offset;
     // Index of next register to move if all registers are in use
@@ -104,9 +109,16 @@ typedef struct AsmState {
      */
     GeneralReg free_reg(std::ostream &code);
 
-    GeneralReg move_into_reg(std::string id, std::ostream &code);
+    GeneralReg move_into_reg(std::string id, std::ostream &code, int offset);
 
     void clear_var(std::string id);
+
+    void clear_reg(GeneralReg reg, std::ostream &code);
+
+    void new_frame();
+
+    int pop_frame();
+
 } AsmState;
 
 #endif

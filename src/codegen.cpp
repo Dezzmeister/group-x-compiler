@@ -6,6 +6,11 @@ NamesToNames x::symtable_to_names(NamesToNames * parent, SymbolTable * symtable)
     NamesToNames out;
 
     for (auto &item : symtable->table) {
+        if (item.first == "main") {
+            out.name_map[item.first] = item.first;
+            continue;
+        }
+
         out.name_map[item.first] = next_p();
     }
 

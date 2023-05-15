@@ -19,7 +19,7 @@ class Quad
 {
 public:
   virtual void print() const;
-  virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const {};
+  virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const = 0;
 
 protected:
   virtual ~Quad() = default;
@@ -62,6 +62,7 @@ class CmpLiteralTAC : public Quad {
     int literal;
     CmpLiteralTAC(std::string id, int literal) : id(id), literal(literal) {}
     void print() const;
+    virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 class JneTAC : public Quad {
@@ -69,6 +70,7 @@ class JneTAC : public Quad {
     std::string label;
     JneTAC(std::string label) : label(label) {}
     void print() const;
+    virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 class LogicalTAC : public Quad {
@@ -80,6 +82,7 @@ class LogicalTAC : public Quad {
 
     LogicalTAC(std::string id, std::string op, std::string left, std::string right) : id(id), op(op), left(left), right(right) {}
     void print() const;
+    virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 class LabelTAC : public Quad {
@@ -88,6 +91,7 @@ class LabelTAC : public Quad {
 
     LabelTAC(std::string label) : label(label) {};
     void print() const;
+    virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 class PushTAC : public Quad {
@@ -95,6 +99,7 @@ class PushTAC : public Quad {
     std::string id; 
     PushTAC(std::string i) : id(i) { }
     void print() const { std::cout << "push " << id; }
+    virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 class CallTAC : public Quad
@@ -103,6 +108,7 @@ public:
   std::string fun;
   CallTAC(std::string f) : fun(f) {}
   void print() const;
+  virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 // t0 = __retval. asm stage will replace with rax
@@ -111,6 +117,7 @@ class RetvalTAC : public Quad {
     std::string id;
     RetvalTAC(std::string id) : id(id) {}
     void print() const;
+    virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 // arg x
@@ -119,14 +126,17 @@ class ArgTAC : public Quad
 public:
   std::string id;
   int arg;
-  ArgTAC(std::string id, int a) : id(id), arg(a) {}
+  std::string func;
+  ArgTAC(std::string id, int a, std::string func) : id(id), arg(a), func(func) {}
   void print() const;
+  virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 class VoidReturnTAC : public Quad {
   public:
     VoidReturnTAC() {}
     void print() const;
+    virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 // mov(suffix) %eax
@@ -138,6 +148,7 @@ public:
 
   ReturnTAC(std::string id) : id(id) {}
   void print() const;
+  virtual void to_asm(std::ostream &out, TypeTable * type_table, NamesToNames &names, AsmState &state) const;
 };
 
 class BasicBlock

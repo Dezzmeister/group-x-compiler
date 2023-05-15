@@ -1,4 +1,5 @@
 #include "tac.h"
+#include "asm_utils.h"
 
 #include <iostream>
 #include <iomanip>
@@ -183,8 +184,8 @@ template <>
 void Value<int>::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
     const GeneralReg reg = state.free_reg(code);
     state.regs[reg].used = true;
-    state.regs[reg].var = "<literal>";
-    code << "movq %" << REG_NAMES[reg] << ", $" << value << "\n";
+    state.regs[reg].var = id;
+    code << "movq $" << value << ", %" << REG_NAMES[reg] << "\n";
 }
 
 template<>
@@ -209,13 +210,13 @@ void Value<std::string>::to_asm(std::ostream &code, TypeTable * type_table, Name
 
 void AssignTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
     std::optional<VarLoc> id_loc = state.find_var(id);
-    GeneralReg rhs_reg = state.move_into_reg(rhs, code);
+    GeneralReg rhs_reg = state.move_into_reg(rhs, code, 0);
 
     if (!id_loc) {
         GeneralReg reg = state.free_reg(code);
         state.regs[reg].used = true;
         state.regs[reg].var = id;
-        code << "movq %" << REG_NAMES[reg] << ", %" << REG_NAMES[rhs_reg] << "\n";
+        code << "movq %" << REG_NAMES[rhs_reg] << ", %" << REG_NAMES[reg] << "\n";
         return;
     }
 
@@ -225,14 +226,141 @@ void AssignTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames 
         GeneralReg reg = loc.loc.reg;
         state.regs[reg].used = true;
         state.regs[reg].var = id;
-        code << "movq %" << REG_NAMES[reg] << ", %" << REG_NAMES[rhs_reg] << "\n";
+        code << "movq %" << REG_NAMES[rhs_reg] << ", %" << REG_NAMES[reg] << "\n";
         return;
     }
 
     StackVarLoc stack_loc = loc.loc.stack;
-    code << "movq -" << stack_loc.offset << "(%rsp), %" << REG_NAMES[rhs_reg] << "\n";
+    code << "movq %" << REG_NAMES[rhs_reg] << ", -" << stack_loc.offset << "(%rsp)\n";
 }
 
 void DeleteTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
     state.clear_var(id);
+}
+
+void CmpLiteralTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    GeneralReg reg = state.move_into_reg(id, code, 0);
+
+    code << "cmp %" << REG_NAMES[reg] << ", $" << literal << "\n";
+}
+
+void JneTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    code << "jne " << label << "\n";
+}
+
+void LogicalTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    state.clear_reg(GeneralReg::Rax, code);
+    state.regs[GeneralReg::Rax].used = true;
+    state.regs[GeneralReg::Rax].var = id;
+    
+    GeneralReg lhs = state.move_into_reg(left, code, GeneralReg::Rax + 1);
+    GeneralReg rhs = state.move_into_reg(right, code, GeneralReg::Rax + 1);
+    std::string true_label = next_l();
+    std::string false_label = next_l();
+
+    if (op == "==") {
+        code << "cmp %" << REG_NAMES[lhs] << ", %" << REG_NAMES[rhs] << "\n";
+        code << "jne " << false_label << "\n";
+        code << "movq %rax, $1\n";
+        code << false_label << ":\n";
+        code << "movq %rax, $0\n";
+        code << true_label << ":\n";
+    } else if (op == "!=") {
+        code << "cmp %" << REG_NAMES[lhs] << ", %" << REG_NAMES[rhs] << "\n";
+        code << "je " << false_label << "\n";
+        code << "movq %rax, $1\n";
+        code << false_label << ":\n";
+        code << "movq %rax, $0\n";
+        code << true_label << ":\n";
+    } else if (op == ">") {
+        code << "cmp %" << REG_NAMES[lhs] << ", %" << REG_NAMES[rhs] << "\n";
+        code << "jle " << false_label << "\n";
+        code << "movq %rax, $1\n";
+        code << false_label << ":\n";
+        code << "movq %rax, $0\n";
+        code << true_label << ":\n";
+    } else if (op == "<") {
+        code << "cmp %" << REG_NAMES[lhs] << ", %" << REG_NAMES[rhs] << "\n";
+        code << "jge " << false_label << "\n";
+        code << "movq %rax, $1\n";
+        code << false_label << ":\n";
+        code << "movq %rax, $0\n";
+        code << true_label << ":\n";
+    } else if (op == ">=") {
+        code << "cmp %" << REG_NAMES[lhs] << ", %" << REG_NAMES[rhs] << "\n";
+        code << "jl " << false_label << "\n";
+        code << "movq %rax, $1\n";
+        code << false_label << ":\n";
+        code << "movq %rax, $0\n";
+        code << true_label << ":\n";
+    } else if (op == "<=") {
+        code << "cmp %" << REG_NAMES[lhs] << ", %" << REG_NAMES[rhs] << "\n";
+        code << "jg " << false_label << "\n";
+        code << "movq %rax, $1\n";
+        code << false_label << ":\n";
+        code << "movq %rax, $0\n";
+        code << true_label << ":\n";
+    } else if (op == "in") {
+        fprintf(stderr, "in kw not supported\n");
+        exit(1);
+    } else if (op == "not in") {
+        fprintf(stderr, "not in kw not supported\n");
+        exit(1);
+    }
+}
+
+void LabelTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    code << label << ":\n";
+}
+
+void PushTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    GeneralReg reg = state.move_into_reg(id, code, 0);
+    code << "pushq %" << REG_NAMES[reg] << "\n";
+    state.stack_offset += 8;
+    state.regs[reg].used = false;
+    StackVar stack_var = {
+        .size = 8,
+        .id = state.regs[reg].var
+    };
+    state.stack.push_back(stack_var);
+}
+
+void CallTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    code << "call " << fun << "\n";
+    state.pop_frame();
+    code << "movq %rbp, %rsp\n";
+}
+
+void RetvalTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    GeneralReg reg = state.move_into_reg(id, code, 0);
+
+    if (reg == GeneralReg::Rax) {
+        return;
+    }
+
+    code << "movq %" << REG_NAMES[reg] << ", %rax #retval\n";
+    state.regs[GeneralReg::Rax].used = true;
+    state.regs[GeneralReg::Rax].var = "<retval>";
+}
+
+void ArgTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    GeneralReg reg = state.free_reg(code);
+    int offset = type_table->arg_offset(this);
+    code << "movq -" << offset << "(%rsp), %" << REG_NAMES[reg] << " # arg: " << arg << "\n";
+    state.regs[reg].used = true;
+    state.regs[reg].var = id;
+}
+
+void VoidReturnTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    code << "ret\n";
+}
+
+void ReturnTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    state.clear_reg(GeneralReg::Rax, code);
+    GeneralReg reg = state.move_into_reg(id, code, GeneralReg::Rax + 1);
+
+    code << "movq %" << REG_NAMES[reg] << ", %rax # prepare return value\n";
+    code << "ret\n";
+    state.regs[GeneralReg::Rax].used = true;
+    state.regs[GeneralReg::Rax].var = id;
 }

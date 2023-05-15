@@ -80,7 +80,6 @@ typedef struct Location Location;
 class ProgramSource;
 class ASTNode;
 class Typename;
-class TypeTable;
 
 typedef bool (*FindFunc)(const ASTNode *);
 
@@ -717,9 +716,11 @@ class TupleExpr : public Expr {
 class FuncTypename : public Typename {
     public:
         const TypenameList * params;
+        std::vector<int> offsets;
         const Typename * ret_type;
 
-        FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type);
+        FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type, SymbolTable * symtable);
+        FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type, const std::vector<int> offsets);
 
         virtual Typename * clone() const;
 
@@ -1358,68 +1359,6 @@ class BreakStmt : public Statement {
         NEQ_OPERATOR()
 
         KIND_CLASS()
-};
-
-/**
- * This class owns all Typename ptrs, so be sure to call clone() before inserting
- * a typename into the map
- */
-class TypeTable {
-    public:
-        std::map<std::string, Typename *> types;
-
-        TypeTable() : types({}) {}
-
-        ~TypeTable() {
-            for (std::pair<const std::string, Typename *> &item : types) {
-                delete item.second;
-            }
-        }
-
-        void put(std::string name, Typename * typ) {
-            types[name] = typ;
-        }
-
-        /**
-         * Look up the symbol and get its type, then insert it into the type table with
-         * a new name
-         */
-        void put_from_symbol(std::string name, std::string new_name, SymbolTable * symtable) {
-            if (get(new_name) != nullptr) {
-                return;
-            }
-
-            Symbol * sym = symtable->get(name);
-
-            if (sym == nullptr) {
-                fprintf(stderr, "symbol '%s' does not exist\n", name.c_str());
-                return;
-            }
-
-            if (sym->kind == Type) {
-                fprintf(stderr, "tried to insert typename into type table\n");
-                return;
-            }
-
-            if (sym->kind == Var) {
-                VarDecl * decl = sym->decl.var;
-                Typename * typ = decl->type_name->clone();
-                types[new_name] = typ;
-                return;
-            }
-
-            FuncDecl * decl = sym->decl.func;
-            Typename * typ = decl->type_of(symtable);
-            types[new_name] = typ;
-        }
-
-        Typename * get(std::string name) {
-            if (types.count(name)) {
-                return types[name];
-            }
-
-            return nullptr;
-        }
 };
 
 #endif

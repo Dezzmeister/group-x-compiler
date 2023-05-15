@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iterator>
 
+#include "asm_utils.h"
 #include "parser.h"
 #include "tac.h"
 
@@ -803,8 +804,17 @@ bool TupleExpr::operator==(const ASTNode &node) const {
     return (*expr_list == *(n.expr_list));
 }
 
-FuncTypename::FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type)
-    : Typename(loc), params(params), ret_type(ret_type) {}
+FuncTypename::FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type, SymbolTable * symtable)
+    : Typename(loc), params(params), offsets({}), ret_type(ret_type) {
+        int size = 0;
+        for (size_t i = 0; i < params->types.size(); i++) {
+            offsets[i] = size;
+            size += params->types[i]->type_size(symtable);
+        }
+    }
+
+FuncTypename::FuncTypename(const Location loc, const TypenameList * params, const Typename * ret_type, const std::vector<int> offsets) 
+    : Typename(loc), params(params), offsets(offsets), ret_type(ret_type) {};
 
 Typename * FuncTypename::clone() const {
     const Typename * ret_clone = ret_type->clone();
@@ -814,7 +824,7 @@ Typename * FuncTypename::clone() const {
         params_clone.push_back(type_name->clone());
     }
 
-    return new FuncTypename(loc, new TypenameList(x::NULL_LOC, params_clone), ret_clone);
+    return new FuncTypename(loc, new TypenameList(x::NULL_LOC, params_clone), ret_clone, offsets);
 }
 
 FuncTypename::~FuncTypename() {
@@ -1562,7 +1572,7 @@ std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table
     for (size_t i = 0; i < params->params.size(); i++) {
         VarDecl * decl = params->params[i];
         std::string param_name = decl->var_name->gen_tac(scope, type_table, block_names, instrs);
-        ArgTAC * tac = new ArgTAC(param_name, i);
+        ArgTAC * tac = new ArgTAC(param_name, i, this_name);
         instrs.push_back(tac);
     }
 
