@@ -118,46 +118,48 @@ std::string CharTAC(const char c, std::vector<Quad *> instrs) {
     return temp;
 }
 
-std::string FloatLitTAC(const int val)
+std::string FloatLitTAC(const float val, std::vector<Quad *> instrs, SymbolTable * global_symtable)
 {
     std::string temp = next_t() ;
-    string out = temp + " = " + val ;
-    cout << out ;
-    instrs.push_back(out) ;
+    std::cout << temp << " = " << val ;
+    Value<float> *value = new Value<float>(temp, val);
+    instrs.push_back(value) ;
     // wait for joe symbol table thing
-    globl_symtable.put(temp, val) ;
+    // global_symtable->put(temp, val) ;
     return temp ;
 }
 
-std::string IntLitTAC(const string val)
+std::string IntLitTAC(const int val, std::vector<Quad *> instrs, SymbolTable * global_symtable)
 {
     std::string temp = next_t() ;
-    string out = temp + " = " + val ;
-    cout << out ;
+    std::cout << temp << " = " << val;
     // wait for joe symbol table thing
-    globl_symtable.put(temp, val) ;
-    instrs.push_back(out) ;
+    Value<int> *value = new Value<int>(temp, val);
+    instrs.push_back(value) ;
+    // wait for joe symbol table thing
+    // global_symtable->put(temp, val) ;
+    return temp ;
+    
+}
+
+std::string BoolLitTAC(const bool b, std::vector<Quad *> instrs, SymbolTable * global_symtable)
+{
+    std::string temp = next_t() ;
+    std::cout << temp << " = " << b;
+    Value<bool> *value = new Value<bool>(temp, b);
+    instrs.push_back(value) ;
+    // wait for joe symbol table thing
+    // global_symtable->put(temp, val) ;
     return temp ;
 }
 
-std::string BoolLitTAC(const bool b)
+std::string StringLitTAC(const std::string s, std::vector<Quad *> instrs, SymbolTable * global_symtable)
 {
     std::string temp = next_t() ;
-    string out = temp + " = " + b ;
-    cout << out ;
+    std::cout << temp << " = " << s;
+    Value<std::string> *value = new Value<std::string>(temp, s);
+    instrs.push_back(value) ;
     // wait for joe symbol table thing
-    globl_symtable.put(temp, b) ;
-    instrs.push_back(out) ;
-    return temp ;
-}
-
-std::string StringLitTAC(const string s)
-{
-    std::string temp = next_t() ;
-    string out = temp + " = " + s ;
-    cout << out ;
-    // wait for joe symbol table thing
-    globl_symtable.put(temp, s) ;
-    instrs.push_back(out) ;
-    return temp ;
+    // global_symtable->put(temp, val) ;
+    return temp;
 }
