@@ -157,6 +157,7 @@ void parser_tests() {
                 }
             }
         )";
+        return TEST_SUCCESS;
     };
     
     xtest::test["error test1"] = []() {
