@@ -697,8 +697,22 @@ std::vector<ASTNode *> StatementList::children() {
 }
 
 std::string StatementList::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const {
+    std::vector<std::string> local_vars = {};
+    
     for (auto &stmt : statements) {
+        if (stmt->get_kind() == VarDecl::kind) {
+            const VarDecl * decl = (VarDecl *) stmt;
+            local_vars.push_back(*names.get(decl->var_name->id));
+        } else if (stmt->get_kind() == VarDeclInit::kind) {
+            const VarDeclInit * decl = (VarDeclInit *) stmt;
+            local_vars.push_back(*names.get(decl->decl->var_name->id));
+        }
+
         stmt->gen_tac(old_symtable, type_table, names, instrs);
+    }
+
+    for (auto &id : local_vars) {
+        instrs.push_back(new DeleteTAC(id));
     }
 
     return "";

@@ -12,12 +12,12 @@ std::string next_l() {
 
 std::string next_t() {
     static int i = 0;
-    return "__t" + std::to_string(i++);
+    return "_t" + std::to_string(i++);
 }
 
 std::string next_p() {
     static int i = 0;
-    return "__p" + std::to_string(i++);
+    return "_p" + std::to_string(i++);
 }
 
 template<>
@@ -64,14 +64,6 @@ void BasicBlock::add_block(std::string name)
 
 void Quad::print() const {}
 
-void LabelTAC::print() const {
-    std::cout << label << ":";
-}
-
-void JumpTAC::print() const {
-    std::cout << "jmp " << label;
-}
-
 void CallTAC::print() const {
     std::cout << "call " << fun;
 }
@@ -92,11 +84,6 @@ void ReturnTAC::print() const {
     std::cout << "ret " << id;
 }
 
-void CopyTAC::print() const
-{
-    std::cout << "copy " << index;
-}
-
 void CmpLiteralTAC::print() const {
     std::cout << "cmp " << id << ", " << literal;
 }
@@ -109,23 +96,17 @@ void LogicalTAC::print() const {
     std::cout << id << " = " << left << " " << op << " " << right;
 }
 
-void LoadTAC::print() const
-{
-    std::cout << identifier;
-}
-
 void AssignTAC::print() const
 {
     std::cout << id << " = " << rhs;
 }
 
-void MoveTAC::print() const
-{
-    std::cout << location << " = " << index;
+void DeleteTAC::print() const {
+    std::cout << "del " << id;
 }
 
-void CondJumpTAC::print() const {
-    std:: cout << "if " << ident_index << " jmp " << jmp_label;
+void LabelTAC::print() const {
+    std::cout << label << ":";
 }
 
 void BasicBlock::print() const
@@ -196,4 +177,62 @@ std::string StringLitTAC(const std::string s, std::vector<Quad *> instrs, Symbol
     // wait for joe symbol table thing
     // global_symtable->put(temp, val) ;
     return temp;
+}
+
+template <>
+void Value<int>::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    const GeneralReg reg = state.free_reg(code);
+    state.regs[reg].used = true;
+    state.regs[reg].var = "<literal>";
+    code << "movq %" << REG_NAMES[reg] << ", $" << value << "\n";
+}
+
+template<>
+void Value<float>::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    // TODO: fill in
+}
+
+template<>
+void Value<bool>::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    // TODO: fill in
+}
+
+template<>
+void Value<char>::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    // TODO: fill in
+}
+
+template<>
+void Value<std::string>::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    // TODO: fill in
+}
+
+void AssignTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    std::optional<VarLoc> id_loc = state.find_var(id);
+    GeneralReg rhs_reg = state.move_into_reg(rhs, code);
+
+    if (!id_loc) {
+        GeneralReg reg = state.free_reg(code);
+        state.regs[reg].used = true;
+        state.regs[reg].var = id;
+        code << "movq %" << REG_NAMES[reg] << ", %" << REG_NAMES[rhs_reg] << "\n";
+        return;
+    }
+
+    VarLoc loc = *id_loc;
+
+    if (loc.loc_type == Reg) {
+        GeneralReg reg = loc.loc.reg;
+        state.regs[reg].used = true;
+        state.regs[reg].var = id;
+        code << "movq %" << REG_NAMES[reg] << ", %" << REG_NAMES[rhs_reg] << "\n";
+        return;
+    }
+
+    StackVarLoc stack_loc = loc.loc.stack;
+    code << "movq -" << stack_loc.offset << "(%rsp), %" << REG_NAMES[rhs_reg] << "\n";
+}
+
+void DeleteTAC::to_asm(std::ostream &code, TypeTable * type_table, NamesToNames &names, AsmState &state) const {
+    state.clear_var(id);
 }

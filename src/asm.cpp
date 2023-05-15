@@ -64,3 +64,39 @@ GeneralReg AsmState::free_reg(std::ostream &code) {
 
     return (GeneralReg) (reg_roulette - 1);
 }
+
+GeneralReg AsmState::move_into_reg(std::string id, std::ostream &code) {
+    std::optional<VarLoc> var_loc_opt = find_var(id);
+
+    if (!var_loc_opt) {
+        fprintf(stderr, "variable not in register file or stack\n");
+        exit(1);
+    }
+
+    VarLoc loc = *var_loc_opt;
+
+    // var is already in reg, return reg
+    if (loc.loc_type == Reg) {
+        return loc.loc.reg;
+    }
+
+    StackVarLoc stack_loc = loc.loc.stack;
+    
+    GeneralReg reg = this->free_reg(code);
+
+    // mov -offset(%rsp), %reg
+    code << "movq -" << stack_loc.offset << "(%rsp), %" << REG_NAMES[reg] << "\n";
+    regs[reg].used = true;
+    regs[reg].var = id;
+
+    return reg;
+}
+
+void AsmState::clear_var(std::string id) {
+    for (size_t i = 0; i < GeneralReg::Count; i++) {
+        if (regs[i].used && regs[i].var == id) {
+            regs[i].used = false;
+            return;
+        }
+    }
+}
