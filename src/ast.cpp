@@ -995,7 +995,7 @@ VarDeclInit::~VarDeclInit() {
 
 
 std::string VarDeclInit::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
-    return ""; 
+    return "";
 }
 
 void VarDeclInit::print() const {
@@ -1141,7 +1141,7 @@ void WhileStmt::print() const {
     printf("};\n");
 }
 
-std::string WhileStmt::gen_tac(SymbolTable * old_symtable, 
+std::string WhileStmt::gen_tac(SymbolTable * old_symtable,
 TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> instrs) const {
     std::string cond_var = cond->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string true_label = next_l();
@@ -1200,7 +1200,7 @@ void ForStmt::print() const {
     printf("}");
 }
 
-std::string ForStmt::gen_tac(SymbolTable * old_symtable, 
+std::string ForStmt::gen_tac(SymbolTable * old_symtable,
 TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
     NamesToNames block_names = x::symtable_to_names(&names, scope);
 
@@ -1210,7 +1210,7 @@ TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
     LabelTAC * exit_label_tac = new LabelTAC(exit_label);
 
     init->gen_tac(scope, type_table, block_names, instrs);
-    
+
     instrs.push_back(cond_label_tac);
     std::string cond_var = condition->gen_tac(scope, type_table, block_names, instrs);
 
@@ -1333,8 +1333,8 @@ void LogicalExpr::print() const {
     right->print();
 }
 
-std::string LogicalExpr::gen_tac(SymbolTable * old_symtable, 
-TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> instrs) const { 
+std::string LogicalExpr::gen_tac(SymbolTable * old_symtable,
+TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> instrs) const {
     std::string l = left->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string r = right->gen_tac(old_symtable, global_symtable, names, instrs);
     std::string temp_name = next_t();
@@ -1494,10 +1494,7 @@ bool ParamsList::operator==(const ASTNode &node) const {
 
 std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
     x::bblock->add_block(name->id);
-<<<<<<< HEAD
-=======
     body->gen_tac(old_symtable, type_table, names, instrs);
->>>>>>> enable tac printing
     return "";
 }
 

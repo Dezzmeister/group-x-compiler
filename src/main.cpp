@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
   top->typecheck(symtable, result.parser_state->errors.sources[top]);
   result.parser_state->errors.print(stderr);
 
-  TypeTable type_table();
+  TypeTable type_table;
   NamesToNames names = x::symtable_to_names(nullptr, result.parser_state->symtable);
   std::vector<Quad *> instrs = {};
   result.parser_state->top->gen_tac(result.parser_state->symtable, nullptr, names, instrs);

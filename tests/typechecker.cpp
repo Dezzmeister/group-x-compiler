@@ -9,11 +9,11 @@
 void typechecker_tests() {
     xtest::tests["simple type alias equality"] = []() {
         const char * code = R"(
-            type X = int;
-            type Y = X;
-            type Z = int;
+            type X = int.
+            type Y = X.
+            type Z = int.
 
-            type W = float;
+            type W = float.
         )";
 
         ParseResult result = x::parse_str(code);
@@ -48,14 +48,14 @@ void typechecker_tests() {
     xtest::tests["complex type alias equality"] = []() {
         const char * code = R"(
             // Arr1 == Arr3
-            type Arr1 = int[5];
-            type Arr2 = float[5];
-            type Arr3 = int[5];
+            type Arr1 = int[5].
+            type Arr2 = float[5].
+            type Arr3 = int[5].
 
             // Func1 == Func3
-            type Func1 = [int, int, float] -> float;
-            type Func2 = [int, float, int] -> float;
-            type Func3 = [int, int, float] -> float;
+            type Func1 = [int, int, float] -> float.
+            type Func2 = [int, float, int] -> float.
+            type Func3 = [int, int, float] -> float.
         )";
 
         ParseResult result = x::parse_str(code);
@@ -84,28 +84,28 @@ void typechecker_tests() {
 
     xtest::tests["struct type equality"] = []() {
         const char * code = R"(
-            type AliasedInt = int;
-            
+            type AliasedInt = int.
+
             // Strukt1 == Strukt3
             struct Strukt1 {
-                int x;
-                int y;
-            };
+                int x.
+                int y.
+            }.
 
             struct Strukt2 {
-                int x;
-                float y;
-            };
+                int x.
+                float y.
+            }.
 
             struct Strukt3 {
-                AliasedInt x;
-                int y;
+                AliasedInt x.
+                int y.
             };
 
             struct Strukt4 {
-                int x;
-                int z;
-            };
+                int x.
+                int z.
+            }.
         )";
 
         ParseResult result = x::parse_str(code);
@@ -131,8 +131,8 @@ void typechecker_tests() {
 
     xtest::tests["qualified type equality"] = []() {
         const char * code = R"(
-            type X = (mut int)*;
-            type Y = mut int*;
+            type X = (mut int)*.
+            type Y = mut int*.
         )";
 
         ParseResult result = x::parse_str(code);
@@ -165,18 +165,18 @@ void typechecker_tests() {
 
     xtest::tests["simple expr typeof"] = []() {
         const char * code = R"(
-            type X = int;
-            type Z = float;
+            type X = int.
+            type Z = float.
 
-            int p = 5;
-            X q = 9;
+            int p = 5.
+            X q = 9.
 
-            X r = p + q; @1
-            float w = p * 5.0; @2
+            X r = p + q. @1
+            float w = p * 5.0. @2
 
-            bool x = r < w || true; @3
+            bool x = r < w || true. @3
 
-            int[5] y = {1, 2, 3 + 4, r, 6 % 7}; @4
+            int[5] y = {1, 2, 3 + 4, r, 6 % 7}. @4
         )";
 
         ParseResult result = x::parse_str(code);
@@ -236,18 +236,18 @@ void typechecker_tests() {
 
     xtest::tests["casting rules followed"] = []() {
         const char * code = R"(
-            int[1] arr1 = {4};
-            [int] tup1 = [7];
-            int[3] arr2 = {1, 2, 3};
-            mut int int1 = 5;
+            int[1] arr1 = {4}.
+            [int] tup1 = [7].
+            int[3] arr2 = {1, 2, 3}.
+            mut int int1 = 5.
 
-            float p = 5 as float;               @1
-            int q = arr1 as int;                @2
-            int r = tup1 as int;                @3
-            float[3] s = arr2 as float[3];      @4
-            mut float t = int1 as mut float;    @5
-            int u = &s as int;                  @6
-            (mut int)* v = 0 as (mut int)*;     @7
+            float p = 5 as float.               @1
+            int q = arr1 as int.                @2
+            int r = tup1 as int.                @3
+            float[3] s = arr2 as float[3].      @4
+            mut float t = int1 as mut float.    @5
+            int u = &s as int.                  @6
+            (mut int)* v = 0 as (mut int)*.     @7
         )";
 
         ParseResult result = x::parse_str(code);
@@ -286,17 +286,17 @@ void typechecker_tests() {
 
     xtest::tests["casting rules broken"] = []() {
         const char * code = R"(
-            float f1 = 4.0;
-            [int, int] tup1 = [1, 2];
-            
-            int func1(int x) {
-                return 4;
-            };
+            float f1 = 4.0.
+            [int, int] tup1 = [1, 2].
 
-            int p = f1 as int;                              @1
-            [float, float] q = tup1 as [float, float];      @2
-            int r = tup1 as int;                            @3
-            [int] -> float s = func1 as [int] -> float;     @4
+            int func1(int x) {
+                return 4.
+            }.
+
+            int p = f1 as int.                              @1
+            [float, float] q = tup1 as [float, float].      @2
+            int r = tup1 as int.                            @3
+            [int] -> float s = func1 as [int] -> float.     @4
         )";
 
         ParseResult result = x::parse_str(code);
@@ -343,31 +343,31 @@ void typechecker_tests() {
 
     xtest::tests["full typechecking (accepted)"] = []() {
         const char * code = R"(
-            type I = int;
+            type I = int.
 
-            mut I[3] eyes = {1, 2, 3};
-            [int, I, float] tup1 = [1, 2, -3.0];
+            mut I[3] eyes = {1, 2, 3}.
+            [int, I, float] tup1 = [1, 2, -3.0].
 
             // Nested struct type
             struct A {
-                int x;
-                int y;
+                int x.
+                int y.
                 struct {
-                    int p;
-                    int q;
+                    int p.
+                    int q.
                 } z;
             };
 
             float func1(I[3] is) {
-                print(i_to_str(3));
-                return 4.321f;
+                print(i_to_str(3)).
+                return 4.321f.
             };
 
             int main() {
-                [I[3]] -> float func2 = func1;
-                func2(eyes);
+                [I[3]] -> float func2 = func1.
+                func2(eyes).
 
-                float f2 = func2(eyes) + func1(eyes);
+                float f2 = func2(eyes) + func1(eyes).
 
                 // Nested struct literal
                 A a = {
@@ -377,14 +377,14 @@ void typechecker_tests() {
                         p: 1,
                         q: 2
                     }
-                };
+                }.
 
                 // Nested struct dereference
-                print(i_to_str(a.z.p));
-                int q = a.z.q;
+                print(i_to_str(a.z.p)).
+                int q = a.z.q.
 
-                return 0;
-            };
+                return 0.
+            }.
         )";
 
         ParseResult result = x::parse_str(code);
@@ -402,16 +402,16 @@ void typechecker_tests() {
 
     xtest::tests["full typechecking (rejected)"] = []() {
         const char * code = R"(
-            (mut int)[3] eyes = {1, 2, 3};
-            [int] -> int bad_func;
+            (mut int)[3] eyes = {1, 2, 3}.
+            [int] -> int bad_func.
 
             int does_not_return() {
-                int x = 1;
-            };
+                int x = 1.
+            }.
 
             void bad_func(int x) {
-                int y = x + 1;
-            };
+                int y = x + 1.
+            }.
         )";
 
         ParseResult result = x::parse_str(code);
@@ -431,20 +431,20 @@ void typechecker_tests() {
         const char * code = R"(
             // A forward declaration is done by declaring the function as a variable
             // with a function type
-            [int, [int, int]] -> float func1;
+            [int, [int, int]] -> float func1.
 
             int main() {
-                func1(1, [2, 3]);
+                func1(1, [2, 3]).
 
-                return 0;
-            };
+                return 0.
+            }.
 
             // When the function is redeclared as a function, the parser will modify
             // its symbol accordingly. This is the only allowed case in which a symbol
             // can be declared twice
             float func1(int a, [int, int] t) {
-                return 1.0;
-            };
+                return 1.0.
+            }.
         )";
 
         ParseResult result = x::parse_str(code);

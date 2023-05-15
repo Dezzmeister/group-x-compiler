@@ -10,9 +10,9 @@ void parser_tests() {
     xtest::tests["struct parse tree"] = []() {
         const char * code = R"(
             struct Point {
-                int x;
-                int y;
-            };
+                int x.
+                int y.
+            }.
         )";
 
         ParseResult result = x::parse_str(code);
@@ -43,8 +43,8 @@ void parser_tests() {
 
     xtest::tests["string literal declaration"] = []() {
         const char * code = R"(
-            string a = "abc\n" + "";
-            string b = "^$&Q*!)LL ";
+            string a = "abc\n" + "".
+            string b = "^$&Q*!)LL ".
         )";
 
         ParseResult result = x::parse_str(code);
@@ -84,18 +84,18 @@ void parser_tests() {
     xtest::tests["New Struct"] = []() {
         const char * code = R"(
             struct dimension {
-                float width;
-                float height;
+                float width.
+                float height.
             };
             struct Shape {
-                struct dimension area;
-                string type;
+                struct dimension area.
+                string type.
             };
 
             int main(int argc) {
-                mut struct Shape circle = new struct Shape;
-                circle.type = "circle";
-                circle.dimension.width = 5.;
+                mut struct Shape circle = new struct Shape.
+                circle.type = "circle".
+                circle.dimension.width = 5.
             }
         )";
         ParseResult result = x::parse_str(code);
@@ -142,18 +142,18 @@ void parser_tests() {
     xtests::tests["Nested While"] = []() {
         const char * code = R"(
             int main() {
-                mut int a;
-                mut int b;
-                mut int res;
-                a = 1;
-                b = 1;
-                res = 0;
+                mut int a.
+                mut int b.
+                mut int res.
+                a = 1.
+                b = 1.
+                res = 0.
                 while(a<15) {
                     while(b<15) {
-                        res = res + b;
-                        b = b+1;
+                        res = res + b.
+                        b = b+1.
                     }
-                    a = a+1;
+                    a = a+1.
                 }
             }
         )";
@@ -163,18 +163,18 @@ void parser_tests() {
 
         const char * expected_parse = R"(
             int main() {
-                    mut int a;
-                    mut int b;
-                    mut int res;
-                    a = 1;
-                    b = 1;
-                    res = 0;
+                    mut int a.
+                    mut int b.
+                    mut int res.
+                    a = 1.
+                    b = 1.
+                    res = 0.
                     while (a < 15) {
                             while (b < 15) {
-                                    res = res + b;
-                                    b = b + 1;
+                                    res = res + b.
+                                    b = b + 1.
                             }
-                            a = a + 1;
+                            a = a + 1.
                     }
             }
         )";
@@ -187,8 +187,8 @@ void parser_tests() {
     xtest::test["error test1"] = []() {
         const char * code = R"(
             int main() {
-                int x = 0;
-                x = 2;
+                int x = 0.
+                x = 2.
             }
         )";
 
