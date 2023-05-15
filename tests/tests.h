@@ -1,7 +1,7 @@
 #ifndef TESTS_TESTS_H
 #define TESTS_TESTS_H
 
-#define NUM_THREADS 1 
+#define NUM_THREADS 2 
 
 void parser_tests();
 void typechecker_tests();
