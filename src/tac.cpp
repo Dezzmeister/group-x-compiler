@@ -81,7 +81,9 @@ void LoadTAC::print() const
 
 void AssignTAC::print() const
 {
-    std::cout << lhs << ' ' << op << ' ' << rhs;
+    std::string temp = lhs + ' ' + op + ' ' + rhs;
+    instrs.pushback(temp);
+    return lhs; #include a symbol table
 }
 
 void MoveTAC::print() const
