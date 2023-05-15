@@ -80,7 +80,7 @@ typedef struct {
     bool used;
 } RegisterState;
 
-struct AsmState {
+typedef struct {
     std::vector<StackVar> stack;
     RegisterState regs[GeneralReg::Count];
     int stack_offset;
@@ -103,6 +103,6 @@ struct AsmState {
      * The free register is returned
      */
     GeneralReg free_reg(std::ostream &code);
-};
+} AsmState;
 
 #endif

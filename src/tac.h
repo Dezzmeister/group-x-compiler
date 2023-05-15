@@ -2,8 +2,9 @@
 #define SRC_TAC_H
 
 #include <cstdint>
+#include <iostream>
+#include <vector>
 
-#include "ast.h"
 #include "symtable.h"
 
 std::string next_t();
@@ -224,10 +225,6 @@ public:
   int last_instruction() const { return n_instructions - 1; }
 
   int next_instruction() const { return n_instructions; }
-
-  int get_instruction(const ASTNode &n);
-
-  int get_instruction(const ArrayLiteral & arr);
 
   void print() const;
   BasicBlock() = default;

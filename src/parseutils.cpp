@@ -9,7 +9,7 @@ const char * BUILTIN_DECLS = R"(
     // be empty
     void print(char* str) { int _x; };
     char* i_to_str(int i) { int _x; };
-    void * calloc(int i)  { int _x; };
+    int calloc(int i)  { int _x; };
 )";
 
 ParseResult::ParseResult(int error, ParserState * parser_state) : error(error), parser_state(parser_state) {}
