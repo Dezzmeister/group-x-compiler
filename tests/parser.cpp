@@ -139,12 +139,12 @@ void parser_tests() {
         return TEST_SUCCESS;
     };
 
-    xtests::tests["Fail: Nested While"] = []() {
+    xtests::tests["Nested While"] = []() {
         const char * code = R"(
             int main() {
-                int a;
-                int b;
-                int res;
+                mut int a;
+                mut int b;
+                mut int res;
                 a = 1;
                 b = 1;
                 res = 0;
@@ -157,17 +157,42 @@ void parser_tests() {
                 }
             }
         )";
+
+        ParseResult result = x::parse_str(code);
+        Program Source * output = result.parser_state->top;
+
+        const char * expected_parse = R"(
+            int main() {
+                    mut int a;
+                    mut int b;
+                    mut int res;
+                    a = 1;
+                    b = 1;
+                    res = 0;
+                    while (a < 15) {
+                            while (b < 15) {
+                                    res = res + b;
+                                    b = b + 1;
+                            }
+                            a = a + 1;
+                    }
+            }
+        )";
+
+        expect(output == expected_parse);
+
         return TEST_SUCCESS;
     };
-    
+
     xtest::test["error test1"] = []() {
         const char * code = R"(
             int main() {
                 int x = 0;
                 x = 2;
             }
-        )";          
-        
+        )";
+
+        ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
         SourceErrors &errors = report.sources[output];
         CompilerError err = errors[0];
