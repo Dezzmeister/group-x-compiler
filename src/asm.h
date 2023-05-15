@@ -103,6 +103,10 @@ typedef struct AsmState {
      * The free register is returned
      */
     GeneralReg free_reg(std::ostream &code);
+
+    GeneralReg move_into_reg(std::string id, std::ostream &code);
+
+    void clear_var(std::string id);
 } AsmState;
 
 #endif
