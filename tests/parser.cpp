@@ -208,4 +208,25 @@ void parser_tests() {
 
         return TEST_SUCCESS;
     };
+
+    xtest::test["arrays"] = []() {
+        const char * code = R"(
+            int main() {
+                ints x;
+            }
+        )";
+
+        ParseResult result = x::parse_str(code);
+        ProgramSource * output = result.parser_state->top;
+
+        const char * expected_parse = R"(
+            int main() {
+                    ints x;
+            }
+        )";
+
+        expect(output == expected_parse)
+
+        return TEST_SUCCESS;
+    };
 }

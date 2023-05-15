@@ -1853,6 +1853,36 @@ bool ArrayIndexExpr::operator==(const ASTNode &node) const {
     return (*arr == *(n.arr) && *index == *(n.index));
 }
 
+DynamicArrayTypename::DynamicArrayTypename(const Location loc, const Typename * arr)
+    : Typename(loc), element_type(arr) {}
+
+Typename * DynamicArrayTypename::clone() const {
+    return new DynamicArrayTypename(loc, element_type->clone());
+}
+
+DynamicArrayTypename::~DynamicArrayTypename() {
+    delete element_type;
+}
+
+void DynamicArrayTypename::print() const {
+    element_type->print();
+    putchar('s');
+}
+
+std::vector<ASTNode *> DynamicArrayTypename::children() {
+    return {(ASTNode *) element_type};
+}
+
+bool DynamicArrayTypename::operator==(const ASTNode &node) const {
+    if (node.get_kind() != DynamicArrayTypename::kind) {
+        return false;
+    }
+
+    const DynamicArrayTypename &n = (DynamicArrayTypename &) node;
+
+    return *element_type == *(n.element_type);
+}
+
 VoidReturnStmt::VoidReturnStmt(const Location loc) : Statement(loc) {}
 
 void VoidReturnStmt::print() const {
