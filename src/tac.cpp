@@ -5,9 +5,14 @@
 
 BasicBlock *x::bblock = nullptr;
 
+std::string next_label() {
+    static int i = 0;
+    return ".L" + std::to_string(i++);
+}
+
 std::string next_t() {
     static int i = 0;
-    return "t"+ std::to_string(i++);
+    return "t" + std::to_string(i++);
 }
 
 template<>
@@ -56,10 +61,6 @@ void Quad::print() const {}
 
 void JumpTAC::print() const {
     std::cout << "jmp " << label;
-}
-
-void CallTAC::print() const {
-    std::cout << "call " << fun << ' ' << num_args;
 }
 
 void CopyTAC::print() const
