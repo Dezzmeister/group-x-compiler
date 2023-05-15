@@ -1,3 +1,23 @@
+================================ Group X =======================================
+Team:
+--Komi Alasse (Language Guru)
+    -Completed the LRM; contributed to the lexical analyzer, AST, TAC, and parsing 
+        duties; troubleshooted testing runs and assembly code; guided sieve example code
+--Alexander Bailey (Test Engineer)
+    -Created tests for language, contributed to AST and TAC files, helped troubleshoot
+        any issues with parser; aided on presentation
+--Giovanna Befeler (Manager)
+    -Organized weekly group meetings to go over project, reserved rooms and ensured
+        communication between group members on code dependencies, contributed to
+        AST and TAC files regarding literals, created presentation
+--Joe Desmond (System Architect)
+    -Created parser, lexical analyzer, AST, TAC, and assembly code; helped all other 
+        group members when lost; general leader of our design and teamwork on project
+--Robbie Rasor (Helper)
+    -Contributed to TAC, AST files regarding literals; helped formulate tests; replaced 
+        semicolon syntax with period syntax; worked on dynamic array "s" feature; aided in
+        sieve example code
+
 =============================== Group X Compiler ===============================
 
 The project uses C++ 17 with GNU extensions (-std=gnu++17). Source code and
