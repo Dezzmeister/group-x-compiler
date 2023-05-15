@@ -293,6 +293,8 @@ void parser_tests() {
         
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
+        SourceErrors &errors = report.sources[output];
+        SymbolTable * test_symtable = x::default_symtable();
 
         for (auto& out : output->children()) {
             if (out->get_kind() == VarDeclInit::kind) {
@@ -300,7 +302,16 @@ void parser_tests() {
                 ArrayIndexExpr * rhs = (ArrayIndexExpr *) vardecl->init;
                 const Expr * index = rhs->index; 
                 IntLiteral * index_as_int = (IntLiteral *) index;
+                expect(index_as_int->value == 3);
+                expect(rhs->type_equals(new TypeIdent(x::NULL_LOC, "float"));
+            }
+            if (out->get_kind() == Assignment::kind) {
+                Assignment * assign = (Assignment*) out;
+                ArrayIndexExpr * lhs = (ArrayIndexExpr *) assign->init;
+                const Expr * index = lhs->index;
+                IntLiteral * index_as_int = (IntLiteral *) index;
                 expect(index_as_int->value == 2);
+                assign->type_check(test_symtable, &errors);
             }
         }
     };
