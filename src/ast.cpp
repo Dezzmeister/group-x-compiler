@@ -1260,6 +1260,25 @@ std::vector<ASTNode *> FunctionCallExpr::children() {
     return {(ASTNode *)func, (ASTNode *)args};
 }
 
+std::string FunctionCallExpr::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
+    // make new name map
+    for (auto &arg : args->exprs) {
+        std::string temp_var = arg->gen_tac(old_symtable, type_table, instrs);
+        // make new Push quad and add to instrs
+    }
+
+    std::string func_var = func->gen_tac(old_symtable, type_table, instrs);
+
+    CallTAC * call = new CallTAC(func_var);
+    std::string id = next_t();
+    RetvalTAC * retval = new RetvalTAC(id);
+
+    instrs.push_back(call);
+    instrs.push_back(retval);
+
+    return id;
+}
+
 bool FunctionCallExpr::operator==(const ASTNode &node) const {
     if (node.get_kind() != FunctionCallExpr::kind) {
         return false;
@@ -1287,6 +1306,20 @@ void FunctionCallStmt::print() const {
 
 std::vector<ASTNode *> FunctionCallStmt::children() {
     return {(ASTNode *)func, (ASTNode *)args};
+}
+
+std::string FunctionCallStmt::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
+    // make new name map
+    for (auto &arg : args->exprs) {
+        std::string temp_var = arg->gen_tac(old_symtable, type_table, instrs);
+        // make new Push quad and add to instrs
+    }
+
+    std::string func_var = func->gen_tac(old_symtable, type_table, instrs);
+    CallTAC * call = new CallTAC(func_var);
+    instrs.push_back(call);
+
+    return "";
 }
 
 bool FunctionCallStmt::operator==(const ASTNode &node) const {

@@ -59,7 +59,11 @@ void JumpTAC::print() const {
 }
 
 void CallTAC::print() const {
-    std::cout << "call " << fun << ' ' << num_args;
+    std::cout << "call " << fun << ' ';
+}
+
+void RetvalTAC::print() const {
+    std::cout << id << " = __retval";
 }
 
 void CopyTAC::print() const
