@@ -202,6 +202,7 @@ statement : type_decl {$$ = $1;}
           | RETURN_KW {$$ = new VoidReturnStmt(Location(@1, @1));}
           | CONTINUE_KW {$$ = new ContinueStmt(Location(@1, @1));}
           | BREAK_KW {$$ = new BreakStmt(Location(@1, @1));}
+          | pre_expr 
           ;
 
 statement_list : statement NEWLINE {$$ = new StatementList(Location(@1, @2), {$1});}
@@ -254,8 +255,8 @@ calling_expr : '(' expr ')' {$$ = new ParensExpr(Location(@1, @3), $2);}
 array_index_expr : calling_expr '[' expr ']' {$$ = new ArrayIndexExpr(Location(@1, @4), $1, $3);}
                  ;
 
-struct_deref : calling_expr NEWLINE IDENT {$$ = new StructDeref(Location(@1, @3), $1, $3);}
-             | calling_expr NEWLINE DECLARED_VAR {
+struct_deref : calling_expr '.' IDENT {$$ = new StructDeref(Location(@1, @3), $1, $3);}
+             | calling_expr '.' DECLARED_VAR {
                 // This allows you to bring a struct member into the scope by assigning
                 // it to a variable of the same name, like 'int q = strukt.q'
                 $$ = new StructDeref(Location(@1, @3), $1, $3);
@@ -309,6 +310,7 @@ pre_expr : INC expr {$$ = new PreExpr(Location(@1, @2), "++", $2);}
          | DEC expr {$$ = new PreExpr(Location(@1, @2), "--", $2);}
          ;
 
+
 function_call_expr : calling_expr '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @4), $1, $3);}
               ;
 
@@ -358,7 +360,7 @@ while_statement : WHILE_KW '(' expr ')' '{'
                     }
                 ;
 
-for_statement : FOR_KW '(' statement NEWLINE {x::create_scope(&state->symtable);} expr NEWLINE statement ')' '{' statement_list '}' {
+for_statement : FOR_KW '(' statement ';' {x::create_scope(&state->symtable);} expr ';' statement ')' '{' statement_list '}' {
                     SymbolTable * table = x::pop_scope(&state->symtable);
                     $$ = new ForStmt(Location(@1, @11), $3, $6, $8, $11, table);
                     table->set_node($$);

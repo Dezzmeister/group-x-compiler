@@ -7,9 +7,15 @@ static SymbolTable * the_default_symtable = nullptr;
 const char * BUILTIN_DECLS = R"(
     // These functions need stub definitions because a statement list cannot
     // be empty
-    void print(char* str) { int _x; }.
-    char* i_to_str(int i) { int _x; }.
-    int calloc(int i)  { int _x; }.
+    void print(char* str) { 
+        int _x. 
+    }.
+    char* i_to_str(int i) { 
+        int _x. 
+    }.
+    int calloc(int i)  { 
+        int _x. 
+    }.
 )";
 
 ParseResult::ParseResult(int error, ParserState * parser_state) : error(error), parser_state(parser_state) {}

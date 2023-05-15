@@ -64,6 +64,7 @@ const int Assignment::kind = x::next_kind("assignment");
 const int BangExpr::kind = x::next_kind("bang_expr");
 const int NotExpr::kind = x::next_kind("not_expr");
 const int PreExpr::kind = x::next_kind("pre_expr");
+const int PostExpr::kind = x::next_kind("post_expr");
 const int StructDeref::kind = x::next_kind("struct_deref");
 const int MemberInitializer::kind = x::next_kind("member_initializer");
 const int InitializerList::kind = x::next_kind("initializer_list");
@@ -1779,6 +1780,32 @@ bool PreExpr::operator==(const ASTNode &node) const {
     }
 
     const PreExpr &n = (PreExpr &) node;
+
+    return (op == n.op && *expr == *(n.expr));
+}
+
+PostExpr::PostExpr(const Location loc, const char * const op, const Expr * expr)
+    : Expr(loc), op(std::string(op)), expr(expr) {}
+
+PostExpr::~PostExpr() {
+    delete expr;
+}
+
+void PostExpr::print() const {
+    std::cout << op;
+    expr->print();
+}
+
+std::vector<ASTNode *> PostExpr::children() {
+    return {(ASTNode *)expr};
+}
+
+bool PostExpr::operator==(const ASTNode &node) const {
+    if (node.get_kind() != PostExpr::kind) {
+        return false;
+    }
+
+    const PostExpr &n = (PostExpr &) node;
 
     return (op == n.op && *expr == *(n.expr));
 }

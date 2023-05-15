@@ -54,13 +54,13 @@ parser.o: src/parser.cpp
 scanner.o: src/scanner.cpp
 
 src/parser.cpp: src/parser.ypp
-	bison ${d} --verbose --graph -o src/parser.cpp src/parser.ypp
+	bison ${d} --verbose -o src/parser.cpp src/parser.ypp
 
 src/scanner.cpp: src/scanner.lex
 	flex -Cfe -o src/scanner.cpp src/scanner.lex
 
 src/parser.h:
-	bison ${d} --defines=src/parser.h src/parser.ypp
+	bison ${d} --verbose --defines=src/parser.h src/parser.ypp
 	rm -f parser.tab.cpp
 
 -include $(DEPS)

@@ -35,7 +35,7 @@ delim       [ \t]
 ws          {delim}+
 int         [[:digit:]]+
 hexint      (\-)?0[xX][[:xdigit:]]+
-float       (\-)?[[:digit:]]+\.[[:digit:]]*f?
+float       (\-)?[[:digit:]]+\.[[:digit:]]+f?
 bool        (true)|(false)
 letter      [a-zA-Z]
 
@@ -55,7 +55,7 @@ comment     \/\/.*\n
                 }
 {ws}        {}
 {comment}   {}
-\n          {}
+(\.[ \t]*(\/\/.*)?[ \t]*\n) {return NEWLINE;}
 {int}       {yylval->int_literal = new IntLiteral(Location(*yylloc, *yylloc), yytext); return INT;}
 {float}     {yylval->float_literal = new FloatLiteral(Location(*yylloc, *yylloc), yytext); return FLOAT;}
 true        {yylval->bool_literal = new BoolLiteral(Location(*yylloc, *yylloc), true); return BOOL;}
@@ -79,7 +79,6 @@ not[ \t]+in {return NOT_IN_KW;}
 and         {return AND_KW;}
 or          {return OR_KW;}
 
-(\.[ \t]*(\/\/.*)?[ \t]*\n) {return NEWLINE;}
 
 {ident}     { {
                 yylval->ident = new Ident(Location(*yylloc, *yylloc), yytext);
