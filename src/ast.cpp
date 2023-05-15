@@ -993,6 +993,11 @@ VarDeclInit::~VarDeclInit() {
     delete init;
 }
 
+
+std::string VarDeclInit::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    return ""; 
+}
+
 void VarDeclInit::print() const {
     decl->print();
     printf(" = ");
@@ -1489,6 +1494,10 @@ bool ParamsList::operator==(const ASTNode &node) const {
 
 std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
     x::bblock->add_block(name->id);
+<<<<<<< HEAD
+=======
+    body->gen_tac(old_symtable, type_table, names, instrs);
+>>>>>>> enable tac printing
     return "";
 }
 
