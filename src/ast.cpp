@@ -279,7 +279,10 @@ StringLiteral::StringLiteral(const Location loc, const char * const value)
     }
 
 std::string StringLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
-    return "";
+    std::string p = next_t();
+    Value<std::string> *v = new Value<std::string>(p, value);
+    x::bblock->add_instruction(v);
+    return p;
 }
 
 void StringLiteral::print() const {
@@ -1030,6 +1033,9 @@ ArrayLiteral::~ArrayLiteral() {
 }
 
 std::string ArrayLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    for (auto & expr : items->exprs) {
+        expr->gen_tac(old_symtable, type_table, names, instrs);
+    }
     return "";
 }
 
@@ -1820,6 +1826,10 @@ void StructLiteral::print() const {
     printf("{\n");
     members->print();
     putchar('}');
+}
+
+std::string StructLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    return "";
 }
 
 std::vector<ASTNode *> StructLiteral::children() {
