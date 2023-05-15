@@ -260,7 +260,7 @@ void parser_tests() {
     };
     
     xtest::tests["(Expected Fail) Missing parenthesis"] = []() {
-        const * code = R"(
+        const char * code = R"(
             int main() {
                 print("Hello World").
                 int x = 5 * (4 + 6.
@@ -282,7 +282,7 @@ void parser_tests() {
    `};
     
     xtest::tests["Array test"] = []() {
-        const * code = R"(
+        const char * code = R"(
             int main() {
                 mut int [5] arr = {0, 1, 2, 3, 4}.
                 int x = arr[2].
@@ -293,5 +293,15 @@ void parser_tests() {
         
         ParseResult result = x::parse_str(code);
         ProgramSource * output = result.parser_state->top;
+
+        for (auto& out : output->children()) {
+            if (out->get_kind() == VarDeclInit::kind) {
+                VarDeclInit * vardecl = (VarDeclInit*) out;
+                ArrayIndexExpr * rhs = (ArrayIndexExpr *) vardecl->init;
+                const Expr * index = rhs->index; 
+                IntLiteral * index_as_int = (IntLiteral *) index;
+                expect(index_as_int->value == 2);
+            }
+        }
     };
 }
