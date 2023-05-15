@@ -2024,6 +2024,20 @@ bool VoidReturnStmt::operator==(const ASTNode &node) const {
     return (node.get_kind() == VoidReturnStmt::kind);
 }
 
+PleaseReturnStmt::PleaseReturnStmt(const Location loc) : Statement(loc) {}
+
+void PleaseReturnStmt::print() const {
+    printf("return");
+}
+
+std::vector<ASTNode *> PleaseReturnStmt::children() {
+    return {};
+}
+
+bool PleaseReturnStmt::operator==(const ASTNode &node) const {
+    return (node.get_kind() == PleaseReturnStmt::kind);
+}
+
 ContinueStmt::ContinueStmt(const Location loc) : Statement(loc) {}
 
 void ContinueStmt::print() const {
