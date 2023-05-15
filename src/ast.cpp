@@ -1584,7 +1584,7 @@ std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table
 
     const int last_stmt_kind = body->statements[body->statements.size() - 1]->get_kind();
 
-    if (last_stmt_kind != ReturnStatement::kind && last_stmt_kind != VoidReturnStmt::kind) {
+    if (last_stmt_kind != ReturnStatement::kind && (last_stmt_kind != VoidReturnStmt::kind || last_stmt_kind != PleaseReturnStmt::kind)) {
         instrs.push_back(new VoidReturnTAC());
     }
 
