@@ -120,3 +120,47 @@ std::string CharTAC(const char c) {
     instrs.pushback(temp + " = '" + std::string(1, c) + "'");
     return temp;
 }
+
+std::string FloatLitTAC(const int val)
+{
+    std::string temp = next_t() ;
+    string out = temp + " = " + val ;
+    cout << out ;
+    instrs.push_back(out) ;
+    // wait for joe symbol table thing
+    globl_symtable.put(temp, val) ;
+    return temp ;
+}
+
+std::string IntLitTAC(const string val)
+{
+    std::string temp = next_t() ;
+    string out = temp + " = " + val ;
+    cout << out ;
+    // wait for joe symbol table thing
+    globl_symtable.put(temp, val) ;
+    instrs.push_back(out) ;
+    return temp ;
+}
+
+std::string BoolLitTAC(const bool b)
+{
+    std::string temp = next_t() ;
+    string out = temp + " = " + b ;
+    cout << out ;
+    // wait for joe symbol table thing
+    globl_symtable.put(temp, b) ;
+    instrs.push_back(out) ;
+    return temp ;
+}
+
+std::string StringLitTAC(const string s)
+{
+    std::string temp = next_t() ;
+    string out = temp + " = " + s ;
+    cout << out ;
+    // wait for joe symbol table thing
+    globl_symtable.put(temp, s) ;
+    instrs.push_back(out) ;
+    return temp ;
+}
