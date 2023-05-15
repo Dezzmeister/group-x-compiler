@@ -4,7 +4,7 @@
 #include "../src/ast.h"
 #include "../src/parseutils.h"
 #include "../src/symtable.h"
-#include "../src/error.h"
+#include "../src/errors.h"
 
 void parser_tests() {
     xtest::tests["struct parse tree"] = []() {

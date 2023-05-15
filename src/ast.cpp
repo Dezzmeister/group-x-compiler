@@ -278,6 +278,10 @@ StringLiteral::StringLiteral(const Location loc, const char * const value)
     : Expr(loc), value(std::string(value)) {
     }
 
+std::string StringLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    return "";
+}
+
 void StringLiteral::print() const {
     putchar('"');
     std::cout << value;
@@ -1023,6 +1027,10 @@ ArrayLiteral::ArrayLiteral(const Location loc, const ExprList * items) :
 
 ArrayLiteral::~ArrayLiteral() {
     delete items;
+}
+
+std::string ArrayLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    return "";
 }
 
 void ArrayLiteral::print() const {
@@ -1795,6 +1803,10 @@ bool InitializerList::operator==(const ASTNode &node) const {
     }
 
     return true;
+}
+
+std::string StructLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+    return "";
 }
 
 StructLiteral::StructLiteral(const Location loc, const InitializerList * members)
