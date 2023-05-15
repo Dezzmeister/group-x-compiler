@@ -63,6 +63,16 @@ void JumpTAC::print() const {
     std::cout << "jmp " << label;
 }
 
+
+void CallTAC::print() const {
+    std::cout << "call " << fun << ' ';
+}
+
+void RetvalTAC::print() const {
+    std::cout << id << " = __retval";
+}
+
+
 void CopyTAC::print() const
 {
     std::cout << "copy " << index;
@@ -90,7 +100,7 @@ void CondJumpTAC::print() const {
 void BasicBlock::print() const
 {
     std::cout << name << ":" << '\n';
-    
+
     int i = 0;
     for (auto trip : trips)
     {
@@ -103,4 +113,10 @@ void BasicBlock::print() const
     {
         this->prev->print();
     }
+}
+
+std::string CharTAC(const char c) {
+    std::string temp = next_t();
+    instrs.pushback(temp + " = " + c);
+    return temp;
 }

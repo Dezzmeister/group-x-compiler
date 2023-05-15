@@ -92,7 +92,7 @@ void parser_tests() {
             };
 
             int main(int argc) {
-                struct Shape circle = new struct Shape;
+                mut struct Shape circle = new struct Shape;
                 circle.type = "circle";
                 circle.dimension.width = 5.;
             }

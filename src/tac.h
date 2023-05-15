@@ -147,15 +147,21 @@ class PushTAC : public Quad {
   void print() const { std::cout << "push " << id; }
 };
 
-// arg 1
-// arg 2
-// call f 2
+
 class CallTAC : public Quad
 {
 public:
   std::string fun;
   CallTAC(std::string f) : fun(f) {}
   void print() const { std::cout << "call " << fun; };
+};
+
+// t0 = __retval. asm stage will replace with rax
+class RetvalTAC : public Quad {
+  public:
+    std::string id;
+    RetvalTAC(std::string id) : id(id) {}
+    void print() const;
 };
 
 // arg x

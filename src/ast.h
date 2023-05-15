@@ -611,6 +611,7 @@ class FunctionCallExpr : public CallingExpr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
 
         virtual Typename * type_of(SymbolTable * symtable) const;
 
@@ -632,9 +633,9 @@ class FunctionCallStmt : public Statement {
 
         virtual ~FunctionCallStmt();
 
-        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
 
         virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
