@@ -349,6 +349,43 @@ bool Ident::operator==(const ASTNode &node) const {
     return (id == n.id);
 }
 
+ virtual std::string IntLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const 
+ {
+     std::string p_name = *names.get(value) ;
+     type_table->put_from_symbol(value, p_name, old_symtable) ;
+     auto v = new Value <int> (p_name, value) ;
+     instrs.push_back(v) ;
+     return p_name ;
+ }
+
+ virtual std::string BoolLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const 
+ {
+     std::string p_name = *names.get(value) ;
+     type_table->put_from_symbol(value, p_name, old_symtable) ;
+     auto v = new Value <int> (p_name, value) ;
+     instrs.push_back(v) ;
+     return p_name ;
+ }
+
+ virtual std::string CharLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const 
+ {
+     std::string p_name = *names.get(value) ;
+     type_table->put_from_symbol(value, p_name, old_symtable) ;
+     auto v = new Value <int> (p_name, value) ;
+     instrs.push_back(v) ;
+     return p_name ;
+ }
+
+ virtual std::string StringLiteral::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad*> instrs) const 
+ {
+     std::string p_name = *names.get(value) ;
+     type_table->put_from_symbol(value, p_name, old_symtable) ;
+     auto v = new Value <int> (p_name, value) ;
+     instrs.push_back(v) ;
+     return p_name ;
+ }
+
+
 MathExpr::MathExpr(const Location loc, const char op, const Expr * left, const Expr * right)
     : Expr(loc), op(op), left(left), right(right) {}
 
@@ -1010,7 +1047,7 @@ bool ArrayLiteral::operator==(const ASTNode &node) const {
     return (*items == *(n.items));
 }
 
-std::string IfStmt::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
+std::string IfStmt::(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
     std::string cond_var = cond->gen_tac(old_symtable, type_table, names, instrs);
     std::string label = next_l();
     CmpLiteralTAC * cmp = new CmpLiteralTAC(cond_var, 1);
