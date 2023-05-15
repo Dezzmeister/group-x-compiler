@@ -1,5 +1,6 @@
 COMMON_FLAGS = -Wall -Werror -std=gnu++17 -march=native -fsanitize=unreachable
 SRCS := $(wildcard src/*.cpp)
+LD_FLAGS := -pthread
 
 ${DEPS_DIR}
 
@@ -80,13 +81,13 @@ ${RELEASE_DIR}/%.o: src/%.cpp | ${DEPS_DIR} ${RELEASE_DIR}
 todo:
 	grep -Rn TODO
 
-test_debug: ${TEST_DIR}/*.cpp
-	$(CXX) -DDEBUG_TOKENS $(CPPFLAGS) $^ -o $@ ${LD_FLAGS}
+test_debug: ${TEST_DIR}/*.cpp ${SRCS}
+	$(CXX) -DDEBUG_TOKENS ${COMMON_FLAGS} $(CPPFLAGS) $^ -o $@ ${LD_FLAGS}
 	./$@
 	rm -f $@
 
-test_release: ${TEST_DIR}/*.cpp
-	$(CXX) -DDEBUG_TOKENS $(CPPFLAGS) $^ -o $@ ${LD_FLAGS}
+test_release: ${TEST_DIR}/*.cpp ${SRCS}
+	$(CXX) -DDEBUG_TOKENS ${COMMON_FLAGS} $(CPPFLAGS) $^ -o $@ ${LD_FLAGS}
 	./$@
 	rm -f $@
 

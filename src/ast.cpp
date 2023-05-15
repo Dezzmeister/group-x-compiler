@@ -146,6 +146,13 @@ void IntLiteral::print() const {
     printf("%d", value);
 }
 
+std::string IntLiteral::gen_tac(SymbolTable * old_symtable,
+    TypeTable * type_table, NamesToNames &names, std::vect<Quad *> instrs) const {
+        std::string p_name = *names.get(value);
+        type_table->put_from_symbol(value, p_name, old_symtable);
+        return p_name;
+}
+
 std::vector<ASTNode *> IntLiteral::children() {
     return {};
 }
@@ -245,7 +252,6 @@ bool CharLiteral::operator==(const ASTNode &node) const {
 
 StringLiteral::StringLiteral(const Location loc, const char * const value)
     : Expr(loc), value(std::string(value)) {
-        add_string(value);
     }
 
 void StringLiteral::print() const {
@@ -328,7 +334,7 @@ Ident::Ident(const Location loc, const char * const _id) :
 void Ident::print() const {
     std::cout << id;
 }
-std::string Ident::gen_tac(SymbolTable * old_symtable, 
+std::string Ident::gen_tac(SymbolTable * old_symtable,
 TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
     std::string p_name = *names.get(id);
     type_table->put_from_symbol(id, p_name, old_symtable);
@@ -1125,7 +1131,7 @@ TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> instrs) co
     instrs.push_back(false_label_tac);
 
     return "";
-} 
+}
 
 std::vector<ASTNode *> WhileStmt::children() {
     return {(ASTNode *)cond, (ASTNode *)body};
@@ -1187,7 +1193,7 @@ TypeTable * type_table, NamesToNames &names, std::vector<Quad *> instrs) const {
 
     instrs.push_back(exit_label_tac);
     return "";
-} 
+}
 
 std::vector<ASTNode *> ForStmt::children() {
     return {(ASTNode *)init, (ASTNode *)condition, (ASTNode *)update,
@@ -1468,6 +1474,10 @@ FuncDecl::~FuncDecl() {
     delete body;
     delete scope;
 }
+
+std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
+    return "";
+};
 
 void FuncDecl::print() const {
     ret_type->print();

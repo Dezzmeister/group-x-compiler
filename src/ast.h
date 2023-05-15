@@ -1091,6 +1091,7 @@ class FuncDecl : public ASTNode {
 
         
         virtual void print() const;
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
         virtual std::vector<ASTNode *> children();
 
         void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
