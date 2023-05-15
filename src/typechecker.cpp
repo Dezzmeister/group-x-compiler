@@ -647,6 +647,18 @@ Typename * NotExpr::type_of(SymbolTable * symtable) const {
     return new TypeIdent(x::NULL_LOC, "bool");
 }
 
+Typename * PostExpr::type_of(SymbolTable * symtable) const {
+    std::unique_ptr<Typename> expr_type(expr->type_of(symtable));
+
+    TypeIdent int_type(x::NULL_LOC, "int");
+
+    if (!expr_type->type_equals(&int_type, symtable)) {
+        throw CompilerError(loc, "Post expr can only be used on int expr", Error);
+    }
+
+    return new TypeIdent(x::NULL_LOC, "int");
+}
+
 Typename * PreExpr::type_of(SymbolTable * symtable) const {
     std::unique_ptr<Typename> expr_type(expr->type_of(symtable));
 

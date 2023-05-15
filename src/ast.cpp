@@ -396,6 +396,17 @@ MathExpr::~MathExpr() {
     delete right;
 }
 
+std::string MathExpr::gen_tac(SymbolTable * old_symtable,
+TypeTable * global_symtable, NamesToNames &names, std::vector<Quad *> &instrs) const {
+    std::string l = left->gen_tac(old_symtable, global_symtable, names, instrs);
+    std::string r = right->gen_tac(old_symtable, global_symtable, names, instrs);
+    std::string temp_name = next_t();
+    AssignTAC * tac = new AssignTAC(temp_name, std::string(1, op), l, r);
+    instrs.push_back(tac);
+
+    return temp_name;
+}
+
 void MathExpr::print() const {
     left->print();
     printf(" %c ", op);
@@ -1043,9 +1054,10 @@ std::string VarDeclInit::gen_tac(SymbolTable * old_symtable, TypeTable * type_ta
     std::string init_name = init->gen_tac(old_symtable, type_table, names, instrs);
     std::string var_name = decl->var_name->gen_tac(old_symtable, type_table, names, instrs);
 
-    instrs.push_back(new AssignTAC(var_name, init_name));
+    std::string name = decl->var_name->id;
+    instrs.push_back(new AssignTAC(name, "=", var_name, init_name));
 
-    return "";
+    return name;
 }
 
 bool VarDeclInit::operator==(const ASTNode &node) const {
@@ -1691,9 +1703,9 @@ std::string Assignment::gen_tac(SymbolTable * old_symtable, TypeTable * type_tab
     std::string lhs_name = lhs->gen_tac(old_symtable, type_table, names, instrs);
     std::string rhs_name = rhs->gen_tac(old_symtable, type_table, names, instrs);
 
-    instrs.push_back(new AssignTAC(lhs_name, rhs_name));
-
-    return "";
+    instrs.push_back(new AssignTAC("", "=", lhs_name, rhs_name));
+    
+    return lhs_name;
 }
 
 bool Assignment::operator==(const ASTNode &node) const {

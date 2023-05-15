@@ -462,6 +462,7 @@ class MathExpr : public Expr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, NamesToNames &names, std::vector<Quad *> &instrs) const;
 
         virtual Typename * type_of(SymbolTable * symtable) const;
 
@@ -1202,6 +1203,27 @@ class PreExpr : public Expr {
         PreExpr(const Location loc, const char * const op, const Expr * expr);
 
         virtual ~PreExpr();
+
+
+        virtual void print() const;
+        virtual std::vector<ASTNode *> children();
+
+        virtual Typename * type_of(SymbolTable * symtable) const;
+
+        virtual bool operator==(const ASTNode &node) const;
+        NEQ_OPERATOR()
+
+        KIND_CLASS()
+};
+
+class PostExpr : public Expr {
+    public:
+        const std::string op;
+        const Expr * expr;
+
+        PostExpr(const Location loc, const char * const op, const Expr * expr);
+
+        virtual ~PostExpr();
 
 
         virtual void print() const;

@@ -74,6 +74,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
     TypeIdent * type_ident;
     Assignment * assignment;
     PreExpr * pre_expr;
+    PostExpr * post_expr;
     CallingExpr * calling_expr;
     StructDeref * struct_deref;
     MemberInitializer * member_initializer;
@@ -163,6 +164,7 @@ int yylex(YYSTYPE * yylvalp, YYLTYPE * yylocp, yyscan_t scanner);
 %type <for_statement> for_statement
 %type <assignment> assignment
 %type <pre_expr> pre_expr
+%type <post_expr> post_expr
 %type <calling_expr> calling_expr
 %type <struct_deref> struct_deref
 %type <member_initializer> member_initializer
@@ -202,7 +204,6 @@ statement : type_decl {$$ = $1;}
           | RETURN_KW {$$ = new VoidReturnStmt(Location(@1, @1));}
           | CONTINUE_KW {$$ = new ContinueStmt(Location(@1, @1));}
           | BREAK_KW {$$ = new BreakStmt(Location(@1, @1));}
-          | pre_expr 
           ;
 
 statement_list : statement NEWLINE {$$ = new StatementList(Location(@1, @2), {$1});}
@@ -237,6 +238,7 @@ expr : calling_expr {$$ = $1;}
      | '!' expr {$$ = new BangExpr(Location(@1, @2), $2);}
      | NOT_KW expr {$$ = new NotExpr(Location(@1, @2), $2);}
      | pre_expr {$$ = $1;}
+     | post_expr {$$ = $1;}
      | STR {$$ = $1;}
      | BOOL {$$ = $1;}
      | CHAR {$$ = $1;}
@@ -310,6 +312,9 @@ pre_expr : INC expr {$$ = new PreExpr(Location(@1, @2), "++", $2);}
          | DEC expr {$$ = new PreExpr(Location(@1, @2), "--", $2);}
          ;
 
+post_expr :expr INC {$$ = new PostExpr(Location(@1, @2), "++", $1);}
+         | expr DEC {$$ = new PostExpr(Location(@1, @2), "--", $1);}
+         ;
 
 function_call_expr : calling_expr '(' args_list ')' {$$ = new FunctionCallExpr(Location(@1, @4), $1, $3);}
               ;
