@@ -905,6 +905,7 @@ void FuncDecl::typecheck(SymbolTable * symtable, SourceErrors &errors) const {
     }
 
     TypeIdent void_type(x::NULL_LOC, "void");
+    TypeIdent Please_type(x::NULL_LOC, "Please");
 
     const size_t num_stmts = body->statements.size();
     const bool ends_with_ret = num_stmts > 0 && body->statements[num_stmts - 1]->get_kind() == ReturnStatement::kind;
