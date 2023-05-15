@@ -38,6 +38,26 @@ public:
   void print() const;
 };
 
+class IfTAC : public Quad {
+  public:
+  std::string relop;
+  std::string lhs;
+  std::string rhs;
+  IfTAC(std::string op, std::string l, std::string r) : 
+  relop(op), lhs(l), rhs(r) {}
+  void print() const {
+    std::cout << "if !(" << lhs << ' ' << relop << rhs << ")" ;
+  };
+};
+
+class Label : public Quad {
+  std::string label;
+  Label(std::string l) : label(l) {}
+  void print() const {
+    std::cout << label;
+  }
+};
+
 class UnaryTAC : public Quad
 {
 public:
@@ -111,8 +131,8 @@ public:
 class JumpTAC : public Quad
 {
 public:
-  int label;
-  JumpTAC(int l = 0) : label(l) {}
+  std::string label;
+  JumpTAC(std::string l = 0) : label(l) {}
 
   void set_jmp(int lbl)
   {
@@ -121,16 +141,27 @@ public:
   void print() const;
 };
 
-// arg 1
-// arg 2
-// call f 2
+class PushTAC : public Quad {
+  std::string id; 
+  PushTAC(std::string i) : id(i) { }
+  void print() const { std::cout << "push " << id; }
+};
+
+
 class CallTAC : public Quad
 {
 public:
   std::string fun;
-  int num_args;
-  CallTAC(std::string f, int n) : fun(f), num_args(n) {}
-  void print() const;
+  CallTAC(std::string f) : fun(f) {}
+  void print() const { std::cout << "call " << fun; };
+};
+
+// t0 = __retval. asm stage will replace with rax
+class RetvalTAC : public Quad {
+  public:
+    std::string id;
+    RetvalTAC(std::string id) : id(id) {}
+    void print() const;
 };
 
 // arg x

@@ -435,6 +435,8 @@ class Ident : public CallingExpr {
         
         virtual std::vector<ASTNode *> children();
 
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *> instrs) const;
+
         virtual Typename * type_of(SymbolTable * symtable) const;
 
         virtual bool operator==(const ASTNode &node) const;
@@ -609,6 +611,7 @@ class FunctionCallExpr : public CallingExpr {
 
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
 
         virtual Typename * type_of(SymbolTable * symtable) const;
 
@@ -630,9 +633,9 @@ class FunctionCallStmt : public Statement {
 
         virtual ~FunctionCallStmt();
 
-        
         virtual void print() const;
         virtual std::vector<ASTNode *> children();
+        virtual std::string gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const;
 
         virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
 
@@ -904,6 +907,8 @@ class IfStmt : public Statement {
         virtual ~IfStmt();
 
         virtual void print() const;
+
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *> instrs) const;
         
         virtual std::vector<ASTNode *> children();
 
@@ -948,6 +953,8 @@ class WhileStmt : public Statement {
         virtual ~WhileStmt();
 
         virtual void print() const;
+
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
         
         virtual std::vector<ASTNode *> children();
 
@@ -974,6 +981,9 @@ class ForStmt : public Statement {
 
         
         virtual void print() const;
+
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
+
         virtual std::vector<ASTNode *> children();
 
         virtual void typecheck(SymbolTable * symtable, SourceErrors &errors) const;
@@ -1057,6 +1067,7 @@ class LogicalExpr : public Expr {
 
         
         virtual void print() const;
+        virtual std::string gen_tac(SymbolTable *, TypeTable *, std::vector<Quad *>) const;
         virtual std::vector<ASTNode *> children();
 
         virtual Typename * type_of(SymbolTable * symtable) const;
