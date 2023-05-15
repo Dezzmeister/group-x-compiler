@@ -335,4 +335,35 @@ void parser_tests() {
 
         // expect(output == expected_parse);
     };
+     
+    xtest::tests["Continue test"] = []() {
+        const char * code = R"(
+            int main() {
+                mut int count = 0.
+                for (int i = 1. i < 6. i++) {
+                    for int j = 1. j < 5. j++) {
+                        if (j % 2 == 0) {
+                            continue.
+                        }
+                        count++.
+                    }
+                    if (i % 3 == 0) {
+                        continue.
+                    }
+                    count++.
+                }
+                return 0.
+            }
+        )";
+        ParseResult result = x::parse_str(code);
+        for (auto& out : output->children()) {
+            if (out->get_kind() == VarDeclInit::kind) {
+                VarDeclInit * vardecl = (VarDeclInit*) out;
+                ArrayIndexExpr * rhs = (ArrayIndexExpr *) vardecl->init;
+                const Expr * index = rhs->index; 
+                IntLiteral * index_as_int = (IntLiteral *) index;
+                expect(index_as_int->value == 3);
+            }
+        }
+    };
 }
