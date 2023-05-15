@@ -71,6 +71,7 @@ const int InitializerList::kind = x::next_kind("initializer_list");
 const int StructLiteral::kind = x::next_kind("struct_literal");
 const int ArrayIndexExpr::kind = x::next_kind("array_index_expr");
 const int VoidReturnStmt::kind = x::next_kind("void_return_stmt");
+const int PleaseReturnStmt::kind = x::next_kind("Please_return_stmt");
 const int ContinueStmt::kind = x::next_kind("continue_stmt");
 const int BreakStmt::kind = x::next_kind("break_stmt");
 
