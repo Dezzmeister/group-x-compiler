@@ -86,3 +86,30 @@ This tells Vim to use yacc syntax highlighting for .ypp files.
 4. Three address code
 
 5. LLVM backend? Or maybe just target linux on x86
+
+==================================== Proposal ====================================
+
+Java, Python, C, and C++ are core languages for many beginner programmers. There 
+are certain aspects of each one that make coding easier for its users. We propose 
+a general-purpose programming language inspired by Python, Java, C, and C++. Our 
+language takes parts of our favorite features of these languages and puts them all 
+into one language. This is hopefully a more user-friendly way for programmers to 
+code in our opinion because of our specific preferences. Some examples of unique 
+features to our language are ending statements with periods, our for loop as seen 
+is python– looping through objects– and pattern matching. Our goal is to create an 
+intuitive, easy to use general purpose language for programmers of all skill levels, 
+with a combination of the most essential low and high level features.
+
+Existing languages in this domain fall short of this goal in one or more ways. Java 
+is intuitive and easy to learn, but Java’s strict programming model forces the 
+programmer to model a problem in terms of objects when a different model may be more 
+appropriate. Python provides many convenient high level features and is easy for new 
+programmers to pick up, but Python hides many of the low level details from its users, 
+and the most commonly used Python implementations are not compiled to native code and 
+are therefore not as fast as compiled languages. Python’s significant whitespace is 
+also unusual and unlike the other popular general purpose languages. C is a great 
+general purpose language, but it lacks many features of modern languages, such as native 
+support for proper objects, a “match” expression, and a standard library. C++ makes up 
+for this by including many more features than most C++ programmers will ever learn and 
+an extensive standard library. We want our language to have enough features to be useful 
+to most people, but not too many features for programmers to learn.
