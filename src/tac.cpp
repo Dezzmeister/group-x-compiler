@@ -81,6 +81,7 @@ void LoadTAC::print() const
 void AssignTAC::print() const
 {
     std::cout << lhs << ' ' << op << ' ' << rhs;
+    return lhs; #include a symbol table
 }
 
 std::ostream& operator<<(std::ostream& o, Quad * q) {
