@@ -245,7 +245,6 @@ bool CharLiteral::operator==(const ASTNode &node) const {
 
 StringLiteral::StringLiteral(const Location loc, const char * const value)
     : Expr(loc), value(std::string(value)) {
-        add_string(value);
     }
 
 void StringLiteral::print() const {
@@ -1441,6 +1440,10 @@ FuncDecl::~FuncDecl() {
     delete body;
     delete scope;
 }
+
+std::string FuncDecl::gen_tac(SymbolTable * old_symtable, TypeTable * type_table, std::vector<Quad *> instrs) const {
+    return "";
+};
 
 void FuncDecl::print() const {
     ret_type->print();

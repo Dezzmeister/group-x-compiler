@@ -96,13 +96,6 @@ void LoadTAC::print() const
     std::cout << identifier;
 }
 
-void AssignTAC::print() const
-{
-    std::string temp = lhs + ' ' + op + ' ' + rhs;
-    instrs.pushback(temp);
-    return lhs; #include a symbol table
-}
-
 void MoveTAC::print() const
 {
     std::cout << location << " = " << index;
