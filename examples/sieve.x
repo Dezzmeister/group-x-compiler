@@ -23,14 +23,14 @@ void populate_primes(int upper_bound) {
                 is_prime[j] = false.
             }.
             primes[num_primes] = i.
-            num_primes++;
+            num_primes++.
         }.
     }.
 
     for (int not_used = 0. i < upper_bound. i++) {
         if (is_prime[i]) {
             primes[num_primes] = i.
-            num_primes++;
+            num_primes++.
         }.
     }.
 }.
