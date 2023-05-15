@@ -315,4 +315,24 @@ void parser_tests() {
             }
         }
     };
+
+    xtest::tests["Arrays test"] = []() {
+        const char * code = R"(
+            int main() {
+                mut ints arr.
+                arr[2] = 3.
+            }
+        )";
+        ParseResult result = x::parse_str(code);
+        ProgramSource * output = result.parser_state->top;
+
+        /*onst char * expected_parse = R"(
+            int main() {
+                    mut ints arr.
+                    arr[2] = 3.
+            }
+        )"; */
+
+        // expect(output == expected_parse);
+    };
 }
