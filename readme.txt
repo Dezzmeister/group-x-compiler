@@ -3,7 +3,7 @@ Team:
 --Komi Alasse (Language Guru)
     -Completed the LRM; contributed to the lexical analyzer, AST, TAC, and parsing 
         duties; troubleshooted testing runs and assembly code; guided sieve example code
---Alexander Bailey (Test Engineer)
+--Alec Bailey (Test Engineer)
     -Created tests for language, contributed to AST and TAC files, helped troubleshoot
         any issues with parser; aided on presentation
 --Giovanna Befeler (Manager)
